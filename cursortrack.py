@@ -1,5 +1,4 @@
 import pandas as pd
-from psychopy import gui, visual, event, core, sound
 import scipy as sp
 import time
 import os
@@ -7,8 +6,8 @@ import os
 #import re
 import gc
 from random import shuffle, seed
+from psychopy import gui, visual, event, core, sound
 from ctypes import *
-#from pygame import key
 #from Xlib import display
 
 
@@ -37,11 +36,9 @@ def runExp():
 
                 cfg['taskno'] = blockno
                 blockDef = cfg['blocks'][blockno]
-                
 
                 #if instruc not empty, show it
                 if len(cfg['blocks'][blockno]['instruction']) > 0:
-                        #print(len(cfg['blocks'][blockno]['instruction']))
                         cfg = showInstruc(cfg)
 
                 if blockDef['tasktype'] == 'resting state':
@@ -51,12 +48,13 @@ def runExp():
                         #loop through trials
                         ntrials = blockDef['trials'].shape[0]
                         if (cfg['mode']=='test'):
-                                ntrials = 3
+                                ntrials = 6
+
                 
                         for trialno in range(ntrials):
                                 cfg['trialno'] = trialno
                                 cfg = runTrial(cfg)
-                                
+
                                 gc.collect()
                         
                         #each trial is put into a csv file at first, eventually they grouped accdg. to task
@@ -67,8 +65,7 @@ def runExp():
                                 filename = "p%03d-%d-%d.csv" % (cfg['id'], cfg['taskno'],trialno)
                                 #print(filename)
                                 filepath = os.path.join('data', filename)
-                                #trialdata = pd.DataFrame.from_csv(path = filepath, index_col = None)
-                                trialdata = pd.read_csv(filepath, index_col = None)
+                                trialdata = pd.DataFrame.from_csv(path = filepath, index_col = None )
                                 
                                 if isinstance(taskdata, pd.DataFrame):
                                         taskdata = pd.concat([taskdata, trialdata])
@@ -119,6 +116,8 @@ def runTrial(cfg):
         blockDef = cfg['blocks'][blockno]
 
         trialDef = blockDef['trials'].iloc[trialno]
+
+        #print trialDef
         
         target = trialDef.target
         rotation = trialDef.rotation
@@ -168,17 +167,9 @@ def runTrial(cfg):
         movetooslow = False
         moveduringerrorfeedback = False #set to true later if they do this then change color at last step when moving back home
 
-
         while (step < 7):
             # where would the cursor be?
             mousepos = cfg['mouse'].Pos()
-
-            keys = event.getKeys()
-            if keys:
-                if keys[0] == 'escape':
-                        cfg['win'].close()
-                        core.quit()
-                        
             #set cursor position if step 5
             if (step == 5):
                     cfg['cursor'].pos = cursorendpt
@@ -193,7 +184,7 @@ def runTrial(cfg):
 
                     if perturbation in ['rotation', 'random']:
                             #rotatepos function
-                            cursorpos = rotatepos(point = cursorpos, ref = cfg['home'].pos, rotation = rotation) 
+                            cursorpos = rotatepos(point = cursorpos, ref = cfg['home'].pos, rotation = rotation)
                     if perturbation == 'mirror':
                             curX = mousepos[0]
                             curY = mousepos[1]
@@ -460,7 +451,7 @@ def getParticipantID(cfg):
         validID = False
         while not(validID):
                 #print(validID)
-                str_id = raw_input('participant ID (integer): ')#raw_input changed to input in py3.x
+                str_id = raw_input('participant ID (integer): ')
                 int_id = int(str_id)
                 
                 str_sb = raw_input('starting block (integer): ')
@@ -486,17 +477,12 @@ def showInstruc(cfg):
         waitingForSpace = True
         
         while waitingForSpace: 
-                #print('waiting for space')
                 pressed = event.getKeys(keyList = ['space'])
-                #print(pressed)
-                #pressed = key.get_pressed()
                 instruction.draw()
                 cfg['win'].flip()
-                
                 if len(pressed) > 0:
                         cfg['win'].flip()
                         waitingForSpace = False
-                        #print('NOT waiting')
 
         
         return(cfg)
@@ -509,15 +495,14 @@ def openEnvironment(cfg):
         # 1050 / 29.6 ~ 35.4729 pix per cm
         
         # let's say 35 pix / cm?
-
-        #keep in mind that pixpercm and winSize change according to monitor used
+        
         cfg['pixpercm'] = 35
 
         #winSize = [1350, 750]
-        winSize = [640,480]
-        #winSize = [1680, 1050]
+        #winSize = [640,480]
+        winSize = [1680, 1050]
         
-        cfg['win'] = visual.Window(size = winSize, color =(0,0,0), units ='pix', fullscr=False, winType = 'pyglet') #,winType = 'pyglet', gamma=256)
+        cfg['win'] = visual.Window(size = winSize, color =(0,0,0), units ='pix', fullscr=True, winType = 'pyglet') #, gamma=256)
         
         
         cfg['winSize'] = winSize
@@ -609,7 +594,7 @@ def addMouse(cfg):
                 #print('PsychoPy mouse')
                 [X,Y] = cfg['psyMouse'].getPos() #get time here to compare with lower, then add to output later on as separate column
                 kX = 0.5*cfg['radius']
-                kY = 1.5*cfg['radius']
+                kY = 2*cfg['radius']
                 return [(X/(1.6/1.05))-kX,(Y*0.98)-kY,time.time()] #0.95 is really close too for Y
                 #kX and kY are offsets to recenter the circle in tablet (10 cm radius)
                 #1.6 is a factor that makes the square for the monitor (tablet is square, monitor is not)
@@ -771,7 +756,7 @@ def makeBlocks(cfg):
 
                                 if direction == -1:
                                         target = [target[ind] - 30 for ind in range(len(target))] #not accdg to random rotation because rotation should be 30 for mirror
-                                target = list(sp.array(target) + taskaxis)
+                                target = list((sp.array(target) + taskaxis)%360)
         
                         taskPerturbation = 'none'
                         
@@ -788,7 +773,10 @@ def makeBlocks(cfg):
 
                                 if direction == -1:
                                         target = [target[ind] - rotation[ind] for ind in range(len(target))]
-                                target = list(sp.array(target) + taskaxis)
+                                target = list((sp.array(target) + taskaxis)%360)
+
+                                if taskPerturbation == 'rotation':
+                                        rotation = [r * pp_rot_dir for r in rotation]
                                 
                                 perturbation = [taskPerturbation] * len(target)
 ##                                print(axis)
@@ -808,7 +796,7 @@ def makeBlocks(cfg):
 
                                 if direction == -1:
                                         target = [target[ind] - 30 for ind in range(len(target))] #need to have the 30 deg rotation in there, not zero
-                                target = list(sp.array(target) + taskaxis)
+                                target = list((sp.array(target) + taskaxis)%360)
                                 #rotation = [0] * len(target)
                                 perturbation = ['none'] * len(target)
                                 axis = [float('NaN')] * len(target)
