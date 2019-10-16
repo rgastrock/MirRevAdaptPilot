@@ -63,8 +63,7 @@ def runExp():
                         filename = "p%03d-%d-%d.csv" % (cfg['id'], cfg['taskno'],trialno)
                         #print(filename)
                         filepath = os.path.join('data/familiarization', filename)
-                        #trialdata = pd.DataFrame.from_csv(path = filepath, index_col = None )
-                        trialdata = pd.read_csv(filepath, index_col = None)
+                        trialdata = pd.DataFrame.from_csv(path = filepath, index_col = None )
                                 
                         if isinstance(taskdata, pd.DataFrame):
                                 taskdata = pd.concat([taskdata, trialdata])
@@ -144,17 +143,9 @@ def runTrial(cfg):
         #movetooslow = False
         #moveduringerrorfeedback = False #set to true later if they do this then change color at last step when moving back home
 
-                        
         while (step < 7):
             # where would the cursor be?
             mousepos = cfg['mouse'].Pos()
-
-            keys = event.getKeys()
-            if keys:
-                    if keys[0] == 'escape':
-                        cfg['win'].close()
-                        core.quit()
-            
             #set cursor position if step 5
             if (step == 5):
                     cfg['cursor'].pos = cursorendpt
@@ -425,15 +416,14 @@ def openEnvironment(cfg):
         # 1050 / 29.6 ~ 35.4729 pix per cm
         
         # let's say 35 pix / cm?
-
-        #keep in mind that pixpercm and winSize change according to monitor used
+        
         cfg['pixpercm'] = 35
 
         #winSize = [1350, 750]
-        winSize = [640,480]
-        #winSize = [1680, 1050]
+        #winSize = [640,480]
+        winSize = [1680, 1050]
         
-        cfg['win'] = visual.Window(size = winSize, color =(0,0,0), units ='pix', fullscr=False, winType = 'pyglet') #, gamma=256)
+        cfg['win'] = visual.Window(size = winSize, color =(0,0,0), units ='pix', fullscr=True, winType = 'pyglet') #, gamma=256)
         
         
         cfg['winSize'] = winSize
@@ -495,7 +485,7 @@ def addMouse(cfg):
                     [X,Y] = cfg['psyMouse'].getPos()
                     #return [X/(1.6/1.1),Y*1.1,time.time()]
                     kX = 0.5*cfg['radius']
-                    kY = 1.5*cfg['radius']
+                    kY = 2*cfg['radius']
                     return [(X/(1.6/1.05))-kX,(Y*0.98)-kY,time.time()] #0.95 is really close too for Y
                     #kX and kY are offsets to recenter the circle in tablet (10 cm radius)
                     #1.6 is a factor that makes the square for the monitor (tablet is square, monitor is not)
