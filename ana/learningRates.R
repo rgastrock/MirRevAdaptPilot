@@ -945,6 +945,7 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
 
 plotROTMIRLC <- function(groups = c('noninstructed', 'instructed'), instmax = 15, noninstmax = 20, location = 'maxvel', targetno = 6, target = 'inline'){
   
+  #fix titles to include instructed and noninstructed in title
   #instmax and noninstmax will differ depending on maximum pp id number in data
   
   #but we can save plot as svg file
@@ -974,93 +975,6 @@ plotROTMIRLC <- function(groups = c('noninstructed', 'instructed'), instmax = 15
   
 }
 
-#Plots for Presentation-----
-plotLC <- function(group = 'noninstructed', instmax = 15, location = 'maxvel', targetno = 6, target = 'inline'){
-  
-  #instmax and noninstmax will differ depending on maximum pp id number in data
-  
-  #but we can save plot as svg file
-  if (target=='svg') {
-    svglite(file='doc/fig/pres/Fig01_NI_BlockedIndLearningCurve.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
-  }
-  
-  
-  par(mfrow = c(1,2))
-  
-  
-  plotBlockedIndLC(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'ROT')
-  plotBlockedIndLC(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'MIR')
-  
-  
-  
-  
-  #close everything if you saved plot as svg
-  if (target=='svg') {
-    dev.off()
-  }
-  
-}
-
-plotPTypeLearningCurves <- function(perturb = c('ROT', 'MIR'), group = 'noninstructed', target='inline') {
-  
-  
-  #but we can save plot as svg file
-  if (target=='svg') {
-    svglite(file='doc/fig/pres/Fig02_NI_learningcurve.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
-  }
-  
-  # create plot
-  meanGroupReaches <- list() #empty list so that it plots the means last
-  
-  #NA to create empty plot
-  # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,91), ylim = c(-200,200), 
-       xlab = "Trial", ylab = "Amount of Compensation (°)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "Reach Learning over Time", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-  axis(1, at = c(1, 30, 60, 90)) #tick marks for x axis
-  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
-  
-  for(ptype in perturb){
-    #read in files created by getGroupConfidenceInterval in filehandling.R
-    groupconfidence <- read.csv(file=sprintf('data/%s_%s_CI_learningcurve.csv', ptype, group))
-    
-    colourscheme <- getPtypeColourScheme(ptype)
-    #take only first, last and middle columns of file
-    lower <- groupconfidence[,1]
-    upper <- groupconfidence[,3]
-    mid <- groupconfidence[,2]
-    
-    col <- colourscheme[[ptype]][['T']] #use colour scheme according to group
-    
-    #upper and lower bounds create a polygon
-    #polygon creates it from low left to low right, then up right to up left -> use rev
-    #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(1:90), rev(c(1:90))), y = c(lower, rev(upper)), border=NA, col=col)
-    
-    meanGroupReaches[[ptype]] <- mid #use mean to fill in empty list for each group
-  }
-  
-  
-  for (ptype in perturb) {
-    # plot mean reaches for each group
-    col <- colourscheme[[ptype]][['S']]
-    lines(meanGroupReaches[[ptype]],col=col,lty=1)
-  }
-  
-  #add legend
-  legend(70,-150,legend=c('Rotation','Mirror Reversal'),
-         col=c(colourscheme[['ROT']][['S']],colourscheme[['MIR']][['S']]),
-         lty=1,bty='n',cex=1,lwd=2)
-  
-  #close everything if you saved plot as svg
-  if (target=='svg') {
-    dev.off()
-  }
-  
-}
-
-
 
 #Reach Aftereffects -----
 
@@ -1070,22 +984,22 @@ plotPTypeLearningCurves <- function(perturb = c('ROT', 'MIR'), group = 'noninstr
 #hence, we go for the rate of deadaptation
 #essentially same as Learning Curves, just going the opposite direction
 
-getROTParticipantAftereffects <- function(id, location) {
+getROTParticipantAftereffects <- function(group, id, location) {
   
   #take learnive curve for both aligned and perturbed (rot, mir, rand) sessions
   #rotation should show percentage of compensation (not angular deviation of hand)
   #because this makes it comparable to mirror reversal where angular deviation will differ depending on location of target relative to mirror
   #measure where hand should be minus where it is: if this is spot on then percentage is 0%
   
-  alignedTraining <- getParticipantTaskData(id, taskno = 1, task = 'aligned') #these values will change if need nocursor or localization
+  alignedTraining <- getParticipantTaskData(group, id, taskno = 1, task = 'aligned') #these values will change if need nocursor or localization
   
   if (id%%2 == 1){
     #mirror then rotation if odd id
-    washoutTrials <- getParticipantTaskData(id, taskno = 13, task = 'washout1')
+    washoutTrials <- getParticipantTaskData(group, id, taskno = 13, task = 'washout1')
   } else if (id%%2 == 0){
     #if pp id is even
     #rotation first then mirror
-    washoutTrials <- getParticipantTaskData(id, taskno = 7, task = 'washout0')
+    washoutTrials <- getParticipantTaskData(group, id, taskno = 7, task = 'washout0')
   }
   
   biases <- getAlignedTrainingBiases(alignedTraining, location = location) #use function to get biases
@@ -1105,7 +1019,30 @@ getROTParticipantAftereffects <- function(id, location) {
   #perturbation is constant here (always 30deg), so the (reachdev/30)*100
   #reachdeviations are all negative values, we just multiply by -1 to make percentage positive
   #we will still get some negative values because of some that go below 0%, but the direction of means if plotted will make more sense
-  WT$reachdev <- ((WT$reachdev * -1)/30)*100
+  alltargetsbef <- c(67.5, 75, 82.5,
+                     157.5, 165, 172.5,
+                     247.5, 255, 262.5,
+                     337.5, 345, 352.5) #should compensate for 30 degrees
+  alltargetsaft <- c(7.5, 15, 22.5,
+                     97.5, 105, 112.5,
+                     187.5, 195, 202.5,
+                     277.5, 285, 292.5) #compensate 30 degrees
+  
+  angles <- unique(WT$targetangle)
+  #RT['compensate'] <- NA
+  
+  for (target in angles){
+    if (target %in% alltargetsbef){
+      WT$reachdev[which(WT$targetangle == target)] <- ((WT$reachdev[which(WT$targetangle == target)])/30)*100
+      #RT$compensate[which(RT$targetangle == target)] <- 30
+    } else if (target %in% alltargetsaft){
+      #multiply by negative 1 bec targets after axis will have negative values
+      WT$reachdev[which(WT$targetangle == target)] <- (((WT$reachdev[which(WT$targetangle == target)])*-1)/30)*100
+      #RT$compensate[which(RT$targetangle == target)] <- 30
+    }
+  }
+  
+  #WT$reachdev <- ((WT$reachdev * -1)/30)*100
   
   #use below for absolute errors:
   #so we subtract rotation size (30deg) from all reach deviations
@@ -1114,16 +1051,20 @@ getROTParticipantAftereffects <- function(id, location) {
   return(WT)
 }
 
-getROTGroupAftereffects <- function(maxppid, location) {
+getROTGroupAftereffects <- function(group, maxppid, location) {
   #participants <- getGroupParticipants(group) #the function that gives all participant ID's for a specified group
   
-  #each column is a participant, but I do not label columns according to participant ID
-  participants <- seq(0,maxppid,1)
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
   
   dataoutput<- data.frame() #create place holder
   #go through each participant in this group
   for (participant in participants) {
-    ppangles <- getROTParticipantAftereffects(id=participant, location = location) #for every participant, get aftereffects data
+    ppangles <- getROTParticipantAftereffects(group=group, id=participant, location = location) #for every participant, get aftereffects data
     
     reaches <- ppangles$reachdev #get reach deviations column from learning curve data
     trial <- c(1:length(reaches)) #sets up trial column
@@ -1140,11 +1081,11 @@ getROTGroupAftereffects <- function(maxppid, location) {
   return(dataoutput)
 }
 
-getROTGroupRAEConfidenceInterval <- function(maxppid, location, type){
+getROTGroupRAEConfidenceInterval <- function(group, maxppid, location, type){
   #for (group in groups){
   # get the confidence intervals for each trial of each group
-  data <- getROTGroupAftereffects(maxppid = maxppid, location = location)
-  data <- data[,-6] #remove faulty particiapnt (pp004) so the 6th column REMOVE ONCE RESOLVED
+  data <- getROTGroupAftereffects(group = group, maxppid = maxppid, location = location)
+  #data <- data[,-6] #remove faulty particiapnt (pp004) so the 6th column REMOVE ONCE RESOLVED
   data <- as.data.frame(data)
   trialno <- data$trial
   data1 <- as.matrix(data[,2:dim(data)[2]])
@@ -1167,22 +1108,27 @@ getROTGroupRAEConfidenceInterval <- function(maxppid, location, type){
     } else {
       confidence <- rbind(confidence, citrial)
     }
-    write.csv(confidence, file='data/ROT_CI_aftereffects.csv', row.names = F)
+    if (group == 'noninstructed'){
+      write.csv(confidence, file='data/ROT_noninstructed_CI_aftereffects.csv', row.names = F) 
+    } else if (group == 'instructed'){
+      write.csv(confidence, file='data/ROT_instructed_CI_aftereffects.csv', row.names = F)
+    }
+    
   }
   #}
 }
 
-getMIRParticipantAftereffects <- function(id, location){
+getMIRParticipantAftereffects <- function(group, id, location){
   #same as rotation, we look into percentage of compensation, but note that magnitude to compensate differs per target
-  alignedTraining <- getParticipantTaskData(id, taskno = 1, task = 'aligned') #these values will change if need nocursor or localization
+  alignedTraining <- getParticipantTaskData(group, id, taskno = 1, task = 'aligned') #these values will change if need nocursor or localization
   
   if (id%%2 == 1){
     #mirror then rotation if odd id
-    washoutTrials <- getParticipantTaskData(id, taskno = 7, task = 'washout0')
+    washoutTrials <- getParticipantTaskData(group, id, taskno = 7, task = 'washout0')
   } else if (id%%2 == 0){
     #if pp id is even
     #rotation first then mirror
-    washoutTrials <- getParticipantTaskData(id, taskno = 13, task = 'washout1')
+    washoutTrials <- getParticipantTaskData(group, id, taskno = 13, task = 'washout1')
   }
   
   biases <- getAlignedTrainingBiases(alignedTraining, location = location) #use function to get biases
@@ -1240,16 +1186,20 @@ getMIRParticipantAftereffects <- function(id, location){
   return(WT)  
 }
 
-getMIRGroupAftereffects <- function(maxppid, location) { # add angle?
+getMIRGroupAftereffects <- function(group, maxppid, location) { # add angle?
   #participants <- getGroupParticipants(group) #the function that gives all participant ID's for a specified group
   
-  #each column is a participant, but I do not label columns according to participant ID
-  participants <- seq(0,maxppid,1)
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
   
   dataoutput<- data.frame() #create place holder
   #go through each participant in this group
   for (participant in participants) {
-    ppangles <- getMIRParticipantAftereffects(id=participant, location = location) #for every participant, get learning curve data
+    ppangles <- getMIRParticipantAftereffects(group=group, id=participant, location = location) #for every participant, get learning curve data
     
     reaches <- ppangles$reachdev #get reach deviations column from learning curve data
     trial <- c(1:length(reaches)) #sets up trial column
@@ -1266,13 +1216,13 @@ getMIRGroupAftereffects <- function(maxppid, location) { # add angle?
   return(dataoutput)
 }
 
-getMIRGroupRAEConfidenceInterval <- function(maxppid, location, type){
+getMIRGroupRAEConfidenceInterval <- function(group, maxppid, location, type){
   #for (group in groups){
   # get the confidence intervals for each trial of each group
   #compangle <- c(15,30,45)
   #for (comp in compangle){
-  data <- getMIRGroupAftereffects(maxppid = maxppid, location = location) #angle = comp
-  data <- data[,-6] #remove faulty particiapnt (pp004) so the 6th column REMOVE ONCE RESOLVED
+  data <- getMIRGroupAftereffects(group = group, maxppid = maxppid, location = location) #angle = comp
+  #data <- data[,-6] #remove faulty particiapnt (pp004) so the 6th column REMOVE ONCE RESOLVED
   data <- as.data.frame(data)
   trialno <- data$trial
   data1 <- as.matrix(data[,2:dim(data)[2]])
@@ -1295,14 +1245,154 @@ getMIRGroupRAEConfidenceInterval <- function(maxppid, location, type){
     } else {
       confidence <- rbind(confidence, citrial)
     }
-    write.csv(confidence, file='data/MIR_CI_aftereffects.csv', row.names = F)
-    #write.csv(confidence, file=sprintf('data/MIR_%d_CI_aftereffects.csv', comp), row.names = F)
-    #write.csv(confidence, file='data/MIRtest_CI_learningcurve.csv', row.names = F)
+    if (group == 'noninstructed'){
+      write.csv(confidence, file='data/MIR_noninstructed_CI_aftereffects.csv', row.names = F) 
+    } else if (group == 'instructed'){
+      write.csv(confidence, file='data/MIR_instructed_CI_aftereffects.csv', row.names = F)
+    }
   }
   #}
 }
 
-plotAftereffects <- function(perturb = c('ROT','MIR'),target='inline') {
+plotROTAftereffects <- function(groups = c('noninstructed', 'instructed'),target='inline') {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/Fig4ROT_aftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  meanGroupReaches <- list() #empty list so that it plots the means last
+  
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(NA, NA, xlim = c(0,49), ylim = c(-200,200), 
+       xlab = "Trial", ylab = "Amount of Compensation (°)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Rate of Deadaptation: ROT", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  axis(1, at = c(1, 15, 30, 48)) #tick marks for x axis
+  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  
+  for(group in groups){
+    #read in files created by getGroupConfidenceInterval in filehandling.R
+    groupconfidence <- read.csv(file=sprintf('data/ROT_%s_CI_aftereffects.csv', group))
+    
+    colourscheme <- getColourScheme(groups = group)
+    #take only first, last and middle columns of file
+    lower <- groupconfidence[,1]
+    upper <- groupconfidence[,3]
+    mid <- groupconfidence[,2]
+    
+    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    
+    #upper and lower bounds create a polygon
+    #polygon creates it from low left to low right, then up right to up left -> use rev
+    #x is just trial nnumber, y depends on values of bounds
+    polygon(x = c(c(1:48), rev(c(1:48))), y = c(lower, rev(upper)), border=NA, col=col)
+    
+    meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+  }
+  
+  
+  for (group in groups) {
+    # plot mean reaches for each group
+    col <- colourscheme[[group]][['S']]
+    lines(meanGroupReaches[[group]],col=col,lty=1)
+  }
+  
+  #add legend
+  legend(35,-100,legend=c('Non-Instructed','Instructed'),
+         col=c(colourscheme[['noninstructed']][['S']],colourscheme[['instructed']][['S']]),
+         lty=1,bty='n',cex=1,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+plotMIRAftereffects <- function(groups = c('noninstructed', 'instructed'),target='inline') {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/Fig4MIR_aftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  meanGroupReaches <- list() #empty list so that it plots the means last
+  
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(NA, NA, xlim = c(0,49), ylim = c(-200,200), 
+       xlab = "Trial", ylab = "Amount of Compensation (°)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Rate of Deadaptation: MIR", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  axis(1, at = c(1, 15, 30, 48)) #tick marks for x axis
+  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  
+  for(group in groups){
+    #read in files created by getGroupConfidenceInterval in filehandling.R
+    groupconfidence <- read.csv(file=sprintf('data/MIR_%s_CI_aftereffects.csv', group))
+    
+    colourscheme <- getColourScheme(groups = group)
+    #take only first, last and middle columns of file
+    lower <- groupconfidence[,1]
+    upper <- groupconfidence[,3]
+    mid <- groupconfidence[,2]
+    
+    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    
+    #upper and lower bounds create a polygon
+    #polygon creates it from low left to low right, then up right to up left -> use rev
+    #x is just trial nnumber, y depends on values of bounds
+    polygon(x = c(c(1:48), rev(c(1:48))), y = c(lower, rev(upper)), border=NA, col=col)
+    
+    meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+  }
+  
+  
+  for (group in groups) {
+    # plot mean reaches for each group
+    col <- colourscheme[[group]][['S']]
+    lines(meanGroupReaches[[group]],col=col,lty=1)
+  }
+  
+  #add legend
+  legend(35,-100,legend=c('Non-Instructed','Instructed'),
+         col=c(colourscheme[['noninstructed']][['S']],colourscheme[['instructed']][['S']]),
+         lty=1,bty='n',cex=1,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+plotAftereffects <- function(target='inline'){
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/Fig4_aftereffects.svg', width=7, height=10, pointsize=10, system_fonts=list(sans="Arial"))
+  }
+  
+  par(mfrow = c(2,1))
+  
+  plotROTAftereffects()
+  plotMIRAftereffects()
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+}
+
+
+
+
+plotRAE <- function(perturb = c('ROT','MIR'),target='inline') {
   
   
   #but we can save plot as svg file
@@ -1366,12 +1456,12 @@ plotAftereffects <- function(perturb = c('ROT','MIR'),target='inline') {
 #first split 48 trials into sets of 6 trials each
 #then in each set, plot individual data as lines
 
-getBlockedIndividualAftereffects <- function(maxppid, location, targetno, perturb){
+getBlockedIndividualAftereffects <- function(group, maxppid, location, targetno, perturb){
   
   if (perturb == 'ROT'){
-    data <- getROTGroupAftereffects(maxppid = maxppid, location = location)
+    data <- getROTGroupAftereffects(group = group, maxppid = maxppid, location = location)
   } else if (perturb == 'MIR'){
-    data <- getMIRGroupAftereffects(maxppid = maxppid, location = location)
+    data <- getMIRGroupAftereffects(group = group, maxppid = maxppid, location = location)
   }
   
   #we want to get the mean for every 6 trials (they go through each of 6 possible targets)
@@ -1399,18 +1489,18 @@ getBlockedIndividualAftereffects <- function(maxppid, location, targetno, pertur
   return(ndat_long)
 }
 
-plotBlockedIndRAE <- function(maxppid, location, targetno, perturb, target='inline'){
+plotBlockedIndRAE <- function(group, maxppid, location, targetno, perturb, target='inline'){
   
   if (perturb == 'ROT'){
     
     #but we can save plot as svg file
     if (target=='svg') {
-      svglite(file='doc/fig/Fig5_ROTBlockedIndAftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+      svglite(file='doc/fig/Fig5ROT_BlockedIndAftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
     }
     
-    data <- getBlockedIndividualAftereffects(maxppid = maxppid, location = location, targetno = targetno, perturb = perturb)
+    data <- getBlockedIndividualAftereffects(group = group, maxppid = maxppid, location = location, targetno = targetno, perturb = perturb)
     #remove pp004 because they anti-learned
-    data <- subset(data, participant != 'pp4')
+    #data <- subset(data, participant != 'pp4')
     
     plot(NA, NA, xlim = c(0,9), ylim = c(-200,200), 
          xlab = "Block", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
@@ -1467,12 +1557,12 @@ plotBlockedIndRAE <- function(maxppid, location, targetno, perturb, target='inli
     
     #but we can save plot as svg file
     if (target=='svg') {
-      svglite(file='doc/fig/Fig5_MIRBlockedIndAftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+      svglite(file='doc/fig/Fig5MIR_BlockedIndAftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
     }
     
-    data <- getBlockedIndividualAftereffects(maxppid = maxppid, location = location, targetno = targetno, perturb = perturb)
+    data <- getBlockedIndividualAftereffects(group = group, maxppid = maxppid, location = location, targetno = targetno, perturb = perturb)
     #remove pp004 because they anti-learned
-    data <- subset(data, participant != 'pp4')
+    #data <- subset(data, participant != 'pp4')
     
     plot(NA, NA, xlim = c(0,9), ylim = c(-200,200), 
          xlab = "Block", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
@@ -1535,7 +1625,9 @@ plotBlockedIndRAE <- function(maxppid, location, targetno, perturb, target='inli
   
 }
 
-plotROTMIRRAE <- function(maxppid, location = 'maxvel', targetno = 6, target = 'inline'){
+plotROTMIRRAE <- function(groups = c('noninstructed', 'instructed'), instmax = 15, noninstmax = 20, location = 'maxvel', targetno = 6, target = 'inline'){
+  #need to indicate non instructed and instructed in title
+  
   
   #but we can save plot as svg file
   if (target=='svg') {
@@ -1543,10 +1635,17 @@ plotROTMIRRAE <- function(maxppid, location = 'maxvel', targetno = 6, target = '
   }
   
   
-  par(mfrow = c(1,2))
+  par(mfrow = c(2,2))
   
-  plotBlockedIndRAE(maxppid=maxppid, location =location, targetno = targetno, perturb = 'ROT')
-  plotBlockedIndRAE(maxppid=maxppid, location =location, targetno = targetno, perturb = 'MIR')
+  for(group in groups){
+    if(group == 'noninstructed'){
+      plotBlockedIndRAE(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'ROT')
+      plotBlockedIndRAE(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'MIR')
+    } else if (group == 'instructed'){
+      plotBlockedIndRAE(group=group, maxppid=noninstmax, location =location, targetno = targetno, perturb = 'ROT')
+      plotBlockedIndRAE(group=group, maxppid=noninstmax, location =location, targetno = targetno, perturb = 'MIR')
+    }
+  }
   
   #close everything if you saved plot as svg
   if (target=='svg') {
@@ -1564,16 +1663,18 @@ plotROTMIRRAE <- function(maxppid, location = 'maxvel', targetno = 6, target = '
 #end of step 3 (when it switches to step 4) is when cursor distance from home is greater than radius (which is 0.5 cm * pixpercm or 35)
 #so essentially, RT is difference between time that go signal occurs and time when cursor is half a centimeter away from home position
 
-getRTTrials <- function(id, task, taskno){
+getRTTrials <- function(group, id, task, taskno){
   #allows for this function to work with each file
   #specify pp id, the task type, and task number
   #note that task type and taskno have to match, depending on present csv files
   #Note to change filepath once data folder is arranged
-  if (id < 10){
-    dat <- read.csv(file = sprintf('data/pilot/RAW/p00%d/p00%d-%d-%s.csv', id, id, taskno,task))
-  } else{
-    dat <- read.csv(file = sprintf('data/pilot/RAW/p0%d/p0%d-%d-%s.csv', id, id, taskno,task))
-  }
+  # if (id < 10){
+  #   dat <- read.csv(file = sprintf('data/pilot/SELECTED/%s/p00%d/p00%d-%d-%s.csv', group, id, id, taskno,task))
+  # } else{
+  #   dat <- read.csv(file = sprintf('data/pilot/SELECTED/%s/p0%d/p0%d-%d-%s.csv', group, id, id, taskno,task))
+  # }
+  
+  dat <- getParticipantTaskData(group = group, id = id, taskno = taskno, task = task)
   
   #only steps 6 and 7 will have 0 or 1 in trial_column
   ndat <- dat[dat$step == 3, ]
@@ -1608,9 +1709,9 @@ getRTTrials <- function(id, task, taskno){
   return(proportion)
 }
 
-getBlockedRTTrials <- function(id,task,taskno){
+getBlockedRTTrials <- function(group,id,task,taskno){
   
-  data <- getRTTrials(id=id,task=task,taskno=taskno)
+  data <- getRTTrials(group=group,id=id,task=task,taskno=taskno)
   reactiontime <- data.frame(as.numeric(data$reaction_time))
   
   #get mean of every 6th trial
@@ -1630,13 +1731,19 @@ getBlockedRTTrials <- function(id,task,taskno){
 #may have to create functions similar to Learning Curve data that does it for Aligned, Perturb, Washout
 
 
-getAlignedRTData <- function(maxppid, task = 'aligned', taskno = 1){
+getAlignedRTData <- function(group, maxppid, task = 'aligned', taskno = 1){
   
-  participants <- seq(0,maxppid,1)
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  #participants <- seq(0,maxppid,1)
   dataoutput<- data.frame()
   
   for(ppno in participants){
-    dat <- getBlockedRTTrials(id=ppno, task=task, taskno=taskno)
+    dat <- getBlockedRTTrials(group=group, id=ppno, task=task, taskno=taskno)
     
     if (prod(dim(dataoutput)) == 0){
       dataoutput <- dat
@@ -1644,14 +1751,14 @@ getAlignedRTData <- function(maxppid, task = 'aligned', taskno = 1){
       dataoutput <- rbind(dataoutput, dat)
     }
   }
-  dataoutput <- subset(dataoutput, participant != 4) #REMOVE FAULTY PARTICIPANT
+  #dataoutput <- subset(dataoutput, participant != 4) #REMOVE FAULTY PARTICIPANT
   return(dataoutput)
 }
 
-getAlignedRTConfInt <- function(maxppid, task = 'aligned', taskno = 1, type = 't'){
+getAlignedRTConfInt <- function(group, maxppid, task = 'aligned', taskno = 1, type = 't'){
   
   
-  dat <- getAlignedRTData(maxppid=maxppid, task=task, taskno=taskno)
+  dat <- getAlignedRTData(group=group, maxppid=maxppid, task=task, taskno=taskno)
   blocks <- unique(dat$block)
   confidence <- data.frame()
   
@@ -1674,22 +1781,32 @@ getAlignedRTConfInt <- function(maxppid, task = 'aligned', taskno = 1, type = 't
     }
   }
   #return(confidence)
-  write.csv(confidence, file='data/ALIGNED_CI_ReactionTime.csv', row.names = F)
+  if (group == 'noninstructed'){
+    write.csv(confidence, file='data/ALIGNED_NI_CI_ReactionTime.csv', row.names = F) 
+  } else if (group == 'instructed'){
+    write.csv(confidence, file='data/ALIGNED_I_CI_ReactionTime.csv', row.names = F)
+  }
 }
 
-getRotationRTData <- function(maxppid){
+getRotationRTData <- function(group, maxppid){
   
-  participants <- seq(0,maxppid,1)
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  #participants <- seq(0,maxppid,1)
   Rotdat <- data.frame()
   
   for(pp in participants){
     if (pp%%2 == 1){
       #mirror then rotation if odd id
-      RotRT <- getBlockedRTTrials(id=pp, taskno = 11, task = 'rotation')
+      RotRT <- getBlockedRTTrials(group=group, id=pp, taskno = 11, task = 'rotation')
     } else if (pp%%2 == 0){
       #if pp id is even
       #rotation first then mirror
-      RotRT <- getBlockedRTTrials(id=pp, taskno = 5, task = 'rotation')
+      RotRT <- getBlockedRTTrials(group=group, id=pp, taskno = 5, task = 'rotation')
     }
     
     if (prod(dim(Rotdat)) == 0){
@@ -1699,14 +1816,14 @@ getRotationRTData <- function(maxppid){
     }
     
   }
-  Rotdat <- subset(Rotdat, participant != 4) #REMOVE FAULTY PARTICIPANT
+  #Rotdat <- subset(Rotdat, participant != 4) #REMOVE FAULTY PARTICIPANT
   return(Rotdat)
 }
 
-getRotationRTConfInt <- function(maxppid, type = 't'){
+getRotationRTConfInt <- function(group, maxppid, type = 't'){
   
   
-  dat <- getRotationRTData(maxppid=maxppid)
+  dat <- getRotationRTData(group=group, maxppid=maxppid)
   blocks <- unique(dat$block)
   confidence <- data.frame()
   
@@ -1729,22 +1846,32 @@ getRotationRTConfInt <- function(maxppid, type = 't'){
     }
   }
   #return(confidence)
-  write.csv(confidence, file='data/ROTATION_CI_ReactionTime.csv', row.names = F)
+  if (group == 'noninstructed'){
+    write.csv(confidence, file='data/ROTATION_NI_CI_ReactionTime.csv', row.names = F) 
+  } else if (group == 'instructed'){
+    write.csv(confidence, file='data/ROTATION_I_CI_ReactionTime.csv', row.names = F)
+  }
 }
 
-getMirrorRTData <- function(maxppid){
+getMirrorRTData <- function(group, maxppid){
   
-  participants <- seq(0,maxppid,1)
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  #participants <- seq(0,maxppid,1)
   Mirdat <- data.frame()
   
   for(pp in participants){
     if (pp%%2 == 1){
       #mirror then rotation if odd id
-      MirRT <- getBlockedRTTrials(id=pp, taskno = 5, task = 'mirror')
+      MirRT <- getBlockedRTTrials(group=group, id=pp, taskno = 5, task = 'mirror')
     } else if (pp%%2 == 0){
       #if pp id is even
       #rotation first then mirror
-      MirRT <- getBlockedRTTrials(id=pp, taskno = 11, task = 'mirror')
+      MirRT <- getBlockedRTTrials(group=group, id=pp, taskno = 11, task = 'mirror')
     }
     
     if (prod(dim(Mirdat)) == 0){
@@ -1754,14 +1881,14 @@ getMirrorRTData <- function(maxppid){
     }
     
   }
-  Mirdat <- subset(Mirdat, participant != 4) #REMOVE FAULTY PARTICIPANT
+  #Mirdat <- subset(Mirdat, participant != 4) #REMOVE FAULTY PARTICIPANT
   return(Mirdat)
 }
 
-getMirrorRTConfInt <- function(maxppid, type = 't'){
+getMirrorRTConfInt <- function(group, maxppid, type = 't'){
   
   
-  dat <- getMirrorRTData(maxppid=maxppid)
+  dat <- getMirrorRTData(group=group, maxppid=maxppid)
   blocks <- unique(dat$block)
   confidence <- data.frame()
   
@@ -1784,22 +1911,33 @@ getMirrorRTConfInt <- function(maxppid, type = 't'){
     }
   }
   #return(confidence)
-  write.csv(confidence, file='data/MIRROR_CI_ReactionTime.csv', row.names = F)
+  if (group == 'noninstructed'){
+    write.csv(confidence, file='data/MIRROR_NI_CI_ReactionTime.csv', row.names = F) 
+  } else if (group == 'instructed'){
+    write.csv(confidence, file='data/MIRROR_I_CI_ReactionTime.csv', row.names = F)
+  }
+
 }
 
-getRotationWashRTData <- function(maxppid){
+getRotationWashRTData <- function(group, maxppid){
   
-  participants <- seq(0,maxppid,1)
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  #participants <- seq(0,maxppid,1)
   Rotdat <- data.frame()
   
   for(pp in participants){
     if (pp%%2 == 1){
       #mirror then rotation if odd id
-      RotRT <- getBlockedRTTrials(id=pp, taskno = 13, task = 'washout1')
+      RotRT <- getBlockedRTTrials(group=group, id=pp, taskno = 13, task = 'washout1')
     } else if (pp%%2 == 0){
       #if pp id is even
       #rotation first then mirror
-      RotRT <- getBlockedRTTrials(id=pp, taskno = 7, task = 'washout0')
+      RotRT <- getBlockedRTTrials(group=group, id=pp, taskno = 7, task = 'washout0')
     }
     
     if (prod(dim(Rotdat)) == 0){
@@ -1809,14 +1947,14 @@ getRotationWashRTData <- function(maxppid){
     }
     
   }
-  Rotdat <- subset(Rotdat, participant != 4) #REMOVE FAULTY PARTICIPANT
+  #Rotdat <- subset(Rotdat, participant != 4) #REMOVE FAULTY PARTICIPANT
   return(Rotdat)
 }
 
-getRotationWashRTConfInt <- function(maxppid, type = 't'){
+getRotationWashRTConfInt <- function(group, maxppid, type = 't'){
   
   
-  dat <- getRotationWashRTData(maxppid=maxppid)
+  dat <- getRotationWashRTData(group=group, maxppid=maxppid)
   blocks <- unique(dat$block)
   confidence <- data.frame()
   
@@ -1839,22 +1977,33 @@ getRotationWashRTConfInt <- function(maxppid, type = 't'){
     }
   }
   #return(confidence)
-  write.csv(confidence, file='data/ROTATIONWASH_CI_ReactionTime.csv', row.names = F)
+  if (group == 'noninstructed'){
+    write.csv(confidence, file='data/ROTATIONWASH_NI_CI_ReactionTime.csv', row.names = F) 
+  } else if (group == 'instructed'){
+    write.csv(confidence, file='data/ROTATIONWASH_I_CI_ReactionTime.csv', row.names = F)
+  }
+
 }
 
-getMirrorWashRTData <- function(maxppid){
+getMirrorWashRTData <- function(group, maxppid){
   
-  participants <- seq(0,maxppid,1)
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  #participants <- seq(0,maxppid,1)
   Mirdat <- data.frame()
   
   for(pp in participants){
     if (pp%%2 == 1){
       #mirror then rotation if odd id
-      MirRT <- getBlockedRTTrials(id=pp, taskno = 7, task = 'washout0')
+      MirRT <- getBlockedRTTrials(group=group, id=pp, taskno = 7, task = 'washout0')
     } else if (pp%%2 == 0){
       #if pp id is even
       #rotation first then mirror
-      MirRT <- getBlockedRTTrials(id=pp, taskno = 13, task = 'washout1')
+      MirRT <- getBlockedRTTrials(group=group, id=pp, taskno = 13, task = 'washout1')
     }
     
     if (prod(dim(Mirdat)) == 0){
@@ -1864,14 +2013,14 @@ getMirrorWashRTData <- function(maxppid){
     }
     
   }
-  Mirdat <- subset(Mirdat, participant != 4) #REMOVE FAULTY PARTICIPANT
+  #Mirdat <- subset(Mirdat, participant != 4) #REMOVE FAULTY PARTICIPANT
   return(Mirdat)
 }
 
-getMirrorWashRTConfInt <- function(maxppid, type = 't'){
+getMirrorWashRTConfInt <- function(group, maxppid, type = 't'){
   
   
-  dat <- getMirrorWashRTData(maxppid=maxppid)
+  dat <- getMirrorWashRTData(group=group, maxppid=maxppid)
   blocks <- unique(dat$block)
   confidence <- data.frame()
   
@@ -1894,22 +2043,26 @@ getMirrorWashRTConfInt <- function(maxppid, type = 't'){
     }
   }
   #return(confidence)
-  write.csv(confidence, file='data/MIRRORWASH_CI_ReactionTime.csv', row.names = F)
+  if (group == 'noninstructed'){
+    write.csv(confidence, file='data/MIRRORWASH_NI_CI_ReactionTime.csv', row.names = F) 
+  } else if (group == 'instructed'){
+    write.csv(confidence, file='data/MIRRORWASH_I_CI_ReactionTime.csv', row.names = F)
+  }
 }
 
-plotBlockedRT <- function(target='inline'){
+plotNIBlockedRT <- function(target='inline'){
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig6_reactiontime.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig6NI_reactiontime.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
   }
   
   #read in the csv files and plot them in one big plot
-  dat1 <- read.csv(file='data/ALIGNED_CI_ReactionTime.csv')
-  dat2 <- read.csv(file='data/ROTATION_CI_ReactionTime.csv')
-  dat3 <- read.csv(file='data/ROTATIONWASH_CI_ReactionTime.csv')
-  dat4 <- read.csv(file='data/MIRROR_CI_ReactionTime.csv')
-  dat5 <- read.csv(file='data/MIRRORWASH_CI_ReactionTime.csv')
+  dat1 <- read.csv(file='data/ALIGNED_NI_CI_ReactionTime.csv')
+  dat2 <- read.csv(file='data/ROTATION_NI_CI_ReactionTime.csv')
+  dat3 <- read.csv(file='data/ROTATIONWASH_NI_CI_ReactionTime.csv')
+  dat4 <- read.csv(file='data/MIRROR_NI_CI_ReactionTime.csv')
+  dat5 <- read.csv(file='data/MIRRORWASH_NI_CI_ReactionTime.csv')
   
   dat <- rbind(dat1, dat2, dat3, dat4, dat5)
   
@@ -1952,9 +2105,97 @@ plotBlockedRT <- function(target='inline'){
   polygon(x = c(X9, rev(X9)), y = c(YLow[47:54], rev(YUp[47:54])), border=NA, col="#c400c42f")
   
   #add legend
-  legend(33,275,legend=c('Aligned','Rotation','Washout: ROT','Mirror Reversal','Washout: MIR'),
+  legend(48,1000,legend=c('Aligned','Rotation','Washout: ROT','Mirror Reversal','Washout: MIR'),
          col=c("#696969ff", "#e51636ff", "#ff8200ff", "#005de4ff", "#c400c4ff"),
-         lty=1,bty='n',cex=1,lwd=2)
+         lty=1,bty='n',cex=0.8,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+plotIBlockedRT <- function(target='inline'){
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/Fig6I_reactiontime.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+  }
+  
+  #read in the csv files and plot them in one big plot
+  dat1 <- read.csv(file='data/ALIGNED_I_CI_ReactionTime.csv')
+  dat2 <- read.csv(file='data/ROTATION_I_CI_ReactionTime.csv')
+  dat3 <- read.csv(file='data/ROTATIONWASH_I_CI_ReactionTime.csv')
+  dat4 <- read.csv(file='data/MIRROR_I_CI_ReactionTime.csv')
+  dat5 <- read.csv(file='data/MIRRORWASH_I_CI_ReactionTime.csv')
+  
+  dat <- rbind(dat1, dat2, dat3, dat4, dat5)
+  
+  #should be the same idea as points in movement time, so may need to separate each task, then plot as usual
+  
+  X1 <- seq(1, 8,1)
+  X3 <- seq(9,23,1)
+  X5 <- seq(24,31,1)
+  X7 <- seq(32,46,1)
+  X9 <- seq(47,54,1)
+  
+  Y <- as.numeric(dat$V2)
+  YLow <- as.numeric(dat$V1)
+  YUp <- as.numeric(dat$V3)
+  
+  plot(c(1:length(Y)), Y, type = 'n', axes = FALSE,
+       xlab = 'Blocks', ylab = 'Reaction Time (ms)', main = 'Mean Reaction Time across Blocks and Tasks',
+       xlim = c(0,55), ylim = c(0,1000))
+  
+  #labs <- c('1:AL','9:ROT','24:WASH','32:MIR','47:WASH','54')
+  #axis(side=1, at=c(1,9,24,32,47,54), labels=labs)
+  axis(side=1, at=c(1,9,24,32,47,54))
+  #mtext('Trial & Task', side = 1, outer = TRUE, line=-1, cex = 1)
+  axis(side=2, at=c(0, 200, 300, 400,500, 600, 700, 800, 1000),las=2)
+  
+  #abline(h = c(400,700), col = 'black', lty = 2)
+  abline(v = c(8.5,23.5,31.5,46.5), col = 8, lty = 2)
+  
+  #localization
+  lines(X1,Y[1:8], col = alpha("#696969ff", 1))#aligned
+  lines(X3, Y[9:23], col = alpha("#e51636ff", 1))#rotation
+  lines(X5, Y[24:31], col = alpha("#ff8200ff", 1))#rotwashout
+  lines(X7, Y[32:46], col = alpha("#005de4ff", 1))#mirror
+  lines(X9, Y[47:54], col = alpha("#c400c4ff", 1))#mirwashout
+  
+  polygon(x = c(X1, rev(X1)), y = c(YLow[1:8], rev(YUp[1:8])), border=NA, col="#6969692f")
+  polygon(x = c(X3, rev(X3)), y = c(YLow[9:23], rev(YUp[9:23])), border=NA, col="#e516362f")
+  polygon(x = c(X5, rev(X5)), y = c(YLow[24:31], rev(YUp[24:31])), border=NA, col="#ff82002f")
+  polygon(x = c(X7, rev(X7)), y = c(YLow[32:46], rev(YUp[32:46])), border=NA, col="#005de42f")
+  polygon(x = c(X9, rev(X9)), y = c(YLow[47:54], rev(YUp[47:54])), border=NA, col="#c400c42f")
+  
+  #add legend
+  legend(48,1000,legend=c('Aligned','Rotation','Washout: ROT','Mirror Reversal','Washout: MIR'),
+         col=c("#696969ff", "#e51636ff", "#ff8200ff", "#005de4ff", "#c400c4ff"),
+         lty=1,bty='n',cex=0.8,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+plotBlockedRT <- function(target='inline'){
+  #need to indicate non instructed and instructed in title
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/Fig6_reactiontime.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+  }
+  
+  
+  par(mfrow = c(2,1))
+  
+  plotNIBlockedRT()
+  plotIBlockedRT()
   
   #close everything if you saved plot as svg
   if (target=='svg') {
@@ -2068,3 +2309,241 @@ plotBlockedRT <- function(target='inline'){
 #     dev.off()
 #   }
 # }
+
+#Plots for Presentation-----
+
+plotPTypeLearningCurves <- function(perturb = c('ROT', 'MIR'), group = 'noninstructed', target='inline') {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/pres/Fig02_NI_learningcurve.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  meanGroupReaches <- list() #empty list so that it plots the means last
+  
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(NA, NA, xlim = c(0,91), ylim = c(-200,200), 
+       xlab = "Trial", ylab = "Amount of Compensation (°)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Reach Learning over Time", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  axis(1, at = c(1, 30, 60, 90)) #tick marks for x axis
+  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  
+  for(ptype in perturb){
+    #read in files created by getGroupConfidenceInterval in filehandling.R
+    groupconfidence <- read.csv(file=sprintf('data/%s_%s_CI_learningcurve.csv', ptype, group))
+    
+    colourscheme <- getPtypeColourScheme(ptype)
+    #take only first, last and middle columns of file
+    lower <- groupconfidence[,1]
+    upper <- groupconfidence[,3]
+    mid <- groupconfidence[,2]
+    
+    col <- colourscheme[[ptype]][['T']] #use colour scheme according to group
+    
+    #upper and lower bounds create a polygon
+    #polygon creates it from low left to low right, then up right to up left -> use rev
+    #x is just trial nnumber, y depends on values of bounds
+    polygon(x = c(c(1:90), rev(c(1:90))), y = c(lower, rev(upper)), border=NA, col=col)
+    
+    meanGroupReaches[[ptype]] <- mid #use mean to fill in empty list for each group
+  }
+  
+  
+  for (ptype in perturb) {
+    # plot mean reaches for each group
+    col <- colourscheme[[ptype]][['S']]
+    lines(meanGroupReaches[[ptype]],col=col,lty=1)
+  }
+  
+  #add legend
+  legend(70,-150,legend=c('Rotation','Mirror Reversal'),
+         col=c(colourscheme[['ROT']][['S']],colourscheme[['MIR']][['S']]),
+         lty=1,bty='n',cex=1,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+plotLC <- function(group = 'noninstructed', instmax = 15, location = 'maxvel', targetno = 6, target = 'inline'){
+  
+  #instmax and noninstmax will differ depending on maximum pp id number in data
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/pres/Fig01_NI_BlockedIndLearningCurve.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+  }
+  
+  
+  par(mfrow = c(1,2))
+  
+  
+  plotBlockedIndLC(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'ROT')
+  plotBlockedIndLC(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'MIR')
+  
+  
+  
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+plotPTypeAftereffects <- function(perturb = c('ROT', 'MIR'), group = 'noninstructed', target='inline') {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/pres/Fig03_NI_aftereffects.svg', width=8, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  meanGroupReaches <- list() #empty list so that it plots the means last
+  
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(NA, NA, xlim = c(0,49), ylim = c(-200,200), 
+       xlab = "Trial", ylab = "Amount of Compensation (°)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Rate of Deadaptation", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  axis(1, at = c(1, 15, 30, 48)) #tick marks for x axis
+  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  
+  for(ptype in perturb){
+    #read in files created by getGroupConfidenceInterval in filehandling.R
+    groupconfidence <- read.csv(file=sprintf('data/%s_%s_CI_aftereffects.csv', ptype, group))
+    
+    colourscheme <- getPtypeColourScheme(ptype)
+    #take only first, last and middle columns of file
+    lower <- groupconfidence[,1]
+    upper <- groupconfidence[,3]
+    mid <- groupconfidence[,2]
+    
+    col <- colourscheme[[ptype]][['T']] #use colour scheme according to group
+    
+    #upper and lower bounds create a polygon
+    #polygon creates it from low left to low right, then up right to up left -> use rev
+    #x is just trial nnumber, y depends on values of bounds
+    polygon(x = c(c(1:48), rev(c(1:48))), y = c(lower, rev(upper)), border=NA, col=col)
+    
+    meanGroupReaches[[ptype]] <- mid #use mean to fill in empty list for each group
+  }
+  
+  
+  for (ptype in perturb) {
+    # plot mean reaches for each group
+    col <- colourscheme[[ptype]][['S']]
+    lines(meanGroupReaches[[ptype]],col=col,lty=1)
+  }
+  
+  #add legend
+  legend(35,-100,legend=c('Rotation','Mirror Reversal'),
+         col=c(colourscheme[['ROT']][['S']],colourscheme[['MIR']][['S']]),
+         lty=1,bty='n',cex=1,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+plotAE <- function(group = 'noninstructed', instmax = 15, location = 'maxvel', targetno = 6, target = 'inline'){
+  
+  #instmax and noninstmax will differ depending on maximum pp id number in data
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/pres/Fig04_NI_BlockedIndAftereffects.svg', width=9, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+  }
+  
+  
+  par(mfrow = c(1,2))
+  
+  
+  plotBlockedIndRAE(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'ROT')
+  plotBlockedIndRAE(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'MIR')
+  
+  
+  
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+plotRT <- function(target='inline'){
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/pres/Fig05_NI_reactiontime.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+  }
+  
+  #read in the csv files and plot them in one big plot
+  dat1 <- read.csv(file='data/ALIGNED_NI_CI_ReactionTime.csv')
+  dat2 <- read.csv(file='data/ROTATION_NI_CI_ReactionTime.csv')
+  dat3 <- read.csv(file='data/ROTATIONWASH_NI_CI_ReactionTime.csv')
+  dat4 <- read.csv(file='data/MIRROR_NI_CI_ReactionTime.csv')
+  dat5 <- read.csv(file='data/MIRRORWASH_NI_CI_ReactionTime.csv')
+  
+  dat <- rbind(dat1, dat2, dat3, dat4, dat5)
+  
+  #should be the same idea as points in movement time, so may need to separate each task, then plot as usual
+  
+  X1 <- seq(1, 8,1)
+  X3 <- seq(9,23,1)
+  X5 <- seq(24,31,1)
+  X7 <- seq(32,46,1)
+  X9 <- seq(47,54,1)
+  
+  Y <- as.numeric(dat$V2)
+  YLow <- as.numeric(dat$V1)
+  YUp <- as.numeric(dat$V3)
+  
+  plot(c(1:length(Y)), Y, type = 'n', axes = FALSE,
+       xlab = 'Blocks', ylab = 'Reaction Time (ms)', main = 'Mean Reaction Time across Blocks and Tasks',
+       xlim = c(0,55), ylim = c(0,1000))
+  
+  #labs <- c('1:AL','9:ROT','24:WASH','32:MIR','47:WASH','54')
+  #axis(side=1, at=c(1,9,24,32,47,54), labels=labs)
+  axis(side=1, at=c(1,9,24,32,47,54))
+  #mtext('Trial & Task', side = 1, outer = TRUE, line=-1, cex = 1)
+  axis(side=2, at=c(0, 200, 300, 400,500, 600, 700, 800, 1000),las=2)
+  
+  #abline(h = c(400,700), col = 'black', lty = 2)
+  abline(v = c(8.5,23.5,31.5,46.5), col = 8, lty = 2)
+  
+  #localization
+  lines(X1,Y[1:8], col = alpha("#696969ff", 1))#aligned
+  lines(X3, Y[9:23], col = alpha("#e51636ff", 1))#rotation
+  lines(X5, Y[24:31], col = alpha("#ff8200ff", 1))#rotwashout
+  lines(X7, Y[32:46], col = alpha("#005de4ff", 1))#mirror
+  lines(X9, Y[47:54], col = alpha("#c400c4ff", 1))#mirwashout
+  
+  polygon(x = c(X1, rev(X1)), y = c(YLow[1:8], rev(YUp[1:8])), border=NA, col="#6969692f")
+  polygon(x = c(X3, rev(X3)), y = c(YLow[9:23], rev(YUp[9:23])), border=NA, col="#e516362f")
+  polygon(x = c(X5, rev(X5)), y = c(YLow[24:31], rev(YUp[24:31])), border=NA, col="#ff82002f")
+  polygon(x = c(X7, rev(X7)), y = c(YLow[32:46], rev(YUp[32:46])), border=NA, col="#005de42f")
+  polygon(x = c(X9, rev(X9)), y = c(YLow[47:54], rev(YUp[47:54])), border=NA, col="#c400c42f")
+  
+  #add legend
+  legend(48,1000,legend=c('Aligned','Rotation','Washout: ROT','Mirror Reversal','Washout: MIR'),
+         col=c("#696969ff", "#e51636ff", "#ff8200ff", "#005de4ff", "#c400c4ff"),
+         lty=1,bty='n',cex=0.8,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
