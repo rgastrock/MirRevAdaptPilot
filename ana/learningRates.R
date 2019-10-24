@@ -700,7 +700,7 @@ plotMIRLearningCurves <- function(groups = c('noninstructed', 'instructed'),targ
 plotLearningCurves <- function(target='inline'){
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3_learningcurve.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_learningcurve.svg', width=7, height=10, pointsize=10, system_fonts=list(sans="Arial"))
   }
   
   par(mfrow = c(2,1))
@@ -943,7 +943,7 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
   
 }
 
-plotROTMIRLC <- function(groups = c('noninstructed', 'instructed'), instmax = 15, noninstmax = 20, location = 'maxvel', targetno = 6, target = 'inline'){
+plotROTMIRLC <- function(groups = c('noninstructed', 'instructed'), noninstmax = 15, instmax = 31, location = 'maxvel', targetno = 6, target = 'inline'){
   
   #fix titles to include instructed and noninstructed in title
   #instmax and noninstmax will differ depending on maximum pp id number in data
@@ -958,11 +958,11 @@ plotROTMIRLC <- function(groups = c('noninstructed', 'instructed'), instmax = 15
   
   for(group in groups){
     if(group == 'noninstructed'){
-      plotBlockedIndLC(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'ROT')
-      plotBlockedIndLC(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'MIR')
-    } else if (group == 'instructed'){
       plotBlockedIndLC(group=group, maxppid=noninstmax, location =location, targetno = targetno, perturb = 'ROT')
       plotBlockedIndLC(group=group, maxppid=noninstmax, location =location, targetno = targetno, perturb = 'MIR')
+    } else if (group == 'instructed'){
+      plotBlockedIndLC(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'ROT')
+      plotBlockedIndLC(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'MIR')
     }
   }
   
@@ -1392,64 +1392,64 @@ plotAftereffects <- function(target='inline'){
 
 
 
-plotRAE <- function(perturb = c('ROT','MIR'),target='inline') {
-  
-  
-  #but we can save plot as svg file
-  if (target=='svg') {
-    svglite(file='doc/fig/Fig4_aftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
-  }
-  
-  # create plot
-  meanGroupReaches <- list() #empty list so that it plots the means last
-  
-  #NA to create empty plot
-  # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,49), ylim = c(-200,200), 
-       xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "Rate of Deadaptation", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-  axis(1, at = c(1, 12, 24, 36, 48)) #tick marks for x axis
-  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
-  
-  
-  for (ptype in perturb) {
-    #read in files created by getGroupConfidenceInterval in filehandling.R
-    groupconfidence <- read.csv(file=sprintf('data/%s_CI_aftereffects.csv', ptype))
-    
-    colourscheme <- getColourScheme(perturb=ptype)
-    #take only first, last and middle columns of file
-    lower <- groupconfidence[,1]
-    upper <- groupconfidence[,3]
-    mid <- groupconfidence[,2]
-    
-    col <- colourscheme[[ptype]][['T']] #use colour scheme according to group
-    
-    #upper and lower bounds create a polygon
-    #polygon creates it from low left to low right, then up right to up left -> use rev
-    #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(1:48), rev(c(1:48))), y = c(lower, rev(upper)), border=NA, col=col)
-    
-    meanGroupReaches[[ptype]] <- mid #use mean to fill in empty list for each group
-  }
-  
-  for (ptype in perturb) {
-    # plot mean reaches for each group
-    col <- colourscheme[[ptype]][['S']]
-    lines(meanGroupReaches[[ptype]],col=col,lty=1)
-  }
-  
-  #add legend
-  legend(38,-150,legend=c('Rotation','Mirror Reversal'),
-         col=c(colourscheme[['ROT']][['S']],colourscheme[['MIR']][['S']]),
-         lty=1,bty='n',cex=1,lwd=2)
-  
-  #close everything if you saved plot as svg
-  if (target=='svg') {
-    dev.off()
-  }
-  
-}
+# plotRAE <- function(perturb = c('ROT','MIR'),target='inline') {
+#   
+#   
+#   #but we can save plot as svg file
+#   if (target=='svg') {
+#     svglite(file='doc/fig/Fig4_aftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+#   }
+#   
+#   # create plot
+#   meanGroupReaches <- list() #empty list so that it plots the means last
+#   
+#   #NA to create empty plot
+#   # could maybe use plot.new() ?
+#   plot(NA, NA, xlim = c(0,49), ylim = c(-200,200), 
+#        xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+#        main = "Rate of Deadaptation", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+#   abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+#   axis(1, at = c(1, 12, 24, 36, 48)) #tick marks for x axis
+#   axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+#   
+#   
+#   for (ptype in perturb) {
+#     #read in files created by getGroupConfidenceInterval in filehandling.R
+#     groupconfidence <- read.csv(file=sprintf('data/%s_CI_aftereffects.csv', ptype))
+#     
+#     colourscheme <- getColourScheme(perturb=ptype)
+#     #take only first, last and middle columns of file
+#     lower <- groupconfidence[,1]
+#     upper <- groupconfidence[,3]
+#     mid <- groupconfidence[,2]
+#     
+#     col <- colourscheme[[ptype]][['T']] #use colour scheme according to group
+#     
+#     #upper and lower bounds create a polygon
+#     #polygon creates it from low left to low right, then up right to up left -> use rev
+#     #x is just trial nnumber, y depends on values of bounds
+#     polygon(x = c(c(1:48), rev(c(1:48))), y = c(lower, rev(upper)), border=NA, col=col)
+#     
+#     meanGroupReaches[[ptype]] <- mid #use mean to fill in empty list for each group
+#   }
+#   
+#   for (ptype in perturb) {
+#     # plot mean reaches for each group
+#     col <- colourscheme[[ptype]][['S']]
+#     lines(meanGroupReaches[[ptype]],col=col,lty=1)
+#   }
+#   
+#   #add legend
+#   legend(38,-150,legend=c('Rotation','Mirror Reversal'),
+#          col=c(colourscheme[['ROT']][['S']],colourscheme[['MIR']][['S']]),
+#          lty=1,bty='n',cex=1,lwd=2)
+#   
+#   #close everything if you saved plot as svg
+#   if (target=='svg') {
+#     dev.off()
+#   }
+#   
+# }
 
 # Individual data: Aftereffects----
 
@@ -1625,7 +1625,7 @@ plotBlockedIndRAE <- function(group, maxppid, location, targetno, perturb, targe
   
 }
 
-plotROTMIRRAE <- function(groups = c('noninstructed', 'instructed'), instmax = 15, noninstmax = 20, location = 'maxvel', targetno = 6, target = 'inline'){
+plotROTMIRRAE <- function(groups = c('noninstructed', 'instructed'), noninstmax = 15, instmax = 31, location = 'maxvel', targetno = 6, target = 'inline'){
   #need to indicate non instructed and instructed in title
   
   
@@ -1639,11 +1639,11 @@ plotROTMIRRAE <- function(groups = c('noninstructed', 'instructed'), instmax = 1
   
   for(group in groups){
     if(group == 'noninstructed'){
-      plotBlockedIndRAE(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'ROT')
-      plotBlockedIndRAE(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'MIR')
-    } else if (group == 'instructed'){
       plotBlockedIndRAE(group=group, maxppid=noninstmax, location =location, targetno = targetno, perturb = 'ROT')
       plotBlockedIndRAE(group=group, maxppid=noninstmax, location =location, targetno = targetno, perturb = 'MIR')
+    } else if (group == 'instructed'){
+      plotBlockedIndRAE(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'ROT')
+      plotBlockedIndRAE(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'MIR')
     }
   }
   
