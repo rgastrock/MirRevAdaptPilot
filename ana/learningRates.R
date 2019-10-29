@@ -2655,8 +2655,8 @@ getAlignedTrialByTrial <- function(group = 'noninstructed', maxppid = 15, locati
     ndat[which(abs(ndat) > trialclip)] <- NA
     
     dat[trialno, 3:ncol(dat)] <- ndat
-    dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:ncol(dat)]), na.rm = TRUE)
-    dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:ncol(dat)]), na.rm = TRUE)
+    dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+    dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
   }
   
   #return(dat)
@@ -2665,6 +2665,29 @@ getAlignedTrialByTrial <- function(group = 'noninstructed', maxppid = 15, locati
                     "p010", "p011", "p012", "p013", "p014",
                     "p015", "average", "sd")
   write.csv(dat, file='data/K4225/aligned_trial.csv', row.names = F)
+}
+
+getAlignedBlocked <- function(){
+  
+  data <- read.csv(file = 'data/K4225/aligned_trial.csv')
+  lastval <- ncol(data) - 2
+  subdat <- data[,3:lastval]
+  
+  #we want to get the mean for every 6 trials (they go through each of 6 possible targets)
+  n <- 6;
+  ndat <- aggregate(subdat, list(rep(1:(nrow(data)%/%n+1),each=n,len=nrow(data))), mean, na.rm = T)[-1];
+
+  
+  for (blockno in 1:nrow(ndat)){
+    ndat$average[blockno] <- mean(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+    ndat$sd[blockno] <- sd(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+  }
+
+  block <- c(1:nrow(ndat))
+  rot <- rep(0,nrow(ndat))
+  ndat <- cbind(block, rot, ndat)
+  
+  write.csv(ndat, file='data/K4225/aligned_block.csv', row.names = F)
 }
 
 #now do it for ROTATED
@@ -2882,8 +2905,8 @@ getRotatedTrialByTrial <- function(group = 'noninstructed', maxppid = 15, locati
     ndat[which(abs(ndat) > trialclip)] <- NA
     
     dat[trialno, 3:ncol(dat)] <- ndat
-    dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:ncol(dat)]), na.rm = TRUE)
-    dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:ncol(dat)]), na.rm = TRUE)
+    dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+    dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
   }
   
   #return(dat)
@@ -2903,8 +2926,8 @@ getRotatedTrialByTrial <- function(group = 'noninstructed', maxppid = 15, locati
     ndat2[which(abs(ndat2) > trialclip)] <- NA
     
     dat2[trialno, 3:ncol(dat2)] <- ndat2
-    dat2$average[trialno] <- mean(as.numeric(dat2[trialno, 3:ncol(dat2)]), na.rm = TRUE)
-    dat2$sd[trialno] <- sd(as.numeric(dat2[trialno, 3:ncol(dat2)]), na.rm = TRUE)
+    dat2$average[trialno] <- mean(as.numeric(dat2[trialno, 3:18]), na.rm = TRUE)
+    dat2$sd[trialno] <- sd(as.numeric(dat2[trialno, 3:18]), na.rm = TRUE)
   }
   alldat <- rbind(dat,dat2)
   colnames(alldat) <- c("trial", "rot", "p000", "p001", "p002", "p003",
@@ -2912,6 +2935,32 @@ getRotatedTrialByTrial <- function(group = 'noninstructed', maxppid = 15, locati
                      "p010", "p011", "p012", "p013", "p014",
                      "p015", "average", "sd")
   write.csv(alldat, file='data/K4225/rotated_trial.csv', row.names = F)
+}
+
+getRotatedBlocked <- function(){
+  
+  data <- read.csv(file = 'data/K4225/rotated_trial.csv')
+  
+  lastval <- ncol(data) - 2
+  subdat <- data[,3:lastval]
+  
+  #we want to get the mean for every 6 trials (they go through each of 6 possible targets)
+  n <- 6;
+  ndat <- aggregate(subdat, list(rep(1:(nrow(data)%/%n+1),each=n,len=nrow(data))), mean, na.rm = T)[-1];
+  
+  
+  for (blockno in 1:nrow(ndat)){
+    ndat$average[blockno] <- mean(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+    ndat$sd[blockno] <- sd(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+  }
+  
+  block <- c(1:nrow(ndat))
+  rotA <- rep(30,15)
+  rotB <- rep(0,8)
+  rot <- c(rotA, rotB)
+  ndat <- cbind(block, rot, ndat)
+  
+  write.csv(ndat, file='data/K4225/rotated_block.csv', row.names = F)
 }
 
 #do it for MIRROR
@@ -3129,8 +3178,8 @@ getMirroredTrialByTrial <- function(group = 'noninstructed', maxppid = 15, locat
     ndat[which(abs(ndat) > trialclip)] <- NA
     
     dat[trialno, 3:ncol(dat)] <- ndat
-    dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:ncol(dat)]), na.rm = TRUE)
-    dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:ncol(dat)]), na.rm = TRUE)
+    dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+    dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
   }
   
   #return(dat)
@@ -3150,8 +3199,8 @@ getMirroredTrialByTrial <- function(group = 'noninstructed', maxppid = 15, locat
     ndat2[which(abs(ndat2) > trialclip)] <- NA
     
     dat2[trialno, 3:ncol(dat2)] <- ndat2
-    dat2$average[trialno] <- mean(as.numeric(dat2[trialno, 3:ncol(dat2)]), na.rm = TRUE)
-    dat2$sd[trialno] <- sd(as.numeric(dat2[trialno, 3:ncol(dat2)]), na.rm = TRUE)
+    dat2$average[trialno] <- mean(as.numeric(dat2[trialno, 3:18]), na.rm = TRUE)
+    dat2$sd[trialno] <- sd(as.numeric(dat2[trialno, 3:18]), na.rm = TRUE)
   }
   alldat <- rbind(dat,dat2)
   colnames(alldat) <- c("trial", "rot", "p000", "p001", "p002", "p003",
@@ -3161,5 +3210,29 @@ getMirroredTrialByTrial <- function(group = 'noninstructed', maxppid = 15, locat
   write.csv(alldat, file='data/K4225/mirrored_trial.csv', row.names = F)
 }
 
-#now have the date blocked
+getMirroredBlocked <- function(){
+  
+  data <- read.csv(file = 'data/K4225/mirrored_trial.csv')
+  
+  lastval <- ncol(data) - 2
+  subdat <- data[,3:lastval]
+  
+  #we want to get the mean for every 6 trials (they go through each of 6 possible targets)
+  n <- 6;
+  ndat <- aggregate(subdat, list(rep(1:(nrow(data)%/%n+1),each=n,len=nrow(data))), mean, na.rm = T)[-1];
+  
+  
+  for (blockno in 1:nrow(ndat)){
+    ndat$average[blockno] <- mean(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+    ndat$sd[blockno] <- sd(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+  }
+  
+  block <- c(1:nrow(ndat))
+  rotA <- rep(30,15)
+  rotB <- rep(0,8)
+  rot <- c(rotA, rotB)
+  ndat <- cbind(block, rot, ndat)
+  
+  write.csv(ndat, file='data/K4225/mirrored_block.csv', row.names = F)
+}
 
