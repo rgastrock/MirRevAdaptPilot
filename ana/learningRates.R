@@ -1677,25 +1677,33 @@ getRTTrials <- function(group, id, task, taskno){
   dat <- getParticipantTaskData(group = group, id = id, taskno = taskno, task = task)
   
   #only steps 6 and 7 will have 0 or 1 in trial_column
-  ndat <- dat[dat$step == 3, ]
+  #ndat <- dat[dat$step == 3, ]
   
-  trials <- unique(ndat$trial)
+  trials <- unique(dat$trial) #need to be dat, not ndat because not all participants have step 3 recorded on every trial
   proportion <- data.frame()
   
   for (trialno in trials){
     
-    subndat <- ndat[ndat$trial == trialno,]
+    subndat <- dat[dat$trial == trialno,]
+    subndat <- subndat[subndat$step == 3,]
     
-    firststep3 <- subndat[1,]
-    laststep3 <- subndat[nrow(subndat),]
-    
-    step3start <- firststep3$time_ms
-    step3end <- laststep3$time_ms
-    
-    reactiontime <- step3end - step3start
-    trial <- trialno
-    
+    if (nrow(subndat)==0){
+      reactiontime <- NA #will assign NaN if step 3 does not occur
+      trial <- trialno
+      
+    } else{
+      firststep3 <- subndat[1,]
+      laststep3 <- subndat[nrow(subndat),]
+      
+      step3start <- firststep3$time_ms
+      step3end <- laststep3$time_ms
+      
+      reactiontime <- step3end - step3start
+      trial <- trialno
+      
+    }
     feedback <- c(trial, reactiontime, task)
+    
     
     if (prod(dim(proportion)) == 0){
       proportion <- feedback
@@ -1716,7 +1724,7 @@ getBlockedRTTrials <- function(group,id,task,taskno){
   
   #get mean of every 6th trial
   n <- 6
-  ndat <- aggregate(reactiontime,list(rep(1:(nrow(reactiontime)%/%n+1),each=n,len=nrow(reactiontime))),mean)[-1]
+  ndat <- aggregate(reactiontime,list(rep(1:(nrow(reactiontime)%/%n+1),each=n,len=nrow(reactiontime))),mean, na.rm=TRUE)[-1]
   colnames(ndat) <- 'reaction_time'
   ndat$block <- seq(1,length(ndat$reaction_time),1)
   ndat$participant <- id
@@ -3236,3 +3244,557 @@ getMirroredBlocked <- function(){
   write.csv(ndat, file='data/K4225/mirrored_block.csv', row.names = F)
 }
 
+#specify RT for each individual, trial by trial
+getAlignedGroupRTTrials <- function(group = 'noninstructed', maxppid = 15) {
+  #participants <- getGroupParticipants(group) #the function that gives all participant ID's for a specified group
+  
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  
+  
+  dataoutput<- data.frame() #create place holder
+  #go through each participant in this group
+  for (participant in participants) {
+    ppRT <- getRTTrials(group = group, id=participant, task = 'aligned', taskno = 1) #for every participant, get RT data
+    
+    reaction <- ppRT$reaction_time#get RT column from RT data
+    trial <- c(1:length(reaction)) #sets up trial column
+    rot <- rep(0, length(reaction))
+    dat <- cbind(trial, rot, reaction)
+    #rdat <- dat$reaches
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- dat
+    } else {
+      dataoutput <- cbind(dataoutput, reaction)
+    }
+    
+  }
+  #rot <- rep(0,nrow(dataoutput))
+  dataoutput <- as.data.frame(dataoutput, stringsAsFactors = FALSE)
+  # dataoutput$rot <- rep(0, nrow(dataoutput))
+  # dataoutput <- dataoutput[, c("a", "b", "d", "c")]
+  return(dataoutput)
+  
+}
+
+getRTAlignedTrialByTrial <- function(group = 'noninstructed', maxppid = 15){
+  
+  dat <- getAlignedGroupRTTrials(group=group, maxppid=maxppid)
+  trials <- dat$trial
+  
+  output <- data.frame()
+  
+  for (trialno in trials){
+    #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+    ndat <- as.numeric(dat[trialno, 3:ncol(dat)])
+    trialmu <- mean(ndat, na.rm = TRUE)
+    trialsigma <- sd(ndat, na.rm = TRUE)
+    #print(trialsigma)
+    trialclip <- abs(trialmu) + (trialsigma * 2)
+    
+    ndat[which(abs(ndat) > trialclip)] <- NA
+    average <- mean(ndat, na.rm = TRUE)
+    sd <- sd(ndat, na.rm = TRUE)
+    metrics <- cbind(average, sd)
+    
+    if (prod(dim(output)) == 0){
+      output <- metrics
+    } else {
+      output <- rbind(output, metrics)
+    }
+    
+    
+    dat[trialno, 3:ncol(dat)] <- ndat
+
+    #dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+    #dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+  }
+  
+  dat <- cbind(dat, output)
+  
+  #return(dat)
+  colnames(dat) <- c("trial", "rot", "p000", "p001", "p002", "p003",
+                     "p004", "p005", "p006", "p007", "p008", "p009",
+                     "p010", "p011", "p012", "p013", "p014",
+                     "p015", "average", "sd")
+  write.csv(dat, file='data/K4225/RT_aligned_trial.csv', row.names = F)
+}
+
+#blocked data can be based off of trial by trial data created
+
+getRTAlignedBlocked <- function(){
+  
+  data <- read.csv(file = 'data/K4225/RT_aligned_trial.csv')
+  
+  lastval <- ncol(data) - 2
+  subdat <- data[,3:lastval]
+  
+  #we want to get the mean for every 6 trials (they go through each of 6 possible targets)
+  n <- 6;
+  ndat <- aggregate(subdat, list(rep(1:(nrow(data)%/%n+1),each=n,len=nrow(data))), mean, na.rm = T)[-1];
+  
+  
+  for (blockno in 1:nrow(ndat)){
+    ndat$average[blockno] <- mean(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+    ndat$sd[blockno] <- sd(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+  }
+  
+  block <- c(1:nrow(ndat))
+  rot <- rep(0,8)
+  ndat <- cbind(block, rot, ndat)
+  
+  write.csv(ndat, file='data/K4225/RT_aligned_block.csv', row.names = F)
+}
+
+# Rotated RT
+getRotatedGroupRTTrials <- function(group = 'noninstructed', maxppid = 15) {
+  #participants <- getGroupParticipants(group) #the function that gives all participant ID's for a specified group
+  
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  
+  
+  dataoutput<- data.frame() #create place holder
+  #go through each participant in this group
+  for (participant in participants) {
+    if (participant%%2 == 1){
+      #mirror then rotation if odd id
+      ppRT <- getRTTrials(group=group, id=participant, taskno = 11, task = 'rotation')
+    } else if (participant%%2 == 0){
+      #if pp id is even
+      #rotation first then mirror
+      ppRT <- getRTTrials(group=group, id=participant, taskno = 5, task = 'rotation')
+    }
+    
+    reaction <- ppRT$reaction_time#get RT column from RT data
+    trial <- c(1:length(reaction)) #sets up trial column
+    rot <- rep(30, length(reaction))
+    dat <- cbind(trial, rot, reaction)
+    #rdat <- dat$reaches
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- dat
+    } else {
+      dataoutput <- cbind(dataoutput, reaction)
+    }
+    
+  }
+  #rot <- rep(0,nrow(dataoutput))
+  dataoutput <- as.data.frame(dataoutput, stringsAsFactors = FALSE)
+  # dataoutput$rot <- rep(0, nrow(dataoutput))
+  # dataoutput <- dataoutput[, c("a", "b", "d", "c")]
+  return(dataoutput)
+  
+}
+
+getRTRotatedTrialByTrial <- function(group = 'noninstructed', maxppid = 15){
+  
+  dat <- getRotatedGroupRTTrials(group=group, maxppid=maxppid)
+  trials <- dat$trial
+  
+  output <- data.frame()
+  
+  for (trialno in trials){
+    #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+    ndat <- as.numeric(dat[trialno, 3:ncol(dat)])
+    trialmu <- mean(ndat, na.rm = TRUE)
+    trialsigma <- sd(ndat, na.rm = TRUE)
+    #print(trialsigma)
+    trialclip <- abs(trialmu) + (trialsigma * 2)
+    
+    ndat[which(abs(ndat) > trialclip)] <- NA
+    average <- mean(ndat, na.rm = TRUE)
+    sd <- sd(ndat, na.rm = TRUE)
+    metrics <- cbind(average, sd)
+    
+    if (prod(dim(output)) == 0){
+      output <- metrics
+    } else {
+      output <- rbind(output, metrics)
+    }
+    
+    
+    dat[trialno, 3:ncol(dat)] <- ndat
+    
+    #dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+    #dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+  }
+  
+  dat <- cbind(dat, output)
+  
+  #return(dat)
+  colnames(dat) <- c("trial", "rot", "p000", "p001", "p002", "p003",
+                     "p004", "p005", "p006", "p007", "p008", "p009",
+                     "p010", "p011", "p012", "p013", "p014",
+                     "p015", "average", "sd")
+  write.csv(dat, file='data/K4225/RT_rotated_trial.csv', row.names = F)
+}
+
+getRTRotatedBlocked <- function(){
+  
+  data <- read.csv(file = 'data/K4225/RT_rotated_trial.csv')
+  
+  lastval <- ncol(data) - 2
+  subdat <- data[,3:lastval]
+  
+  #we want to get the mean for every 6 trials (they go through each of 6 possible targets)
+  n <- 6;
+  ndat <- aggregate(subdat, list(rep(1:(nrow(data)%/%n+1),each=n,len=nrow(data))), mean, na.rm = T)[-1];
+  
+  
+  for (blockno in 1:nrow(ndat)){
+    ndat$average[blockno] <- mean(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+    ndat$sd[blockno] <- sd(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+  }
+  
+  block <- c(1:nrow(ndat))
+  rot <- rep(30,15)
+  ndat <- cbind(block, rot, ndat)
+  
+  write.csv(ndat, file='data/K4225/RT_rotated_block.csv', row.names = F)
+}
+
+# Mirrored RT
+getMirroredGroupRTTrials <- function(group = 'noninstructed', maxppid = 15) {
+  #participants <- getGroupParticipants(group) #the function that gives all participant ID's for a specified group
+  
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  
+  
+  dataoutput<- data.frame() #create place holder
+  #go through each participant in this group
+  for (participant in participants) {
+    if (participant%%2 == 1){
+      #mirror then rotation if odd id
+      ppRT <- getRTTrials(group=group, id=participant, taskno = 5, task = 'mirror')
+    } else if (participant%%2 == 0){
+      #if pp id is even
+      #rotation first then mirror
+      ppRT <- getRTTrials(group=group, id=participant, taskno = 11, task = 'mirror')
+    }
+    
+    reaction <- ppRT$reaction_time#get RT column from RT data
+    trial <- c(1:length(reaction)) #sets up trial column
+    rot <- rep(30, length(reaction))
+    dat <- cbind(trial, rot, reaction)
+    #rdat <- dat$reaches
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- dat
+    } else {
+      dataoutput <- cbind(dataoutput, reaction)
+    }
+    
+  }
+  #rot <- rep(0,nrow(dataoutput))
+  dataoutput <- as.data.frame(dataoutput, stringsAsFactors = FALSE)
+  # dataoutput$rot <- rep(0, nrow(dataoutput))
+  # dataoutput <- dataoutput[, c("a", "b", "d", "c")]
+  return(dataoutput)
+  
+}
+
+getRTMirroredTrialByTrial <- function(group = 'noninstructed', maxppid = 15){
+  
+  dat <- getMirroredGroupRTTrials(group=group, maxppid=maxppid)
+  trials <- dat$trial
+  
+  output <- data.frame()
+  
+  for (trialno in trials){
+    #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+    ndat <- as.numeric(dat[trialno, 3:ncol(dat)])
+    trialmu <- mean(ndat, na.rm = TRUE)
+    trialsigma <- sd(ndat, na.rm = TRUE)
+    #print(trialsigma)
+    trialclip <- abs(trialmu) + (trialsigma * 2)
+    
+    ndat[which(abs(ndat) > trialclip)] <- NA
+    average <- mean(ndat, na.rm = TRUE)
+    sd <- sd(ndat, na.rm = TRUE)
+    metrics <- cbind(average, sd)
+    
+    if (prod(dim(output)) == 0){
+      output <- metrics
+    } else {
+      output <- rbind(output, metrics)
+    }
+    
+    
+    dat[trialno, 3:ncol(dat)] <- ndat
+    
+    #dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+    #dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+  }
+  
+  dat <- cbind(dat, output)
+  
+  #return(dat)
+  colnames(dat) <- c("trial", "rot", "p000", "p001", "p002", "p003",
+                     "p004", "p005", "p006", "p007", "p008", "p009",
+                     "p010", "p011", "p012", "p013", "p014",
+                     "p015", "average", "sd")
+  write.csv(dat, file='data/K4225/RT_mirrored_trial.csv', row.names = F)
+}
+
+getRTMirroredBlocked <- function(){
+  
+  data <- read.csv(file = 'data/K4225/RT_mirrored_trial.csv')
+  
+  lastval <- ncol(data) - 2
+  subdat <- data[,3:lastval]
+  
+  #we want to get the mean for every 6 trials (they go through each of 6 possible targets)
+  n <- 6;
+  ndat <- aggregate(subdat, list(rep(1:(nrow(data)%/%n+1),each=n,len=nrow(data))), mean, na.rm = T)[-1];
+  
+  
+  for (blockno in 1:nrow(ndat)){
+    ndat$average[blockno] <- mean(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+    ndat$sd[blockno] <- sd(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+  }
+  
+  block <- c(1:nrow(ndat))
+  rot <- rep(30,15)
+  ndat <- cbind(block, rot, ndat)
+  
+  write.csv(ndat, file='data/K4225/RT_mirrored_block.csv', row.names = F)
+}
+
+#Washout Rotated RT
+getRotatedWashGroupRTTrials <- function(group = 'noninstructed', maxppid = 15) {
+  #participants <- getGroupParticipants(group) #the function that gives all participant ID's for a specified group
+  
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  
+  
+  dataoutput<- data.frame() #create place holder
+  #go through each participant in this group
+  for (participant in participants) {
+    if (participant%%2 == 1){
+      #mirror then rotation if odd id
+      ppRT <- getRTTrials(group=group, id=participant, taskno = 13, task = 'washout1')
+    } else if (participant%%2 == 0){
+      #if pp id is even
+      #rotation first then mirror
+      ppRT <- getRTTrials(group=group, id=participant, taskno = 7, task = 'washout0')
+    }
+    
+    reaction <- ppRT$reaction_time#get RT column from RT data
+    trial <- c(1:length(reaction)) #sets up trial column
+    rot <- rep(0, length(reaction))
+    dat <- cbind(trial, rot, reaction)
+    #rdat <- dat$reaches
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- dat
+    } else {
+      dataoutput <- cbind(dataoutput, reaction)
+    }
+    
+  }
+  #rot <- rep(0,nrow(dataoutput))
+  dataoutput <- as.data.frame(dataoutput, stringsAsFactors = FALSE)
+  # dataoutput$rot <- rep(0, nrow(dataoutput))
+  # dataoutput <- dataoutput[, c("a", "b", "d", "c")]
+  return(dataoutput)
+  
+}
+
+getRTRotatedWashTrialByTrial <- function(group = 'noninstructed', maxppid = 15){
+  
+  dat <- getRotatedWashGroupRTTrials(group=group, maxppid=maxppid)
+  trials <- dat$trial
+  
+  output <- data.frame()
+  
+  for (trialno in trials){
+    #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+    ndat <- as.numeric(dat[trialno, 3:ncol(dat)])
+    trialmu <- mean(ndat, na.rm = TRUE)
+    trialsigma <- sd(ndat, na.rm = TRUE)
+    #print(trialsigma)
+    trialclip <- abs(trialmu) + (trialsigma * 2)
+    
+    ndat[which(abs(ndat) > trialclip)] <- NA
+    average <- mean(ndat, na.rm = TRUE)
+    sd <- sd(ndat, na.rm = TRUE)
+    metrics <- cbind(average, sd)
+    
+    if (prod(dim(output)) == 0){
+      output <- metrics
+    } else {
+      output <- rbind(output, metrics)
+    }
+    
+    
+    dat[trialno, 3:ncol(dat)] <- ndat
+    
+    #dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+    #dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+  }
+  
+  dat <- cbind(dat, output)
+  
+  #return(dat)
+  colnames(dat) <- c("trial", "rot", "p000", "p001", "p002", "p003",
+                     "p004", "p005", "p006", "p007", "p008", "p009",
+                     "p010", "p011", "p012", "p013", "p014",
+                     "p015", "average", "sd")
+  write.csv(dat, file='data/K4225/RT_rotwash_trial.csv', row.names = F)
+}
+
+getRTRotatedWashBlocked <- function(){
+  
+  data <- read.csv(file = 'data/K4225/RT_rotwash_trial.csv')
+  
+  lastval <- ncol(data) - 2
+  subdat <- data[,3:lastval]
+  
+  #we want to get the mean for every 6 trials (they go through each of 6 possible targets)
+  n <- 6;
+  ndat <- aggregate(subdat, list(rep(1:(nrow(data)%/%n+1),each=n,len=nrow(data))), mean, na.rm = T)[-1];
+  
+  
+  for (blockno in 1:nrow(ndat)){
+    ndat$average[blockno] <- mean(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+    ndat$sd[blockno] <- sd(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+  }
+  
+  block <- c(1:nrow(ndat))
+  rot <- rep(0,8)
+  ndat <- cbind(block, rot, ndat)
+  
+  write.csv(ndat, file='data/K4225/RT_rotwash_block.csv', row.names = F)
+}
+
+#Washout Mirror RT
+getMirroredWashGroupRTTrials <- function(group = 'noninstructed', maxppid = 15) {
+  #participants <- getGroupParticipants(group) #the function that gives all participant ID's for a specified group
+  
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  
+  
+  dataoutput<- data.frame() #create place holder
+  #go through each participant in this group
+  for (participant in participants) {
+    if (participant%%2 == 1){
+      #mirror then rotation if odd id
+      ppRT <- getRTTrials(group=group, id=participant, taskno = 7, task = 'washout0')
+    } else if (participant%%2 == 0){
+      #if pp id is even
+      #rotation first then mirror
+      ppRT <- getRTTrials(group=group, id=participant, taskno = 13, task = 'washout1')
+    }
+    
+    reaction <- ppRT$reaction_time#get RT column from RT data
+    trial <- c(1:length(reaction)) #sets up trial column
+    rot <- rep(0, length(reaction))
+    dat <- cbind(trial, rot, reaction)
+    #rdat <- dat$reaches
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- dat
+    } else {
+      dataoutput <- cbind(dataoutput, reaction)
+    }
+    
+  }
+  #rot <- rep(0,nrow(dataoutput))
+  dataoutput <- as.data.frame(dataoutput, stringsAsFactors = FALSE)
+  # dataoutput$rot <- rep(0, nrow(dataoutput))
+  # dataoutput <- dataoutput[, c("a", "b", "d", "c")]
+  return(dataoutput)
+  
+}
+
+getRTMirroredWashTrialByTrial <- function(group = 'noninstructed', maxppid = 15){
+  
+  dat <- getMirroredWashGroupRTTrials(group=group, maxppid=maxppid)
+  trials <- dat$trial
+  
+  output <- data.frame()
+  
+  for (trialno in trials){
+    #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+    ndat <- as.numeric(dat[trialno, 3:ncol(dat)])
+    trialmu <- mean(ndat, na.rm = TRUE)
+    trialsigma <- sd(ndat, na.rm = TRUE)
+    #print(trialsigma)
+    trialclip <- abs(trialmu) + (trialsigma * 2)
+    
+    ndat[which(abs(ndat) > trialclip)] <- NA
+    average <- mean(ndat, na.rm = TRUE)
+    sd <- sd(ndat, na.rm = TRUE)
+    metrics <- cbind(average, sd)
+    
+    if (prod(dim(output)) == 0){
+      output <- metrics
+    } else {
+      output <- rbind(output, metrics)
+    }
+    
+    
+    dat[trialno, 3:ncol(dat)] <- ndat
+    
+    #dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+    #dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+  }
+  
+  dat <- cbind(dat, output)
+  
+  #return(dat)
+  colnames(dat) <- c("trial", "rot", "p000", "p001", "p002", "p003",
+                     "p004", "p005", "p006", "p007", "p008", "p009",
+                     "p010", "p011", "p012", "p013", "p014",
+                     "p015", "average", "sd")
+  write.csv(dat, file='data/K4225/RT_mirwash_trial.csv', row.names = F)
+}
+
+getRTMirroredWashBlocked <- function(){
+  
+  data <- read.csv(file = 'data/K4225/RT_mirwash_trial.csv')
+  
+  lastval <- ncol(data) - 2
+  subdat <- data[,3:lastval]
+  
+  #we want to get the mean for every 6 trials (they go through each of 6 possible targets)
+  n <- 6;
+  ndat <- aggregate(subdat, list(rep(1:(nrow(data)%/%n+1),each=n,len=nrow(data))), mean, na.rm = T)[-1];
+  
+  
+  for (blockno in 1:nrow(ndat)){
+    ndat$average[blockno] <- mean(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+    ndat$sd[blockno] <- sd(as.numeric(ndat[blockno,1:16]), na.rm = TRUE)
+  }
+  
+  block <- c(1:nrow(ndat))
+  rot <- rep(0,8)
+  ndat <- cbind(block, rot, ndat)
+  
+  write.csv(ndat, file='data/K4225/RT_mirwash_block.csv', row.names = F)
+}
