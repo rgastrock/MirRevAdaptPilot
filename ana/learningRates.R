@@ -821,8 +821,8 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
     plot(NA, NA, xlim = c(0,16), ylim = c(-200,200), 
          xlab = "Block", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
          main = "Learning Rate by Blocks: ROT", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-    abline(h = 100, col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-    abline(h = 0, col = 8, lty = 2)
+    abline(h = 100, col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    abline(h = 0, col = '#000000', lty = 2)
     axis(1, at=c(1:15))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
     axis(2, at = c(-200, -150, -100, -50, 0, 50, 100, 150, 200)) #tick marks for y axis
     
@@ -885,8 +885,8 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
     plot(NA, NA, xlim = c(0,16), ylim = c(-200,200), 
          xlab = "Block", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
          main = "Learning Rate by Blocks: MIR", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-    abline(h = 100, col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-    abline(h = 0, col = 8, lty = 2)
+    abline(h = 100, col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    abline(h = 0, col = '#000000', lty = 2)
     axis(1, at=c(1:15))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
     axis(2, at = c(-200, -150, -100, -50, 0, 50, 100, 150, 200)) #tick marks for y axis
     
@@ -1505,8 +1505,8 @@ plotBlockedIndRAE <- function(group, maxppid, location, targetno, perturb, targe
     plot(NA, NA, xlim = c(0,9), ylim = c(-200,200), 
          xlab = "Block", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
          main = "Blocked Individual Aftereffects: ROT", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-    abline(h = 100, col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-    abline(h = 0, col = 8, lty = 2)
+    abline(h = 100, col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    abline(h = 0, col = '#000000', lty = 2)
     axis(1, at=c(1:8))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
     axis(2, at = c(-200, -150, -100, -50, 0, 50, 100, 150, 200)) #tick marks for y axis
     
@@ -1567,8 +1567,8 @@ plotBlockedIndRAE <- function(group, maxppid, location, targetno, perturb, targe
     plot(NA, NA, xlim = c(0,9), ylim = c(-200,200), 
          xlab = "Block", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
          main = "Blocked Individual Aftereffects: MIR", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-    abline(h = 100, col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-    abline(h = 0, col = 8, lty = 2)
+    abline(h = 100, col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    abline(h = 0, col = '#000000', lty = 2)
     axis(1, at=c(1:8))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
     axis(2, at = c(-200, -150, -100, -50, 0, 50, 100, 150, 200)) #tick marks for y axis
     
@@ -2336,7 +2336,7 @@ plotPTypeLearningCurves <- function(perturb = c('ROT', 'MIR'), group = 'noninstr
   plot(NA, NA, xlim = c(0,91), ylim = c(-200,200), 
        xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
        main = "Reach Learning over Time", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  abline(h = c(-100,0, 100), col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 30, 60, 90)) #tick marks for x axis
   axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
   
@@ -2421,7 +2421,7 @@ plotPTypeAftereffects <- function(perturb = c('ROT', 'MIR'), group = 'noninstruc
   plot(NA, NA, xlim = c(0,49), ylim = c(-200,200), 
        xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
        main = "Rate of Deadaptation", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  abline(h = c(-100,0, 100), col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 15, 30, 48)) #tick marks for x axis
   axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
   
