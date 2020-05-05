@@ -587,6 +587,360 @@ plotMIRLearningCurves <- function(groups = c('noninstructed', 'instructed'),targ
   
 }
 
+# Learning Curves Individual Target Analysis for Mirror----
+# Assess high variance in Mir reversal, by looking into learning curves for each target (7.5, 15, 22.5)
+getMIRParticipantTargetCurve <- function(group, id, location){
+  #same as rotation, we look into percentage of compensation, but note that magnitude to compensate differs per target
+  alignedTraining <- getParticipantTaskData(group, id, taskno = 1, task = 'aligned') #these values will change if need nocursor or localization
+  
+  if (id%%2 == 1){
+    #mirror then rotation if odd id
+    rotatedTraining <- getParticipantTaskData(group, id, taskno = 5, task = 'mirror')
+  } else if (id%%2 == 0){
+    #if pp id is even
+    #rotation first then mirror
+    rotatedTraining <- getParticipantTaskData(group, id, taskno = 11, task = 'mirror')
+  }
+  
+  biases <- getAlignedTrainingBiases(alignedTraining, location = location) #use function to get biases
+  #AT<- getReachAngles(alignedTraining, starttrial = 1, endtrial = 45) #aligned is first 45 trials
+  RT<- getReachAngles(rotatedTraining, starttrial=0, endtrial=89, location = location) #rotated is 90 trials; appended to end of aligned
+  
+  for (biasno in c(1: dim(biases)[1])){ #from 1 to however many biases there are in data
+    
+    target<- biases[biasno, 'targetangle'] #get corresponding target angle
+    bias<- biases[biasno, 'reachdev'] #get corresponding reachdev or bias
+    
+    #subtract bias from reach deviation for rotated session only
+    RT$reachdev[which(RT$targetangle == target)] <- RT$reachdev[which(RT$targetangle == target)] - bias
+    
+  }
+  #after baseline correction, we need to assign specific targets to corresponding magnitudes to compensate
+  #we have 24 possible targets, but they differ depending on which side of mirror axis they are (before or after mirror)
+  #this will affect calculations later on (due to negative values)
+  #so we separate them by amount of compensation, and whether they are before or after mirror axis
+  alltargets15bef <- c(82.5, 172.5, 262.5, 352.5) #should compensate for 15 degrees
+  alltargets15aft <- c(7.5, 97.5, 187.5, 277.5)
+  alltargets30bef <- c(75, 165, 255, 345) #30 degrees
+  alltargets30aft <- c(15, 105, 195, 285)
+  alltargets45bef <- c(67.5, 157.5, 247.5, 337.5) #45 degrees
+  alltargets45aft <- c(22.5, 112.5, 202.5, 292.5)
+  
+  angles <- unique(RT$targetangle)
+  RT['compensate'] <- NA
+  
+  #we want percentage of compensation
+  #we multily by -1 so that getting positive values mean that the hand went to the correct direction
+  #above 100 values would mean an overcompensation, 0 is going directly to target, negative values are undercompensation
+  for (target in angles){
+    if (target %in% alltargets15bef){
+      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/15)*100
+      RT$compensate[which(RT$targetangle == target)] <- 15
+    } else if (target %in% alltargets15aft){
+      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/15)*100
+      RT$compensate[which(RT$targetangle == target)] <- 15
+    } else if (target %in% alltargets30bef){
+      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/30)*100
+      RT$compensate[which(RT$targetangle == target)] <- 30
+    } else if (target %in% alltargets30aft){
+      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/30)*100
+      RT$compensate[which(RT$targetangle == target)] <- 30
+    } else if (target %in% alltargets45bef){
+      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/45)*100
+      RT$compensate[which(RT$targetangle == target)] <- 45
+    } else if (target %in% alltargets45aft){
+      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/45)*100
+      RT$compensate[which(RT$targetangle == target)] <- 45
+    }
+  }
+  #write.csv(RT, file='data/PPLCmir.csv', row.names = F)
+  return(RT)  
+}
+
+#need a function that would collect all data from all participants into one, while still separating info for each target
+getMIRGroupTargetCurve <- function(group, maxppid, location){
+  
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  
+  dataoutput<- data.frame() #create place holder
+  #go through each participant in this group
+  for (participant in participants) {
+    ppangles <- getMIRParticipantTargetCurve(group = group, id=participant, location = location) #for every participant, get learning curve data
+    participant <- rep(participant, nrow(ppangles))
+    dat <- cbind(participant, ppangles)
+    
+    # reaches <- ppangles$reachdev #get reach deviations column from learning curve data
+    # trial <- c(1:length(reaches)) #sets up trial column
+    # dat <- cbind(trial, reaches)
+    # #rdat <- dat$reaches
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- dat
+    } else {
+      dataoutput <- rbind(dataoutput, dat)
+    }
+  }
+  return(dataoutput)
+}
+
+getMIRTargetCurve <- function(group, maxppid, location, angle){
+  
+  #each column will be one participant and their 90 trials
+  dat <- getMIRGroupTargetCurve(group=group, maxppid=maxppid,location=location)
+
+  #return whichever data is needed
+  #angle is either 15, 30, 45 (or the amount of compensation)
+  if (angle == 15){
+    subdat <- dat[which(dat$compensate == 15), ]
+  } else if (angle == 30){
+    subdat <- dat[which(dat$compensate == 30), ]
+  } else if (angle == 45){
+    subdat <- dat[which(dat$compensate == 45), ]
+  }
+  
+  #get only columns we are interested in then transform to wide format, so that we can generate learning curves using code we already have
+  subdat <- subdat[,c(1,4)]
+  participants <- unique(subdat$participant)
+  
+  newdat <- data.frame()
+  for(pp in participants){
+    reachdev <- subdat[which(subdat$participant == pp),]
+    reachdev <- reachdev[,-1]
+    trial <- c(1:length(reachdev))
+    output <- cbind(trial, reachdev)
+    
+    if (prod(dim(newdat)) == 0){
+      newdat <- output
+    } else {
+      newdat <- cbind(newdat, reachdev)
+    }
+  }
+  return(newdat)
+}
+
+getMIRGroupTargetCurveConfidenceInterval <- function(group, maxppid, location, angles = c(15,30,45), type){
+  
+  for(angle in angles){
+    data <- getMIRTargetCurve(group = group, maxppid = maxppid, location = location, angle=angle) #angle = comp
+    #data <- data[,-6] #remove faulty particiapnt (pp004) so the 6th column REMOVE ONCE RESOLVED
+    data <- as.data.frame(data)
+    trialno <- data$trial
+    data1 <- as.matrix(data[,2:dim(data)[2]])
+    
+    confidence <- data.frame()
+    
+    
+    for (trial in trialno){
+      cireaches <- data1[which(data$trial == trial), ]
+      
+      if (type == "t"){
+        cireaches <- cireaches[!is.na(cireaches)]
+        citrial <- t.interval(data = cireaches, variance = var(cireaches), conf.level = 0.95)
+      } else if(type == "b"){
+        citrial <- getBSConfidenceInterval(data = cireaches, resamples = 1000)
+      }
+      
+      if (prod(dim(confidence)) == 0){
+        confidence <- citrial
+      } else {
+        confidence <- rbind(confidence, citrial)
+      }
+      if (group == 'noninstructed'){
+        write.csv(confidence, file=sprintf('data/MIR_noninstructed_CI_targetcurve%s.csv', angle), row.names = F) 
+      } else if (group == 'instructed'){
+        write.csv(confidence, file=sprintf('data/MIR_instructed_CI_targetcurve%s.csv', angle), row.names = F)
+      }
+    }
+  }
+}
+
+#for simplicity, I will make 2 functions that will generate order effects plots for non instructed and instructed groups separately
+plotNIMIRTargetCurve<- function(group = 'noninstructed', angles = c(15,30,45), target = 'inline') {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/Fig3MIR_NI_targetcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  meanGroupReaches <- list() #empty list so that it plots the means last
+  
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(NA, NA, xlim = c(0,31), ylim = c(-200,200), 
+       xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Learning Rate Across Targets", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  axis(1, at = c(1, 10, 20, 30)) #tick marks for x axis
+  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  
+  for(angle in angles){
+    #read in files created by getGroupConfidenceInterval in filehandling.R
+    groupconfidence <- read.csv(file=sprintf('data/MIR_%s_CI_targetcurve%s.csv', group, angle))
+    
+    colourscheme <- getTtypeColourScheme(angles = angle)
+    #take only first, last and middle columns of file
+    lower <- groupconfidence[,1]
+    upper <- groupconfidence[,3]
+    mid <- groupconfidence[,2]
+    
+    col <- colourscheme[[angle]][['T']] #use colour scheme according to group
+    
+    #upper and lower bounds create a polygon
+    #polygon creates it from low left to low right, then up right to up left -> use rev
+    #x is just trial nnumber, y depends on values of bounds
+    polygon(x = c(c(1:30), rev(c(1:30))), y = c(lower, rev(upper)), border=NA, col=col)
+    
+    meanGroupReaches[[angle]] <- mid #use mean to fill in empty list for each group
+  }
+  
+  
+  for (angle in angles) {
+    # plot mean reaches for each group
+    col <- colourscheme[[angle]][['S']]
+    lines(meanGroupReaches[[angle]],col=col,lty=1)
+  }
+  
+  #add legend
+  legend(20,-100,legend=c('15 deg','30 deg','45 deg'),
+         col=c(colourscheme[[15]][['S']],colourscheme[[30]][['S']],colourscheme[[45]][['S']]),
+         lty=1,bty='n',cex=1,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+plotIMIRTargetCurve<- function(group = 'instructed', angles = c(15,30,45), target = 'inline') {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/Fig3MIR_I_targetcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  meanGroupReaches <- list() #empty list so that it plots the means last
+  
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(NA, NA, xlim = c(0,31), ylim = c(-200,200), 
+       xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Learning Rate Across Targets", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  axis(1, at = c(1, 10, 20, 30)) #tick marks for x axis
+  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  
+  for(angle in angles){
+    #read in files created by getGroupConfidenceInterval in filehandling.R
+    groupconfidence <- read.csv(file=sprintf('data/MIR_%s_CI_targetcurve%s.csv', group, angle))
+    
+    colourscheme <- getTtypeColourScheme(angles = angle)
+    #take only first, last and middle columns of file
+    lower <- groupconfidence[,1]
+    upper <- groupconfidence[,3]
+    mid <- groupconfidence[,2]
+    
+    col <- colourscheme[[angle]][['T']] #use colour scheme according to group
+    
+    #upper and lower bounds create a polygon
+    #polygon creates it from low left to low right, then up right to up left -> use rev
+    #x is just trial nnumber, y depends on values of bounds
+    polygon(x = c(c(1:30), rev(c(1:30))), y = c(lower, rev(upper)), border=NA, col=col)
+    
+    meanGroupReaches[[angle]] <- mid #use mean to fill in empty list for each group
+  }
+  
+  
+  for (angle in angles) {
+    # plot mean reaches for each group
+    col <- colourscheme[[angle]][['S']]
+    lines(meanGroupReaches[[angle]],col=col,lty=1)
+  }
+  
+  #add legend
+  legend(20,-100,legend=c('15 deg','30 deg','45 deg'),
+         col=c(colourscheme[[15]][['S']],colourscheme[[30]][['S']],colourscheme[[45]][['S']]),
+         lty=1,bty='n',cex=1,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+#Much of the variability seems to be due to the 15 deg separation (near mirror axis). So we can look into this further.
+#generate boxplots for each trial, showing the distribution of compensation across participants for that trial.
+#vioplots are also generated. Nothing really bimodal, but there are what seem to be some skewed distributions.
+#Switching between maxvel and endpoint does not affect the distributions that much. See three functions below.
+
+getTargetCurveBoxplots <- function(group, maxppid, location, angles = c(15,30,45)){
+  
+  #par(mfrow = c(3,1))
+  
+  for(angle in angles){
+    dat <- as.data.frame(getMIRTargetCurve(group=group, maxppid = maxppid, location=location, angle=angle))
+    #transform to long format so we can do boxplots for every trial
+    ppcols <- c('p0','p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'p13', 'p14', 'p15')
+    colnames(dat) <- c('trial', 'p0','p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'p13', 'p14', 'p15')
+    longdata <- gather(dat, participant, reachdev, ppcols[1:length(ppcols)], factor_key=TRUE)
+    
+    #there are outliers, but to get a better view, can set outline=False to not include these in the plot
+    boxplot(reachdev~trial, data=longdata, ylab='Compensation (%)', xlab='Trial', main=sprintf('Target Separation: %s deg.', angle),
+            axes=FALSE,outline=FALSE)
+    axis(1, at=1:30)
+    axis(2, at = c(-1000,-400,-250,-100,0,100,250,400,1000))
+  }
+}
+
+getTargetCurveVioplots <- function(group, maxppid, location, angles = c(15,30,45)){
+  
+  #par(mfrow = c(3,1))
+  
+  for(angle in angles){
+    dat <- as.data.frame(getMIRTargetCurve(group=group, maxppid = maxppid, location=location, angle=angle))
+    #transform to long format so we can do boxplots for every trial
+    ppcols <- c('p0','p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'p13', 'p14', 'p15')
+    colnames(dat) <- c('trial', 'p0','p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'p13', 'p14', 'p15')
+    longdata <- gather(dat, participant, reachdev, ppcols[1:length(ppcols)], factor_key=TRUE)
+    
+    #there are outliers, but to get a better view, can set outline=False to not include these in the plot
+    vioplot(reachdev~trial, data=longdata, col='#005de42f', lty=1, border=NA, drawRect=T, rectCol='black', 
+            lineCol='black', axes=F, side='left', xaxt='n',yaxt='n',
+            ylab='Compensation (%)', xlab='Trial', main=sprintf('Target Separation: %s deg.', angle)) #pchMed='-')
+    axis(1, at=1:30)
+    axis(2, at = c(-1000,-400,-250,-100,0,100,250,400,1000))
+  }
+}
+
+testTargetCurveMeasure <- function(group, maxppid, angles = c(15,30,45)){
+  
+  for(angle in angles){
+    #data based on maxvel
+    datmaxvel <- as.data.frame(getMIRTargetCurve(group=group, maxppid = maxppid, location='maxvel', angle=angle))
+    ppcols <- c('p0','p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'p13', 'p14', 'p15')
+    colnames(datmaxvel) <- c('trial', 'p0','p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'p13', 'p14', 'p15')
+    maxvel <- gather(datmaxvel, participant, compensation, ppcols[1:length(ppcols)], factor_key=TRUE)
+    #data based on endpt
+    datendpt  <- as.data.frame(getMIRTargetCurve(group=group, maxppid = maxppid, location='endpoint', angle=angle))
+    ppcols <- c('p0','p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'p13', 'p14', 'p15')
+    colnames(datendpt) <- c('trial', 'p0','p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'p13', 'p14', 'p15')
+    endpt <- gather(datendpt, participant, compensation, ppcols[1:length(ppcols)], factor_key=TRUE)
+    #compare
+    plot(maxvel$compensation, endpt$compensation, main=sprintf('maxvel and endpt correlation for target separated by %s degrees', angle))
+    cat(sprintf('maxvel and endpoint correlation for target separated by %s degrees:\n', angle))
+    print(cor.test(maxvel$compensation, endpt$compensation))
+  }
+}
+
 # Learning Curves INDIVIDUAL DATA----
 
 #first split 90 trials into sets of 6 trials each
@@ -710,12 +1064,13 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
     #cols<-brewer.pal(n=maxppid+1,name="Set1")
     #cols contain the names of n different colors
     #colidx <- 1
-    
+    colourscheme <- getPtypeColourScheme(perturb = perturb)
     
     for (pp in participants){
       row.idx <- which(data$participant == pp)
-      lines(data$trial[row.idx],data$reachdev[row.idx], lwd = 2, lty = 1, col = 'grey')
-      points(data$trial[row.idx],data$reachdev[row.idx], pch = 19, col = 'grey')
+      col <- colourscheme[[perturb]][['T']]
+      #lines(data$trial[row.idx],data$reachdev[row.idx], lwd = 2, lty = 1, col = col)
+      points(data$trial[row.idx],data$reachdev[row.idx], pch = 19, col = col)
       
       #linetypeidx <- linetypeidx + 1
       #colidx <- colidx +1
@@ -736,8 +1091,9 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
       }
     }
     
-    lines(c(1:length(allmeans)),allmeans[,1], lwd = 2, lty = 1, col = 'red')
-    points(c(1:length(allmeans)),allmeans[,1], pch = 19, col = 'red')
+    col <- colourscheme[[perturb]][['S']]
+    lines(c(1:length(allmeans)),allmeans[,1], lwd = 2, lty = 1, col = col)
+    points(c(1:length(allmeans)),allmeans[,1], pch = 19, col = col)
     
     #legend(12,-100,legend=c('Implicit 30°','Strategy 30°','Cursor Jump', 'Hand View'),
     #      col=c(colourscheme[['30implicit']][['S']],colourscheme[['30explicit']][['S']],colourscheme[['cursorjump']][['S']],colourscheme[['handview']][['S']]),
@@ -774,12 +1130,13 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
     #cols<-brewer.pal(n=maxppid+1,name="Set1")
     #cols contain the names of n different colors
     #colidx <- 1
-    
+    colourscheme <- getPtypeColourScheme(perturb = perturb)
     
     for (pp in participants){
       row.idx <- which(data$participant == pp)
-      lines(data$trial[row.idx],data$reachdev[row.idx], lwd = 2, lty = 1, col = 'grey')
-      points(data$trial[row.idx],data$reachdev[row.idx], pch = 19, col = 'grey')
+      col <- colourscheme[[perturb]][['T']]
+      #lines(data$trial[row.idx],data$reachdev[row.idx], lwd = 2, lty = 1, col = col)
+      points(data$trial[row.idx],data$reachdev[row.idx], pch = 19, col = col)
       
       #linetypeidx <- linetypeidx + 1
       #colidx <- colidx +1
@@ -800,8 +1157,9 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
       }
     }
     
-    lines(c(1:length(allmeans)),allmeans[,1], lwd = 2, lty = 1, col = 'red')
-    points(c(1:length(allmeans)),allmeans[,1], pch = 19, col = 'red')
+    col <- colourscheme[[perturb]][['S']]
+    lines(c(1:length(allmeans)),allmeans[,1], lwd = 2, lty = 1, col = col)
+    points(c(1:length(allmeans)),allmeans[,1], pch = 19, col = col)
     
     #legend(12,-100,legend=c('Implicit 30°','Strategy 30°','Cursor Jump', 'Hand View'),
     #      col=c(colourscheme[['30implicit']][['S']],colourscheme[['30explicit']][['S']],colourscheme[['cursorjump']][['S']],colourscheme[['handview']][['S']]),
