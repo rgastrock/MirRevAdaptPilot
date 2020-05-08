@@ -1,7 +1,8 @@
+source('ana/shared.R')
+source('ana/learningRates.R')
+
 #Reaction Time across Blocks -----
 
-#movement time measures are originally found in testCorrect.R script - this has been updated here see MT analysis section
-#code for RT will be similar, but now we only want step 3
 #start of step 3 is when target signal turns to go
 #end of step 3 (when it switches to step 4) is when cursor distance from home is greater than radius (which is 0.5 cm * pixpercm or 35)
 #so essentially, RT is difference between time that go signal occurs and time when cursor is half a centimeter away from home position
@@ -18,22 +19,24 @@ getRTTrials <- function(group, id, task, taskno){
   # }
   
   dat <- getParticipantTaskData(group = group, id = id, taskno = taskno, task = task)
-  
-  #only steps 6 and 7 will have 0 or 1 in trial_column
-  #ndat <- dat[dat$step == 3, ]
-  
-  trials <- unique(dat$trial) #need to be dat, not ndat because not all participants have step 3 recorded on every trial
+  trials <- unique(dat$trial) 
   proportion <- data.frame()
   
   for (trialno in trials){
     
     subndat <- dat[dat$trial == trialno,]
     subndat <- subndat[subndat$step == 3,]
+    subndatsamp <- subndat[1,]
     
     if (nrow(subndat)==0){
-      reactiontime <- NA #will assign NaN if step 3 does not occur
+      reactiontime <- NA #will assign NA if step 3 does not occur
       trial <- trialno
+      comment <- 'nostep' #this will help to keep track of how many trials did not have a step later on
       
+    } else if(subndatsamp$trialselected_bool == 0){#we only want data that has been selected
+      reactiontime <- NA
+      trial <- trialno
+      comment <- 'unselected'
     } else{
       firststep3 <- subndat[1,]
       laststep3 <- subndat[nrow(subndat),]
@@ -43,9 +46,10 @@ getRTTrials <- function(group, id, task, taskno){
       
       reactiontime <- step3end - step3start
       trial <- trialno
+      comment <- 'selected'
       
     }
-    feedback <- c(trial, reactiontime, task)
+    feedback <- c(trial, reactiontime, task, comment)
     
     
     if (prod(dim(proportion)) == 0){
@@ -55,25 +59,125 @@ getRTTrials <- function(group, id, task, taskno){
     }
   }
   proportion <- data.frame(proportion, row.names = NULL, stringsAsFactors = F)
-  colnames(proportion) <- c('trial', 'reaction_time', 'task')
+  colnames(proportion) <- c('trial', 'reaction_time', 'task', 'comment')
   proportion$participant <- id
   return(proportion)
 }
 
-getBlockedRTTrials <- function(group,id,task,taskno){
+getAlignedGroupRTTrials <- function(group = 'noninstructed', maxppid = 15) {
+  #participants <- getGroupParticipants(group) #the function that gives all participant ID's for a specified group
   
-  data <- getRTTrials(group=group,id=id,task=task,taskno=taskno)
-  reactiontime <- data.frame(as.numeric(data$reaction_time))
+  #a consequence of adding the groups late led me to fix it in the manner below
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
   
-  #get mean of every 6th trial
-  n <- 6
-  ndat <- aggregate(reactiontime,list(rep(1:(nrow(reactiontime)%/%n+1),each=n,len=nrow(reactiontime))),mean, na.rm=TRUE)[-1]
-  colnames(ndat) <- 'reaction_time'
-  ndat$block <- seq(1,length(ndat$reaction_time),1)
-  ndat$participant <- id
-  ndat$task <- task
   
-  return(ndat)
+  dataoutput<- data.frame() #create place holder
+  #go through each participant in this group
+  for (participant in participants) {
+    ppRT <- getRTTrials(group = group, id=participant, task = 'aligned', taskno = 1) #for every participant, get RT data
+    
+    reaction <- as.numeric(ppRT$reaction_time)#get RT column from RT data
+    trial <- c(1:length(reaction)) #sets up trial column
+    #task <- rep('AL', length(reaction))
+    dat <- cbind(trial, reaction)
+    #rdat <- dat$reaches
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- dat
+    } else {
+      dataoutput <- cbind(dataoutput, reaction)
+    }
+    
+  }
+
+  return(dataoutput)
+  
+}
+
+#Implement outlier removal
+getRTAligned <- function(group = 'noninstructed', maxppid = 15){
+  
+  dat <- getAlignedGroupRTTrials(group=group, maxppid=maxppid)
+  dat <- as.data.frame(dat)
+  trials <- dat$trial
+  
+  dataoutput <- data.frame()
+  
+  for (trialno in trials){
+    #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+    ndat <- as.numeric(dat[trialno, 2:ncol(dat)])
+    #remove all times below 200 (rough estimate based on plotting everything)
+    #i do this here instead of for all so that I wouldn't need to switch between a matrix and df format
+    ndat[which(ndat < 200)] <- NA
+    trialmu <- mean(ndat, na.rm = TRUE)
+    trialsigma <- sd(ndat, na.rm = TRUE)
+    #print(trialsigma)
+    trialclip <- abs(trialmu) + (trialsigma * 2)
+    
+    ndat[which(abs(ndat) > trialclip)] <- NA
+    # average <- mean(ndat, na.rm = TRUE)
+    # sd <- sd(ndat, na.rm = TRUE)
+    # metrics <- cbind(average, sd)
+   
+     if (prod(dim(dataoutput)) == 0){
+      dataoutput <- ndat
+    } else {
+      dataoutput <- rbind(dataoutput, ndat)
+    }
+    
+    
+    #dat[trialno, 3:ncol(dat)] <- ndat
+    
+    #dat$average[trialno] <- mean(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+    #dat$sd[trialno] <- sd(as.numeric(dat[trialno, 3:18]), na.rm = TRUE)
+  }
+  dataoutput <- as.data.frame(dataoutput)
+  dat <- cbind(trials,dataoutput)  
+
+  return(dat)
+}
+
+#need to generate conf int per block!
+getRTAlignedConfInt <- function(group, maxppid, type = 't'){
+  
+  #for (group in groups){
+  # get the confidence intervals for each trial of each group
+  data <- getRTAligned(group = group, maxppid = maxppid)
+  #data <- data[,-6] #remove faulty particiapnt (pp004) so the 6th column REMOVE ONCE RESOLVED
+  data <- as.data.frame(data)
+  trialno <- data$trial
+  data1 <- as.matrix(data[,2:dim(data)[2]])
+  
+  confidence <- data.frame()
+  
+  
+  for (trial in trialno){
+    cireaches <- data1[which(data$trial == trial), ]
+    
+    if (type == "t"){
+      cireaches <- cireaches[!is.na(cireaches)]
+      citrial <- t.interval(data = cireaches, variance = var(cireaches), conf.level = 0.95)
+    } else if(type == "b"){
+      citrial <- getBSConfidenceInterval(data = cireaches, resamples = 1000)
+    }
+    
+    if (prod(dim(confidence)) == 0){
+      confidence <- citrial
+    } else {
+      confidence <- rbind(confidence, citrial)
+    }
+    if (group == 'noninstructed'){
+      write.csv(confidence, file='data/ALIGNED_noninstructed_CI_RT.csv', row.names = F) 
+    } else if (group == 'instructed'){
+      write.csv(confidence, file='data/ALIGNED_instructed_CI_RT.csv', row.names = F)
+    } 
+    
+  }
+  
 }
 
 

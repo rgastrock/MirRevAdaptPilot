@@ -4,7 +4,7 @@ library(svglite)
 library(scales)
 library(ez)
 library(vioplot)
-#library(phia) #used for interactionMeans
+library(phia) #used for interactionMeans
 library(emmeans)
 library(afex) #used for aov_ez
 
@@ -180,6 +180,30 @@ getTtypeColourScheme <- function(angles = c(15,30,45)){
     
     #colourscheme[['ALIGNED']] <-   list('S'='#A9A9A9ff', #dark grey
     #                               'T'='#A9A9A92f')
+    
+  }
+  return(colourscheme)
+}
+
+getAlltypeColourScheme <- function(perturb = c('ROT','MIR','CMIR')){
+  #create a list containing the colourscheme per group
+  for (ptype in perturb){
+    colourscheme <- list()
+    
+    #colourscheme[['WASH0']] <- list('S'='#ff8200ff', # pure orange
+    #                                     'T'='#ff82002f')    #2f gives a lighter shade of the color
+    
+    colourscheme[['ROT']] <- list('S'='#e51636ff', #vivid/york red
+                                  'T'='#e516362f')
+    
+    #colourscheme[['WASH1']] <- list('S'='#c400c4ff', #strong magenta
+    #                                     'T'='#c400c42f')
+    
+    colourscheme[['MIR']] <-   list('S'='#005de4ff', #pure blue
+                                    'T'='#005de42f')
+    
+    colourscheme[['CMIR']] <-   list('S'='#A9A9A9ff', #dark grey
+                                   'T'='#A9A9A92f')
     
   }
   return(colourscheme)

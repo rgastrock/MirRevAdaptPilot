@@ -1,6 +1,66 @@
 source('ana/shared.R')
 source('ana/learningRates.R')
 
+#Plots for Neuromatch 2.0 (2020)----
+plotPTypeLearningCurvesWONear <- function(perturb = c('ROT', 'MIR'), group = 'noninstructed', target='inline') {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/pres/Fig02_NI_learningcurveWONear.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  meanGroupReaches <- list() #empty list so that it plots the means last
+  
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(NA, NA, xlim = c(0,61), ylim = c(-200,200), 
+       xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Reach Learning over Time", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(-100,0, 100), col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  axis(1, at = c(1, 20, 40, 60)) #tick marks for x axis
+  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  
+  for(ptype in perturb){
+    #read in files created by getGroupConfidenceInterval in filehandling.R
+    groupconfidence <- read.csv(file=sprintf('data/%s_%s_CI_learningcurve_WONear.csv', ptype, group))
+    
+    colourscheme <- getPtypeColourScheme(ptype)
+    #take only first, last and middle columns of file
+    lower <- groupconfidence[,1]
+    upper <- groupconfidence[,3]
+    mid <- groupconfidence[,2]
+    
+    col <- colourscheme[[ptype]][['T']] #use colour scheme according to group
+    
+    #upper and lower bounds create a polygon
+    #polygon creates it from low left to low right, then up right to up left -> use rev
+    #x is just trial nnumber, y depends on values of bounds
+    polygon(x = c(c(1:60), rev(c(1:60))), y = c(lower, rev(upper)), border=NA, col=col)
+    
+    meanGroupReaches[[ptype]] <- mid #use mean to fill in empty list for each group
+  }
+  
+  
+  for (ptype in perturb) {
+    # plot mean reaches for each group
+    col <- colourscheme[[ptype]][['S']]
+    lines(meanGroupReaches[[ptype]],col=col,lty=1)
+  }
+  
+  #add legend
+  legend(40,-150,legend=c('Rotation','Mirror Reversal'),
+         col=c(colourscheme[['ROT']][['S']],colourscheme[['MIR']][['S']]),
+         lty=1,bty='n',cex=1,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
 #Plots for Presentation-----
 
 plotPTypeLearningCurves <- function(perturb = c('ROT', 'MIR'), group = 'noninstructed', target='inline') {
