@@ -290,7 +290,7 @@ getROTGroupConfidenceInterval <- function(group, maxppid, location, type){
   #}
 }
 
-plotROTLearningCurves <- function(groups = c('noninstructed','instructed'),target='inline') {
+plotROTLearningCurves <- function(groups = c('noninstructed'),target='inline') {
   
   
   #but we can save plot as svg file
@@ -528,7 +528,7 @@ getMIRGroupConfidenceInterval <- function(group, maxppid, location, type){
   #}
 }
 
-plotMIRLearningCurves <- function(groups = c('noninstructed','instructed'), target='inline') {
+plotMIRLearningCurves <- function(groups = c('noninstructed'), target='inline') {
   
   
   #but we can save plot as svg file
@@ -1454,6 +1454,7 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
     
     
     participants <- unique(data$participant)
+    
     #linetypeidx <- 1
     
     #library(RColorBrewer)
@@ -1469,30 +1470,51 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
       row.idx <- which(data$participant == pp)
       col <- colourscheme[[perturb]][['T']]
       #lines(data$trial[row.idx],data$reachdev[row.idx], lwd = 2, lty = 1, col = col)
-      points(data$trial[row.idx],data$reachdev[row.idx], pch = 19, col = col)
+      points(data$trial[row.idx],data$reachdev[row.idx], pch = 16, cex=1.5, col = alpha(col, .15))
       
       #linetypeidx <- linetypeidx + 1
       #colidx <- colidx +1
     }
     
     #then create a mean for all, according to trial number
+    # blockno <- unique(data$trial)
+    # allmeans <- data.frame()
+    # for (block in blockno){
+    #   row.idx <- which(data$trial == block)
+    #   blockmean <- data$reachdev[row.idx]
+    #   val <- mean(blockmean, na.rm = TRUE)
+    #   
+    #   if (prod(dim(allmeans)) == 0){
+    #     allmeans <- val
+    #   } else {
+    #     allmeans <- rbind(allmeans, val)
+    #   }
+    # }
+    
     blockno <- unique(data$trial)
     allmeans <- data.frame()
-    for (block in blockno){
-      row.idx <- which(data$trial == block)
-      blockmean <- data$reachdev[row.idx]
-      val <- mean(blockmean, na.rm = TRUE)
+    for(block in blockno){
+      dat <- data[which(data$trial == block),]
+      meandist <- getConfidenceInterval(data=dat$reachdev, method='bootstrap', resamples=5000, FUN=mean, returndist=TRUE)
+      blockmean <- mean(dat$reachdev)
+      col <- colourscheme[[perturb]][['S']]
+      lines(x=rep(block,2),y=meandist$CI95,col=col) #as.character(styles$color_solid[groupno]))
+      #print(meandist$CI95)
+      points(x=block,y=blockmean,pch=16,cex=1.5,col=col) #as.character(styles$color_solid[groupno]))
+      
       
       if (prod(dim(allmeans)) == 0){
-        allmeans <- val
-      } else {
-        allmeans <- rbind(allmeans, val)
-      }
+            allmeans <- blockmean
+          } else {
+            allmeans <- rbind(allmeans, blockmean)
+          }
     }
     
-    col <- colourscheme[[perturb]][['S']]
-    lines(c(1:length(allmeans)),allmeans[,1], lwd = 2, lty = 1, col = col)
-    points(c(1:length(allmeans)),allmeans[,1], pch = 19, col = col)
+    lines(x=c(1:length(blockno)),y=allmeans[,1], lwd = 2, lty = 1, col = col)
+    
+    # col <- colourscheme[[perturb]][['S']]
+    # lines(c(1:length(allmeans)),allmeans[,1], lwd = 2, lty = 1, col = col)
+    # points(c(1:length(allmeans)),allmeans[,1], pch = 19, col = col)
     
     #legend(12,-100,legend=c('Implicit 30°','Strategy 30°','Cursor Jump', 'Hand View'),
     #      col=c(colourscheme[['30implicit']][['S']],colourscheme[['30explicit']][['S']],colourscheme[['cursorjump']][['S']],colourscheme[['handview']][['S']]),
@@ -1535,7 +1557,7 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
       row.idx <- which(data$participant == pp)
       col <- colourscheme[[perturb]][['T']]
       #lines(data$trial[row.idx],data$reachdev[row.idx], lwd = 2, lty = 1, col = col)
-      points(data$trial[row.idx],data$reachdev[row.idx], pch = 19, col = col)
+      points(data$trial[row.idx],data$reachdev[row.idx], pch = 16, cex=1.5, col = alpha(col, .15))
       
       #linetypeidx <- linetypeidx + 1
       #colidx <- colidx +1
@@ -1544,21 +1566,42 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
     #then create a mean for all, according to trial number
     blockno <- unique(data$trial)
     allmeans <- data.frame()
-    for (block in blockno){
-      row.idx <- which(data$trial == block)
-      blockmean <- data$reachdev[row.idx]
-      val <- mean(blockmean, na.rm = TRUE)
+    for(block in blockno){
+      dat <- data[which(data$trial == block),]
+      meandist <- getConfidenceInterval(data=dat$reachdev, method='bootstrap', resamples=5000, FUN=mean, returndist=TRUE)
+      blockmean <- mean(dat$reachdev)
+      col <- colourscheme[[perturb]][['S']]
+      lines(x=rep(block,2),y=meandist$CI95,col=col) #as.character(styles$color_solid[groupno]))
+      #print(meandist$CI95)
+      points(x=block,y=blockmean,pch=16,cex=1.5,col=col) #as.character(styles$color_solid[groupno]))
+      
       
       if (prod(dim(allmeans)) == 0){
-        allmeans <- val
+        allmeans <- blockmean
       } else {
-        allmeans <- rbind(allmeans, val)
+        allmeans <- rbind(allmeans, blockmean)
       }
     }
     
-    col <- colourscheme[[perturb]][['S']]
-    lines(c(1:length(allmeans)),allmeans[,1], lwd = 2, lty = 1, col = col)
-    points(c(1:length(allmeans)),allmeans[,1], pch = 19, col = col)
+    lines(x=c(1:length(blockno)),y=allmeans[,1], lwd = 2, lty = 1, col = col)
+    
+    # blockno <- unique(data$trial)
+    # allmeans <- data.frame()
+    # for (block in blockno){
+    #   row.idx <- which(data$trial == block)
+    #   blockmean <- data$reachdev[row.idx]
+    #   val <- mean(blockmean, na.rm = TRUE)
+    #   
+    #   if (prod(dim(allmeans)) == 0){
+    #     allmeans <- val
+    #   } else {
+    #     allmeans <- rbind(allmeans, val)
+    #   }
+    # }
+    # 
+    # col <- colourscheme[[perturb]][['S']]
+    # lines(c(1:length(allmeans)),allmeans[,1], lwd = 2, lty = 1, col = col)
+    # points(c(1:length(allmeans)),allmeans[,1], pch = 19, col = col)
     
     #legend(12,-100,legend=c('Implicit 30°','Strategy 30°','Cursor Jump', 'Hand View'),
     #      col=c(colourscheme[['30implicit']][['S']],colourscheme[['30explicit']][['S']],colourscheme[['cursorjump']][['S']],colourscheme[['handview']][['S']]),
@@ -1573,7 +1616,7 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
   
 }
 
-plotROTMIRLC <- function(groups = c('noninstructed', 'instructed'), noninstmax = 15, instmax = 31, location = 'maxvel', targetno = 6, target = 'inline'){
+plotROTMIRLC <- function(groups = c('noninstructed'), noninstmax = 15, instmax = 31, location = 'maxvel', targetno = 6, target = 'inline'){
   
   #fix titles to include instructed and noninstructed in title
   #instmax and noninstmax will differ depending on maximum pp id number in data
@@ -1586,7 +1629,7 @@ plotROTMIRLC <- function(groups = c('noninstructed', 'instructed'), noninstmax =
   
   par(mfrow = c(1,2))
   
-  #for(group in groups){
+  for(group in groups){
   #   if(group == 'noninstructed'){
       plotBlockedIndLC(group=group, maxppid=noninstmax, location =location, targetno = targetno, perturb = 'ROT')
       plotBlockedIndLC(group=group, maxppid=noninstmax, location =location, targetno = targetno, perturb = 'MIR')
@@ -1594,7 +1637,7 @@ plotROTMIRLC <- function(groups = c('noninstructed', 'instructed'), noninstmax =
   #     plotBlockedIndLC(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'ROT')
   #     plotBlockedIndLC(group=group, maxppid=instmax, location =location, targetno = targetno, perturb = 'MIR')
   #   }
-  #}
+  }
   
 
   
