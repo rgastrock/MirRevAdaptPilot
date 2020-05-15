@@ -141,7 +141,7 @@ getAlignedTrainingBiases <- function(df, location) {
 plotLearningCurves <- function(target='inline'){
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3_learningcurve.svg', width=7, height=10, pointsize=10, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_learningcurve.svg', width=7, height=10, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   par(mfrow = c(2,1))
@@ -295,7 +295,7 @@ plotROTLearningCurves <- function(groups = c('noninstructed'),target='inline') {
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3ROT_learningcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_ROT_learningcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -533,7 +533,7 @@ plotMIRLearningCurves <- function(groups = c('noninstructed'), target='inline') 
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3MIR_learningcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_MIR_learningcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -733,7 +733,7 @@ plotROTLearningCurvesWONear <- function(groups = c('noninstructed','instructed')
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3ROT_learningcurveWONear.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_ROT_learningcurveWONear.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -932,7 +932,7 @@ plotMIRLearningCurvesWONear <- function(groups = c('noninstructed','instructed')
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3MIR_learningcurveWONear.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_MIR_learningcurveWONear.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -1163,7 +1163,7 @@ plotNIMIRTargetCurve<- function(group = 'noninstructed', angles = c(15,30,45), t
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3MIR_NI_targetcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_MIR_NI_targetcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -1222,7 +1222,7 @@ plotIMIRTargetCurve<- function(group = 'instructed', angles = c(15,30,45), targe
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3MIR_I_targetcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_MIR_I_targetcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -1435,7 +1435,7 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
     
     #but we can save plot as svg file
     if (target=='svg') {
-      svglite(file='doc/fig/Fig2ROT_BlockedIndLearningCurve.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+      svglite(file='doc/fig/Fig3_ROT_BlockedIndLearningCurve.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
     }
     
     data <- getBlockedIndividualLearningCurves(group = group, maxppid = maxppid, location = location, targetno = targetno, perturb = perturb)
@@ -1444,13 +1444,13 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
     # data <- subset(data, participant != 'pp0')
     # data <- subset(data, participant != 'pp1')
     
-    plot(NA, NA, xlim = c(0,16), ylim = c(-200,200), 
-         xlab = "Block", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
-         main = "Learning Rate by Blocks: ROT", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    plot(NA, NA, xlim = c(0,16), ylim = c(-200,210), 
+         xlab = "Block", ylab = "Amount of compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "Visuomotor rotation", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
     abline(h = 100, col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
     abline(h = 0, col = '#000000', lty = 2)
-    axis(1, at=c(1:15))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
-    axis(2, at = c(-200, -150, -100, -50, 0, 50, 100, 150, 200)) #tick marks for y axis
+    axis(1, at=c(1, 5, 10, 15))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
+    axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
     
     
     participants <- unique(data$participant)
@@ -1523,7 +1523,7 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
     
     #but we can save plot as svg file
     if (target=='svg') {
-      svglite(file='doc/fig/Fig2MIR_BlockedIndLearningCurve.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+      svglite(file='doc/fig/Fig3_MIR_BlockedIndLearningCurve.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
     }
     
     data <- getBlockedIndividualLearningCurves(group = group, maxppid = maxppid, location = location, targetno = targetno, perturb = perturb)
@@ -1532,13 +1532,13 @@ plotBlockedIndLC <- function(group, maxppid, location, targetno, perturb, target
     # data <- subset(data, participant != 'pp0')
     # data <- subset(data, participant != 'pp1')
     
-    plot(NA, NA, xlim = c(0,16), ylim = c(-200,200), 
-         xlab = "Block", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
-         main = "Learning Rate by Blocks: MIR", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    plot(NA, NA, xlim = c(0,16), ylim = c(-200,210), 
+         xlab = "Block", ylab = "Amount of compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "Mirror reversal", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
     abline(h = 100, col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
     abline(h = 0, col = '#000000', lty = 2)
-    axis(1, at=c(1:15))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
-    axis(2, at = c(-200, -150, -100, -50, 0, 50, 100, 150, 200)) #tick marks for y axis
+    axis(1, at=c(1, 5, 10, 15))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
+    axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
     
     
     participants <- unique(data$participant)
@@ -1623,7 +1623,7 @@ plotROTMIRLC <- function(groups = c('noninstructed'), noninstmax = 15, instmax =
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig2_BlockedIndLearningCurve.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_BlockedIndLearningCurve.svg', width=18, height=7, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   

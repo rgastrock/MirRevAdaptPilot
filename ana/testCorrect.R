@@ -96,7 +96,7 @@ GetAllPropCor <- function(maxppno){
   #then can plot this as plot(var$percent_correct ~ var$participant + var$task)
 }
 
-# #try to plot it with time that they reach boundary on y axis, two IVs will still be ppid and task----
+# #try to plot it with time that they reach boundary on y axis, two IVs will still be ppid and task
 # getMTTrials <- function(id, task, taskno){
 #   #allows for this function to work with each file
 #   #specify pp id, the task type, and task number

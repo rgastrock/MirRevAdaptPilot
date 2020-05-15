@@ -881,7 +881,7 @@ plotNIBlockedRT <- function(target='inline'){
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig6NI_reactiontime.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig5_NI_reactiontime.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   #read in the csv files and plot them in one big plot
@@ -906,34 +906,35 @@ plotNIBlockedRT <- function(target='inline'){
   YUp <- as.numeric(dat$V3)
   
   plot(c(1:length(Y)), Y, type = 'n', axes = FALSE,
-       xlab = 'Blocks', ylab = 'Reaction Time (ms)', main = 'Mean Reaction Time across Blocks and Tasks',
-       xlim = c(0,51), ylim = c(0,1000))
+       xlab = 'Blocks', ylab = 'Reaction time (ms)', main = '',
+       xlim = c(0,51), ylim = c(0,810))
   
   #labs <- c('1:AL','9:ROT','24:WASH','32:MIR','47:WASH','54')
   #axis(side=1, at=c(1,9,24,32,47,54), labels=labs)
   axis(side=1, at=c(1,5,20,28,43,50))
   #mtext('Trial & Task', side = 1, outer = TRUE, line=-1, cex = 1)
-  axis(side=2, at=c(0, 200, 300, 400,500, 600, 700, 800, 1000),las=2)
+  axis(side=2, at=c(0, 200, 400,600,800),las=2)
   
   #abline(h = c(400,700), col = 'black', lty = 2)
   abline(v = c(4.5,19.5,27.5,42.5), col = 8, lty = 2)
   
-  #localization
-  lines(X1,Y[1:4], col = alpha("#696969ff", 1))#aligned
-  lines(X3, Y[5:19], col = alpha("#e51636ff", 1))#rotation
-  lines(X5, Y[20:27], col = alpha("#ff8200ff", 1))#rotwashout
-  lines(X7, Y[28:42], col = alpha("#005de4ff", 1))#mirror
-  lines(X9, Y[43:50], col = alpha("#c400c4ff", 1))#mirwashout
-  
-  polygon(x = c(X1, rev(X1)), y = c(YLow[1:4], rev(YUp[1:4])), border=NA, col="#6969692f")
+  polygon(x = c(X1, rev(X1)), y = c(YLow[1:4], rev(YUp[1:4])), border=NA, col=alpha("#b4b4b4",.5))
   polygon(x = c(X3, rev(X3)), y = c(YLow[5:19], rev(YUp[5:19])), border=NA, col="#e516362f")
-  polygon(x = c(X5, rev(X5)), y = c(YLow[20:27], rev(YUp[20:27])), border=NA, col="#ff82002f")
+  polygon(x = c(X5, rev(X5)), y = c(YLow[20:27], rev(YUp[20:27])), border=NA, col="#e516362f")
   polygon(x = c(X7, rev(X7)), y = c(YLow[28:42], rev(YUp[28:42])), border=NA, col="#005de42f")
-  polygon(x = c(X9, rev(X9)), y = c(YLow[43:50], rev(YUp[43:50])), border=NA, col="#c400c42f")
+  polygon(x = c(X9, rev(X9)), y = c(YLow[43:50], rev(YUp[43:50])), border=NA, col="#005de42f")
+  
+  lines(X1,Y[1:4], col = alpha("#000000", 1))#aligned
+  lines(X3, Y[5:19], col = alpha("#e51636ff", 1))#rotation
+  lines(X5, Y[20:27], col = alpha("#e51636ff", 1))#rotwashout
+  lines(X7, Y[28:42], col = alpha("#005de4ff", 1))#mirror
+  lines(X9, Y[43:50], col = alpha("#005de4ff", 1))#mirwashout
+  
+
   
   #add legend
-  legend(43,1000,legend=c('Aligned','Rotation','Washout: ROT','Mirror Reversal','Washout: MIR'),
-         col=c("#696969ff", "#e51636ff", "#ff8200ff", "#005de4ff", "#c400c4ff"),
+  legend(27,200,legend=c('Aligned','Rotation and washout','Mirror Reversal and washout'),
+         col=c("#000000", "#e51636ff", "#005de4ff"),
          lty=1,bty='n',cex=0.8,lwd=2)
   
   #close everything if you saved plot as svg
@@ -947,7 +948,7 @@ plotIBlockedRT <- function(target='inline'){
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig6I_reactiontime.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig5_I_reactiontime.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   #read in the csv files and plot them in one big plot
@@ -1015,7 +1016,7 @@ plotBlockedRT <- function(target='inline'){
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig6_reactiontime.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig5_reactiontime.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
   }
   
   
@@ -2299,7 +2300,7 @@ plotNIBlockedMT <- function(target='inline'){
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig7NI_movementtime.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig6_NI_movementtime.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   #read in the csv files and plot them in one big plot
@@ -2324,34 +2325,35 @@ plotNIBlockedMT <- function(target='inline'){
   YUp <- as.numeric(dat$V3)
   
   plot(c(1:length(Y)), Y, type = 'n', axes = FALSE,
-       xlab = 'Blocks', ylab = 'Movement Time (ms)', main = 'Mean Movement Time across Blocks and Tasks',
-       xlim = c(0,51), ylim = c(0,301))
+       xlab = 'Blocks', ylab = 'Movement time (ms)', main = '',
+       xlim = c(0,51), ylim = c(0,251))
   
   #labs <- c('1:AL','9:ROT','24:WASH','32:MIR','47:WASH','54')
   #axis(side=1, at=c(1,9,24,32,47,54), labels=labs)
   axis(side=1, at=c(1,5,20,28,43,50))
   #mtext('Trial & Task', side = 1, outer = TRUE, line=-1, cex = 1)
-  axis(side=2, at=c(0, 100, 150, 200, 250, 300),las=2)
+  axis(side=2, at=c(0, 100, 150, 200, 250),las=2)
   
   #abline(h = c(400,700), col = 'black', lty = 2)
   abline(v = c(4.5,19.5,27.5,42.5), col = 8, lty = 2)
   
-  #localization
-  lines(X1,Y[1:4], col = alpha("#696969ff", 1))#aligned
-  lines(X3, Y[5:19], col = alpha("#e51636ff", 1))#rotation
-  lines(X5, Y[20:27], col = alpha("#ff8200ff", 1))#rotwashout
-  lines(X7, Y[28:42], col = alpha("#005de4ff", 1))#mirror
-  lines(X9, Y[43:50], col = alpha("#c400c4ff", 1))#mirwashout
-  
-  polygon(x = c(X1, rev(X1)), y = c(YLow[1:4], rev(YUp[1:4])), border=NA, col="#6969692f")
+  polygon(x = c(X1, rev(X1)), y = c(YLow[1:4], rev(YUp[1:4])), border=NA, col=alpha("#b4b4b4",.5))
   polygon(x = c(X3, rev(X3)), y = c(YLow[5:19], rev(YUp[5:19])), border=NA, col="#e516362f")
-  polygon(x = c(X5, rev(X5)), y = c(YLow[20:27], rev(YUp[20:27])), border=NA, col="#ff82002f")
+  polygon(x = c(X5, rev(X5)), y = c(YLow[20:27], rev(YUp[20:27])), border=NA, col="#e516362f")
   polygon(x = c(X7, rev(X7)), y = c(YLow[28:42], rev(YUp[28:42])), border=NA, col="#005de42f")
-  polygon(x = c(X9, rev(X9)), y = c(YLow[43:50], rev(YUp[43:50])), border=NA, col="#c400c42f")
+  polygon(x = c(X9, rev(X9)), y = c(YLow[43:50], rev(YUp[43:50])), border=NA, col="#005de42f")
+  
+  lines(X1,Y[1:4], col = alpha("#000000", 1))#aligned
+  lines(X3, Y[5:19], col = alpha("#e51636ff", 1))#rotation
+  lines(X5, Y[20:27], col = alpha("#e51636ff", 1))#rotwashout
+  lines(X7, Y[28:42], col = alpha("#005de4ff", 1))#mirror
+  lines(X9, Y[43:50], col = alpha("#005de4ff", 1))#mirwashout
+  
+
   
   #add legend
-  legend(43,300,legend=c('Aligned','Rotation','Washout: ROT','Mirror Reversal','Washout: MIR'),
-         col=c("#696969ff", "#e51636ff", "#ff8200ff", "#005de4ff", "#c400c4ff"),
+  legend(27,50,legend=c('Aligned','Rotation and washout','Mirror Reversal and washout'),
+         col=c("#000000", "#e51636ff", "#005de4ff"),
          lty=1,bty='n',cex=0.8,lwd=2)
   
   #close everything if you saved plot as svg
@@ -2365,7 +2367,7 @@ plotIBlockedMT <- function(target='inline'){
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig7I_movementtime.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig6_I_movementtime.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   #read in the csv files and plot them in one big plot
@@ -2433,7 +2435,7 @@ plotBlockedMT <- function(target='inline'){
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig7_movementtime.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig6_movementtime.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
   }
   
   

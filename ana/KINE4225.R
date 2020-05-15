@@ -1,7 +1,7 @@
 source('ana/shared.R')
 source('ana/learningRates.R')
 
-#Plots for Neuromatch 2.0 (2020)----
+#Additional Plots for Neuromatch 2.0 (2020)----
 plotPTypeLearningCurvesWONear <- function(perturb = c('ROT', 'MIR'), group = 'noninstructed', target='inline') {
   
   
@@ -16,8 +16,8 @@ plotPTypeLearningCurvesWONear <- function(perturb = c('ROT', 'MIR'), group = 'no
   #NA to create empty plot
   # could maybe use plot.new() ?
   plot(NA, NA, xlim = c(0,61), ylim = c(-200,200), 
-       xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "Reach Learning over Time", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+       xlab = "Trial", ylab = "Amount of compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   abline(h = c(-100,0, 100), col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 20, 40, 60)) #tick marks for x axis
   axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
@@ -68,7 +68,7 @@ plotPTypeLearningCurves <- function(perturb = c('ROT', 'MIR'), group = 'noninstr
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/pres/Fig02_NI_learningcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/pres/Fig02_NI_learningcurve.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -77,8 +77,8 @@ plotPTypeLearningCurves <- function(perturb = c('ROT', 'MIR'), group = 'noninstr
   #NA to create empty plot
   # could maybe use plot.new() ?
   plot(NA, NA, xlim = c(0,91), ylim = c(-200,200), 
-       xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "Reach Learning over Time", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+       xlab = "Trial", ylab = "Amount of compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   abline(h = c(-100,0, 100), col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 30, 60, 90)) #tick marks for x axis
   axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
@@ -111,7 +111,7 @@ plotPTypeLearningCurves <- function(perturb = c('ROT', 'MIR'), group = 'noninstr
   }
   
   #add legend
-  legend(70,-150,legend=c('Rotation','Mirror Reversal'),
+  legend(65,-150,legend=c('Visuomotor rotation','Mirror reversal'),
          col=c(colourscheme[['ROT']][['S']],colourscheme[['MIR']][['S']]),
          lty=1,bty='n',cex=1,lwd=2)
   
@@ -153,7 +153,7 @@ plotPTypeAftereffects <- function(perturb = c('ROT', 'MIR'), group = 'noninstruc
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/pres/Fig03_NI_aftereffects.svg', width=8, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/pres/Fig03_NI_aftereffects.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -162,8 +162,8 @@ plotPTypeAftereffects <- function(perturb = c('ROT', 'MIR'), group = 'noninstruc
   #NA to create empty plot
   # could maybe use plot.new() ?
   plot(NA, NA, xlim = c(0,49), ylim = c(-200,200), 
-       xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "Rate of Deadaptation", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+       xlab = "Trial", ylab = "Amount of compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   abline(h = c(-100,0, 100), col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 15, 30, 48)) #tick marks for x axis
   axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
@@ -196,7 +196,7 @@ plotPTypeAftereffects <- function(perturb = c('ROT', 'MIR'), group = 'noninstruc
   }
   
   #add legend
-  legend(25,-100,legend=c('Rotation','Mirror Reversal'),
+  legend(35,-150,legend=c('Visuomotor rotation','Mirror reversal'),
          col=c(colourscheme[['ROT']][['S']],colourscheme[['MIR']][['S']]),
          lty=1,bty='n',cex=1,lwd=2)
   

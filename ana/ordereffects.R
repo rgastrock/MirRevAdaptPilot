@@ -104,7 +104,7 @@ plotNIROTOrderEffects <- function(group = 'noninstructed', conditions = c(1,2), 
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3ROT_NI_ordereffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_ROT_NI_ordereffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -163,7 +163,7 @@ plotIROTOrderEffects <- function(group = 'instructed', conditions = c(1,2), targ
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3ROT_I_ordereffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_ROT_I_ordereffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -320,7 +320,7 @@ plotNIMIROrderEffects <- function(group = 'noninstructed', conditions = c(1,2), 
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3MIR_NI_ordereffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_MIR_NI_ordereffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -379,7 +379,7 @@ plotIMIROrderEffects <- function(group = 'instructed', conditions = c(1,2), targ
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3MIR_I_ordereffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_MIR_I_ordereffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -851,7 +851,7 @@ plotNIROTTargetEffects <- function(group = 'noninstructed', conditions = c(1,2),
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3ROT_NI_targeteffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_ROT_NI_targeteffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -910,7 +910,7 @@ plotIROTTargetEffects <- function(group = 'instructed', conditions = c(1,2), tar
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3ROT_I_targeteffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_ROT_I_targeteffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -1271,7 +1271,7 @@ plotNIMIRTargetEffects <- function(group = 'noninstructed', conditions = c(1,2),
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3MIR_NI_targeteffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_MIR_NI_targeteffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -1330,7 +1330,7 @@ plotIMIRTargetEffects <- function(group = 'instructed', conditions = c(1,2), tar
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3MIR_I_targeteffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_MIR_I_targeteffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -1593,7 +1593,7 @@ plotNIROTAxisEffects <- function(group = 'noninstructed', conditions = c(1,2), t
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3ROT_NI_axiseffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_ROT_NI_axiseffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -1652,7 +1652,7 @@ plotIROTAxisEffects <- function(group = 'instructed', conditions = c(1,2), targe
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3ROT_I_axiseffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_ROT_I_axiseffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -1809,7 +1809,7 @@ plotNIMIRAxisEffects <- function(group = 'noninstructed', conditions = c(1,2), t
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3MIR_NI_axiseffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_MIR_NI_axiseffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -1868,7 +1868,7 @@ plotIMIRAxisEffects <- function(group = 'instructed', conditions = c(1,2), targe
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3MIR_I_axiseffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig2_MIR_I_axiseffects.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot

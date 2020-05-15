@@ -280,7 +280,7 @@ plotROTAftereffects <- function(groups = c('noninstructed', 'instructed'),target
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig4ROT_aftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig4_ROT_aftereffects.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -288,8 +288,8 @@ plotROTAftereffects <- function(groups = c('noninstructed', 'instructed'),target
   
   #NA to create empty plot
   # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,49), ylim = c(-200,200), 
-       xlab = "Trial", ylab = "Amount of Compensation (°)", frame.plot = FALSE, #frame.plot takes away borders
+  plot(NA, NA, xlim = c(0,49), ylim = c(-200,210), 
+       xlab = "Trial", ylab = "Amount of compensation (°)", frame.plot = FALSE, #frame.plot takes away borders
        main = "Rate of Deadaptation: ROT", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 15, 30, 48)) #tick marks for x axis
@@ -477,7 +477,7 @@ plotMIRAftereffects <- function(groups = c('noninstructed', 'instructed'),target
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig4MIR_aftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig4_MIR_aftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -534,7 +534,7 @@ plotMIRAftereffects <- function(groups = c('noninstructed', 'instructed'),target
 plotAftereffects <- function(target='inline'){
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig4_aftereffects.svg', width=7, height=10, pointsize=10, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig4_aftereffects.svg', width=7, height=10, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   par(mfrow = c(2,1))
@@ -592,20 +592,20 @@ plotBlockedIndRAE <- function(group, maxppid, location, targetno, perturb, targe
     
     #but we can save plot as svg file
     if (target=='svg') {
-      svglite(file='doc/fig/Fig5ROT_BlockedIndAftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+      svglite(file='doc/fig/Fig4_ROT_BlockedIndAftereffects.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
     }
     
     data <- getBlockedIndividualAftereffects(group = group, maxppid = maxppid, location = location, targetno = targetno, perturb = perturb)
     #remove pp004 because they anti-learned
     #data <- subset(data, participant != 'pp4')
     
-    plot(NA, NA, xlim = c(0,9), ylim = c(-200,200), 
-         xlab = "Block", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
-         main = "Blocked Individual Aftereffects: ROT", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    plot(NA, NA, xlim = c(0,9), ylim = c(-200,210), 
+         xlab = "Block", ylab = "Amount of compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "Visuomotor rotation", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
     abline(h = 100, col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
     abline(h = 0, col = '#000000', lty = 2)
-    axis(1, at=c(1:8))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
-    axis(2, at = c(-200, -150, -100, -50, 0, 50, 100, 150, 200)) #tick marks for y axis
+    axis(1, at=c(1,3,6,8))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
+    axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
     
     
     participants <- unique(data$participant)
@@ -677,20 +677,20 @@ plotBlockedIndRAE <- function(group, maxppid, location, targetno, perturb, targe
     
     #but we can save plot as svg file
     if (target=='svg') {
-      svglite(file='doc/fig/Fig5MIR_BlockedIndAftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+      svglite(file='doc/fig/Fig4_MIR_BlockedIndAftereffects.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
     }
     
     data <- getBlockedIndividualAftereffects(group = group, maxppid = maxppid, location = location, targetno = targetno, perturb = perturb)
     #remove pp004 because they anti-learned
     #data <- subset(data, participant != 'pp4')
     
-    plot(NA, NA, xlim = c(0,9), ylim = c(-200,200), 
-         xlab = "Block", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
-         main = "Blocked Individual Aftereffects: MIR", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    plot(NA, NA, xlim = c(0,9), ylim = c(-200,210), 
+         xlab = "Block", ylab = "Amount of compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "Mirror reversal", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
     abline(h = 100, col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
     abline(h = 0, col = '#000000', lty = 2)
-    axis(1, at=c(1:8))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
-    axis(2, at = c(-200, -150, -100, -50, 0, 50, 100, 150, 200)) #tick marks for y axis
+    axis(1, at=c(1,3,6,8))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
+    axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
     
     
     participants <- unique(data$participant)
@@ -774,7 +774,7 @@ plotROTMIRRAE <- function(groups = c('noninstructed'), noninstmax = 15, instmax 
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig5_BlockedIndAftereffects.svg', width=12, height=7, pointsize=10, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig4_BlockedIndAftereffects.svg', width=18, height=7, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   
