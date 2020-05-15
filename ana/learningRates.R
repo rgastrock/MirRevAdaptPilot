@@ -1652,7 +1652,7 @@ plotCollapsedBlockedIndLC <- function(group='noninstructed', maxppid=15, locatio
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3_AllBlockedIndLearningCurve.svg', width=9, height=7, pointsize=16, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_AllBlockedIndLearningCurve.svg', width=9, height=10, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   plot(NA, NA, xlim = c(0,16), ylim = c(-200,210), 

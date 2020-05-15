@@ -801,7 +801,7 @@ plotCollapsedBlockedIndRAE <- function(group='noninstructed', maxppid=15, locati
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig4_AllBlockedIndAftereffects.svg', width=9, height=7, pointsize=16, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig4_AllBlockedIndAftereffects.svg', width=9, height=10, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   plot(NA, NA, xlim = c(0,9), ylim = c(-200,210), 
