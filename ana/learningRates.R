@@ -1648,6 +1648,81 @@ plotROTMIRLC <- function(groups = c('noninstructed'), noninstmax = 15, instmax =
   
 }
 
+plotCollapsedBlockedIndLC <- function(group='noninstructed', maxppid=15, location='maxvel', targetno=6, perturbtypes=c('ROT','MIR'), target='inline'){
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/Fig3_AllBlockedIndLearningCurve.svg', width=9, height=7, pointsize=16, system_fonts=list(sans="Arial"))
+  }
+  
+  plot(NA, NA, xlim = c(0,16), ylim = c(-200,210), 
+       xlab = "Block", ylab = "Amount of compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = 100, col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  abline(h = 0, col = '#000000', lty = 2)
+  axis(1, at=c(1, 5, 10, 15))#, labels=c('Exclusive', 'Inclusive')) #tick marks for x axis
+  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  
+  for(perturb in perturbtypes){
+    data <- getBlockedIndividualLearningCurves(group = group, maxppid = maxppid, location = location, targetno = targetno, perturb = perturb)
+    
+    participants <- unique(data$participant)
+    
+    colourscheme <- getPtypeColourScheme(perturb = perturb)
+    
+    for (pp in participants){
+      row.idx <- which(data$participant == pp)
+      col <- colourscheme[[perturb]][['T']]
+      #lines(data$trial[row.idx],data$reachdev[row.idx], lwd = 2, lty = 1, col = col)
+      if(perturb == 'ROT'){
+        points(data$trial[row.idx]-(1/4),data$reachdev[row.idx], pch = 16, cex=1.5, col = alpha(col, .15))
+      } else if (perturb == 'MIR'){
+        points(data$trial[row.idx]+(1/4),data$reachdev[row.idx], pch = 16, cex=1.5, col = alpha(col, .15))
+      }
+      
+    }
+    
+    blockno <- unique(data$trial)
+    allmeans <- data.frame()
+    for(block in blockno){
+      dat <- data[which(data$trial == block),]
+      meandist <- getConfidenceInterval(data=dat$reachdev, method='bootstrap', resamples=5000, FUN=mean, returndist=TRUE)
+      blockmean <- mean(dat$reachdev)
+      col <- colourscheme[[perturb]][['S']]
+      if(perturb == 'ROT'){
+        lines(x=rep((block-(1/4)),2),y=meandist$CI95,col=col) #as.character(styles$color_solid[groupno]))
+        points(x=(block-(1/4)),y=blockmean,pch=16,cex=1.5,col=col) #as.character(styles$color_solid[groupno]))
+      } else if(perturb == 'MIR'){
+        lines(x=rep((block+(1/4)),2),y=meandist$CI95,col=col) #as.character(styles$color_solid[groupno]))
+        points(x=(block+(1/4)),y=blockmean,pch=16,cex=1.5,col=col) #as.character(styles$color_solid[groupno]))
+      }
+      
+      
+      
+      if (prod(dim(allmeans)) == 0){
+        allmeans <- blockmean
+      } else {
+        allmeans <- rbind(allmeans, blockmean)
+      }
+      
+    }
+    
+    if(perturb == 'ROT'){
+      lines(x=c((1-(1/4)):(length(blockno)-(1/4))),y=allmeans[,1], lwd = 2, lty = 1, col = col)
+    } else if(perturb == 'MIR'){
+      lines(x=c((1+(1/4)):(length(blockno)+(1/4))),y=allmeans[,1], lwd = 2, lty = 1, col = col)
+    }
+    
+  }
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+  
+
 #Learning Curves STATS----
 #Stats are currently only for Non-instructed group
 
