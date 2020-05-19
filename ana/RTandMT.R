@@ -881,7 +881,7 @@ plotNIBlockedRT <- function(target='inline'){
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig5_NI_reactiontime.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig5_NI_reactiontime.svg', width=11.5, height=8.5, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   #read in the csv files and plot them in one big plot
@@ -2300,7 +2300,7 @@ plotNIBlockedMT <- function(target='inline'){
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig6_NI_movementtime.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig6_NI_movementtime.svg', width=11.5, height=8.5, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   #read in the csv files and plot them in one big plot

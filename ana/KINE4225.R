@@ -68,7 +68,7 @@ plotPTypeLearningCurves <- function(perturb = c('ROT', 'MIR'), group = 'noninstr
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/pres/Fig02_NI_learningcurve.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/pres/Fig02_NI_learningcurve.svg', width=11.5, height=8.5, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -111,7 +111,7 @@ plotPTypeLearningCurves <- function(perturb = c('ROT', 'MIR'), group = 'noninstr
   }
   
   #add legend
-  legend(65,-150,legend=c('Visuomotor rotation','Mirror reversal'),
+  legend(60,-150,legend=c('Visuomotor rotation','Mirror reversal'),
          col=c(colourscheme[['ROT']][['S']],colourscheme[['MIR']][['S']]),
          lty=1,bty='n',cex=1,lwd=2)
   
@@ -153,7 +153,7 @@ plotPTypeAftereffects <- function(perturb = c('ROT', 'MIR'), group = 'noninstruc
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/pres/Fig03_NI_aftereffects.svg', width=12, height=7, pointsize=16, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/pres/Fig03_NI_aftereffects.svg', width=9.5, height=8.5, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   # create plot

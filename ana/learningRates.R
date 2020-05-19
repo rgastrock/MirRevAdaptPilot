@@ -1652,7 +1652,7 @@ plotCollapsedBlockedIndLC <- function(group='noninstructed', maxppid=15, locatio
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3_AllBlockedIndLearningCurve.svg', width=9, height=10, pointsize=16, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_AllBlockedIndLearningCurve.svg', width=11.5, height=10.5, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   plot(NA, NA, xlim = c(0,16), ylim = c(-200,210), 
@@ -1675,9 +1675,9 @@ plotCollapsedBlockedIndLC <- function(group='noninstructed', maxppid=15, locatio
       col <- colourscheme[[perturb]][['T']]
       #lines(data$trial[row.idx],data$reachdev[row.idx], lwd = 2, lty = 1, col = col)
       if(perturb == 'ROT'){
-        points(data$trial[row.idx]-(1/4),data$reachdev[row.idx], pch = 16, cex=1.5, col = alpha(col, .15))
+        points(data$trial[row.idx]-(1/6),data$reachdev[row.idx], pch = 16, cex=1.5, col = alpha(col, .15))
       } else if (perturb == 'MIR'){
-        points(data$trial[row.idx]+(1/4),data$reachdev[row.idx], pch = 16, cex=1.5, col = alpha(col, .15))
+        points(data$trial[row.idx]+(1/6),data$reachdev[row.idx], pch = 16, cex=1.5, col = alpha(col, .15))
       }
       
     }
@@ -1690,11 +1690,11 @@ plotCollapsedBlockedIndLC <- function(group='noninstructed', maxppid=15, locatio
       blockmean <- mean(dat$reachdev)
       col <- colourscheme[[perturb]][['S']]
       if(perturb == 'ROT'){
-        lines(x=rep((block-(1/4)),2),y=meandist$CI95,col=col) #as.character(styles$color_solid[groupno]))
-        points(x=(block-(1/4)),y=blockmean,pch=16,cex=1.5,col=col) #as.character(styles$color_solid[groupno]))
+        lines(x=rep((block-(1/6)),2),y=meandist$CI95,col=col) #as.character(styles$color_solid[groupno]))
+        points(x=(block-(1/6)),y=blockmean,pch=16,cex=1.5,col=col) #as.character(styles$color_solid[groupno]))
       } else if(perturb == 'MIR'){
-        lines(x=rep((block+(1/4)),2),y=meandist$CI95,col=col) #as.character(styles$color_solid[groupno]))
-        points(x=(block+(1/4)),y=blockmean,pch=16,cex=1.5,col=col) #as.character(styles$color_solid[groupno]))
+        lines(x=rep((block+(1/6)),2),y=meandist$CI95,col=col) #as.character(styles$color_solid[groupno]))
+        points(x=(block+(1/6)),y=blockmean,pch=16,cex=1.5,col=col) #as.character(styles$color_solid[groupno]))
       }
       
       
@@ -1708,9 +1708,9 @@ plotCollapsedBlockedIndLC <- function(group='noninstructed', maxppid=15, locatio
     }
     
     if(perturb == 'ROT'){
-      lines(x=c((1-(1/4)):(length(blockno)-(1/4))),y=allmeans[,1], lwd = 2, lty = 1, col = col)
+      lines(x=c((1-(1/6)):(length(blockno)-(1/6))),y=allmeans[,1], lwd = 2, lty = 1, col = col)
     } else if(perturb == 'MIR'){
-      lines(x=c((1+(1/4)):(length(blockno)+(1/4))),y=allmeans[,1], lwd = 2, lty = 1, col = col)
+      lines(x=c((1+(1/6)):(length(blockno)+(1/6))),y=allmeans[,1], lwd = 2, lty = 1, col = col)
     }
     
   }
