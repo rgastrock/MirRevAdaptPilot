@@ -11,6 +11,8 @@ source('ana/learningRates.R')
 # every new sample's absolute vector will be calculated using the previous sample as its origin. Then all
 # these values are added to come up with a total path length.
 #Repeat this process for all trials within one participant. Then show mean measures across participants for every trial.
+# Currently, measures are in cm. But can normalize this (divide path length by distance between target and home) to make it comparable
+# to other experiments that have different measures.
 
 getParticipantPathLength <- function(group, id, taskno, task){
   dat <- getParticipantTaskData(group=group, id=id, taskno=taskno, task=task)
@@ -122,7 +124,7 @@ plotAlignedPathLength <- function(groups = c('noninstructed'),target='inline') {
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig7_ALIGNED_pathlength.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig7_ALIGNED_pathlength.svg', width=8, height=7, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -132,7 +134,7 @@ plotAlignedPathLength <- function(groups = c('noninstructed'),target='inline') {
   # could maybe use plot.new() ?
   plot(NA, NA, xlim = c(0,49), ylim = c(10,20), 
        xlab = "Trial", ylab = "Path Length (cm)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "Path Length across Trials: Aligned", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+       main = 'Path Length: Aligned', xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   #abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 12, 24, 36, 48)) #tick marks for x axis
   axis(2, at = c(10, 12, 14, 16, 18)) #tick marks for y axis
@@ -165,9 +167,9 @@ plotAlignedPathLength <- function(groups = c('noninstructed'),target='inline') {
   }
   
   #add legend
-  # legend(70,-100,legend=c('Non-Instructed','Instructed'),
-  #        col=c(colourscheme[['noninstructed']][['S']],colourscheme[['instructed']][['S']]),
-  #        lty=1,bty='n',cex=1,lwd=2)
+   # # legend(70,-100,legend=c('Aligned'),
+   #        col=c(colourscheme[['noninstructed']][['S']],colourscheme[['instructed']][['S']]),
+   #        lty=1,bty='n',cex=1,lwd=2)
   
   #close everything if you saved plot as svg
   if (target=='svg') {
@@ -317,7 +319,7 @@ plotPTypePathLength <- function(perturb = c('ROT', 'MIR'), group = 'noninstructe
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig7_NI_pathlength.svg', width=11.5, height=8.5, pointsize=16, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig7_NI_pathlength.svg', width=11.5, height=7, pointsize=16, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -327,7 +329,7 @@ plotPTypePathLength <- function(perturb = c('ROT', 'MIR'), group = 'noninstructe
   # could maybe use plot.new() ?
   plot(NA, NA, xlim = c(0,91), ylim = c(10,20), 
        xlab = "Trial", ylab = "Path Length (cm)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+       main = "Path Length: Rot and Mir", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   #abline(h = c(-100,0, 100), col = '#000000', lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 30, 60, 90)) #tick marks for x axis
   axis(2, at = c(10, 12, 14, 16, 18)) #tick marks for y axis
