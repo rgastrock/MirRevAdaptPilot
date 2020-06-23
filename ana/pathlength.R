@@ -57,7 +57,7 @@ getParticipantPathLength <- function(group, id, taskno, task){
   return(alldat)
   
 }
-
+#Aligned Reaches-----
 getAlignedGroupPathLength <- function(group, maxppid){
   
   if (group == 'noninstructed'){
@@ -175,7 +175,7 @@ plotAlignedPathLength <- function(groups = c('noninstructed'),target='inline') {
   }
   
 }
-
+#Rotated reaches-----
 getROTGroupPathLength <- function(group, maxppid){
   
   if (group == 'noninstructed'){
@@ -243,7 +243,7 @@ getROTPathLengthCI <- function(group, maxppid, type){
     
   }
 }
-
+#Mirror reaches----
 getMIRGroupPathLength <- function(group, maxppid){
   
   if (group == 'noninstructed'){
@@ -311,7 +311,7 @@ getMIRPathLengthCI <- function(group, maxppid, type){
     
   }
 }
-
+#plots for ROT and MIR----
 plotPTypePathLength <- function(perturb = c('ROT', 'MIR'), group = 'noninstructed', target='inline') {
   
   
