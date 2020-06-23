@@ -130,12 +130,12 @@ plotAlignedPathLength <- function(groups = c('noninstructed'),target='inline') {
   
   #NA to create empty plot
   # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,49), ylim = c(5,20), 
+  plot(NA, NA, xlim = c(0,49), ylim = c(10,20), 
        xlab = "Trial", ylab = "Path Length (cm)", frame.plot = FALSE, #frame.plot takes away borders
        main = "Path Length across Trials: Aligned", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   #abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 12, 24, 36, 48)) #tick marks for x axis
-  axis(2, at = c(5, 10, 15, 20)) #tick marks for y axis
+  axis(2, at = c(10, 12, 14, 16, 18)) #tick marks for y axis
   
   for(group in groups){
     #read in files created by getGroupConfidenceInterval in filehandling.R
