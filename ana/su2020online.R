@@ -229,7 +229,7 @@ getAlGroupMirrorConfInt <- function(type){
 #Here, each column will have participant code/identifier as header. If some participants do not learn to compensate,
 #we can remove them from further analysis using these as identifiers.
 
-get30GroupMirrorLC <- function(){
+getGroupMirrorLC <- function(group){
   
   datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
   #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
@@ -239,7 +239,12 @@ get30GroupMirrorLC <- function(){
     datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
     mdat <- getParticipantMirrorLC(filename = datafilename)
-    mdat <- mdat[which(mdat$targetangle_deg == 30),] #get 30 degrees only
+    if(group == '30'){
+      mdat <- mdat[which(mdat$targetangle_deg == 30),] #get 30 degrees only
+    } else if(group == '60'){
+      mdat <- mdat[which(mdat$targetangle_deg == 60),] #get 60 degrees only
+    }
+    
     
     ppreaches <- mdat$reachdeviation_deg #get reach deviations column from learning curve data
     trial <- c(1:length(ppreaches)) #sets up trial column
@@ -255,110 +260,60 @@ get30GroupMirrorLC <- function(){
       names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
     }
   }
+  
+  for (trialno in dataoutput$trial){
+    #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+    ndat <- as.numeric(dataoutput[trialno, 2:ncol(dataoutput)])
+    trialmu <- mean(ndat, na.rm = TRUE)
+    trialsigma <- sd(ndat, na.rm = TRUE)
+    #print(trialsigma)
+    trialclip <- abs(trialmu) + (trialsigma * 2)
+
+    ndat[which(abs(ndat) > trialclip)] <- NA
+
+    dataoutput[trialno, 2:ncol(dataoutput)] <- ndat
+  }
+  
   return(dataoutput)
-  #write.csv(dataoutput, file='data/mReversalNewAlpha3-master/data/processed/learningcurves.csv', row.names = F) 
+  
+  #can keep track of deleted trials here, by using the saved csv file or counting NA values in dataoutput
+  #write.csv(dataoutput, file='data/mReversalNewAlpha3-master/data/processed/30_learningcurves.csv', row.names = F) 
   #Note: multiple files have no step 2 or have many trials without step 2
   #These participant files have been removed
   #check for any more NA values:
   #names(which(colSums(is.na(dataoutput))>0))
 }
 
-get30GroupMirrorConfInt <- function(type){
-  
-  data <- get30GroupMirrorLC()
-  
-  trialno <- data$trial
-  data1 <- as.matrix(data[,2:dim(data)[2]])
-  
-  confidence <- data.frame()
-  
-  
-  for (trial in trialno){
-    cireaches <- data1[which(data$trial == trial), ]
+getGroupMirrorConfInt <- function(groups = c('30','60'), type = 't'){
+  for(group in groups){
+    data <- getGroupMirrorLC(group = group)
     
-    if (type == "t"){
-      cireaches <- cireaches[!is.na(cireaches)]
-      citrial <- t.interval(data = cireaches, variance = var(cireaches), conf.level = 0.95)
-    } else if(type == "b"){
-      citrial <- getBSConfidenceInterval(data = cireaches, resamples = 1000)
-    }
+    trialno <- data$trial
+    data1 <- as.matrix(data[,2:dim(data)[2]])
     
-    if (prod(dim(confidence)) == 0){
-      confidence <- citrial
-    } else {
-      confidence <- rbind(confidence, citrial)
-    }
+    confidence <- data.frame()
     
-    write.csv(confidence, file='data/mReversalNewAlpha3-master/data/processed/30_Learningcurves_CI.csv', row.names = F) 
     
-  }
-  
-}
-
-get60GroupMirrorLC <- function(){
-  
-  datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
-  #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
-  
-  dataoutput<- data.frame() #create place holder
-  for(datafilenum in c(1:length(datafilenames))){
-    datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
-    cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
-    mdat <- getParticipantMirrorLC(filename = datafilename)
-    mdat <- mdat[which(mdat$targetangle_deg == 60),] #get 60 degrees only
-    
-    ppreaches <- mdat$reachdeviation_deg #get reach deviations column from learning curve data
-    trial <- c(1:length(ppreaches)) #sets up trial column
-    ppdat <- data.frame(trial, ppreaches)
-    
-    ppname <- unique(mdat$participant)
-    names(ppdat)[names(ppdat) == 'ppreaches'] <- ppname
-    
-    if (prod(dim(dataoutput)) == 0){
-      dataoutput <- ppdat
-    } else {
-      dataoutput <- cbind(dataoutput, ppreaches)
-      names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
+    for (trial in trialno){
+      cireaches <- data1[which(data$trial == trial), ]
+      
+      if (type == "t"){
+        cireaches <- cireaches[!is.na(cireaches)]
+        citrial <- t.interval(data = cireaches, variance = var(cireaches), conf.level = 0.95)
+      } else if(type == "b"){
+        citrial <- getBSConfidenceInterval(data = cireaches, resamples = 1000)
+      }
+      
+      if (prod(dim(confidence)) == 0){
+        confidence <- citrial
+      } else {
+        confidence <- rbind(confidence, citrial)
+      }
+      
+      write.csv(confidence, file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Learningcurves_CI.csv', group), row.names = F) 
+      
     }
   }
-  return(dataoutput)
-  #write.csv(dataoutput, file='data/mReversalNewAlpha3-master/data/processed/learningcurves.csv', row.names = F) 
-  #Note: multiple files have no step 2 or have many trials without step 2
-  #These participant files have been removed
-  #check for any more NA values:
-  #names(which(colSums(is.na(dataoutput))>0))
-}
-
-get60GroupMirrorConfInt <- function(type){
-  
-  data <- get60GroupMirrorLC()
-  
-  trialno <- data$trial
-  data1 <- as.matrix(data[,2:dim(data)[2]])
-  
-  confidence <- data.frame()
-  
-  
-  for (trial in trialno){
-    cireaches <- data1[which(data$trial == trial), ]
-    
-    if (type == "t"){
-      cireaches <- cireaches[!is.na(cireaches)]
-      citrial <- t.interval(data = cireaches, variance = var(cireaches), conf.level = 0.95)
-    } else if(type == "b"){
-      citrial <- getBSConfidenceInterval(data = cireaches, resamples = 1000)
-    }
-    
-    if (prod(dim(confidence)) == 0){
-      confidence <- citrial
-    } else {
-      confidence <- rbind(confidence, citrial)
-    }
-    
-    write.csv(confidence, file='data/mReversalNewAlpha3-master/data/processed/60_Learningcurves_CI.csv', row.names = F) 
-    
-  }
-  
 }
 
 plotMirrorLC <- function(groups = c('30', '60'), target='inline') {
@@ -366,7 +321,7 @@ plotMirrorLC <- function(groups = c('30', '60'), target='inline') {
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig1_learningcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig1_learningcurve.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -374,9 +329,9 @@ plotMirrorLC <- function(groups = c('30', '60'), target='inline') {
   
   #NA to create empty plot
   # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,46), ylim = c(0,125), 
+  plot(NA, NA, xlim = c(0,46), ylim = c(-10,125), 
        xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "Reach Learning over Time: MIR", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+       main = "Rate of learning per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 15, 30, 45)) #tick marks for x axis
   axis(2, at = c(0, 30, 60, 90, 120)) #tick marks for y axis
@@ -409,7 +364,7 @@ plotMirrorLC <- function(groups = c('30', '60'), target='inline') {
   }
   
   #add legend
-   legend(30,40,legend=c('30-deg target','60-deg target'),
+   legend(32,25,legend=c('30° target','60° target'),
          col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
          lty=1,bty='n',cex=1,lwd=2)
   
@@ -671,6 +626,193 @@ plotLearnedLC <- function(target='inline') {
 
 
 
+
+
+#Reachaftereffects----
+
+getParticipantMirrorRAE <- function(filename){
+  
+  #first, implement baseline correction
+  #get Aligned biases
+  dat <- handleOneFile(filename = filename)
+  adat <- dat[which(dat$taskno == 1), ]
+  biases <- aggregate(reachdeviation_deg ~ targetangle_deg, data= adat, FUN = median) 
+  
+  mdat <- dat[which(dat$taskno == 3),]
+  #print (biases)
+  
+  for (biasno in c(1: dim(biases)[1])){ #from 1 to however many biases there are in data
+
+    target<- biases[biasno, 'targetangle_deg'] #get corresponding target angle
+    bias<- biases[biasno, 'reachdeviation_deg'] #get corresponding reachdev or bias
+
+    #subtract bias from reach deviation for rotated session only
+    mdat$reachdeviation_deg[which(mdat$targetangle_deg == target)] <- mdat$reachdeviation_deg[which(mdat$targetangle_deg == target)] - bias
+
+  }
+  
+  #next, calculate percentage of compensation (since mirror reversal would not have a set magnitude for the perturbation)
+  #angles <- unique(mdat$targetangle_deg)
+  #mdat['compensate'] <- NA
+  
+  #for (target in angles){
+  #if (target == 30){
+  #mdat$reachdeviation_deg[which(mdat$targetangle_deg == 30)] <- ((mdat$reachdeviation_deg[which(mdat$targetangle_deg == 30)])/150)*100
+  #mdat$compensate[which(mdat$targetangle_deg == target)] <- 120
+  #} else if (target == 60){
+  #mdat$reachdeviation_deg[which(mdat$targetangle_deg == 60)] <- ((mdat$reachdeviation_deg[which(mdat$targetangle_deg == 60)])/120)*100
+  #mdat$compensate[which(mdat$targetangle_deg == target)] <- 60
+  #}
+  # }
+  
+  return(mdat)
+}
+
+getGroupMirrorRAE <- function(group){
+  
+  datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
+  #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  
+  dataoutput<- data.frame() #create place holder
+  for(datafilenum in c(1:length(datafilenames))){
+    datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+    mdat <- getParticipantMirrorRAE(filename = datafilename)
+    if(group == '30'){
+      mdat <- mdat[which(mdat$targetangle_deg == 30),] #get 30 degrees only
+    } else if(group == '60'){
+      mdat <- mdat[which(mdat$targetangle_deg == 60),] #get 60 degrees only
+    }
+    
+    
+    ppreaches <- mdat$reachdeviation_deg #get reach deviations column from learning curve data
+    trial <- c(1:length(ppreaches)) #sets up trial column
+    ppdat <- data.frame(trial, ppreaches)
+    
+    ppname <- unique(mdat$participant)
+    names(ppdat)[names(ppdat) == 'ppreaches'] <- ppname
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- ppdat
+    } else {
+      dataoutput <- cbind(dataoutput, ppreaches)
+      names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
+    }
+  }
+  
+  for (trialno in dataoutput$trial){
+    #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+    ndat <- as.numeric(dataoutput[trialno, 2:ncol(dataoutput)])
+    trialmu <- mean(ndat, na.rm = TRUE)
+    trialsigma <- sd(ndat, na.rm = TRUE)
+    #print(trialsigma)
+    trialclip <- abs(trialmu) + (trialsigma * 2)
+    
+    ndat[which(abs(ndat) > trialclip)] <- NA
+    
+    dataoutput[trialno, 2:ncol(dataoutput)] <- ndat
+  }
+  
+  return(dataoutput)
+  
+  #can keep track of deleted trials here, by using the saved csv file or counting NA values in dataoutput
+  #write.csv(dataoutput, file='data/mReversalNewAlpha3-master/data/processed/30_learningcurves.csv', row.names = F) 
+  #Note: multiple files have no step 2 or have many trials without step 2
+  #These participant files have been removed
+  #check for any more NA values:
+  #names(which(colSums(is.na(dataoutput))>0))
+}
+
+getGroupMirrorRAEConfInt <- function(groups = c('30','60'), type = 't'){
+  for(group in groups){
+    data <- getGroupMirrorRAE(group = group)
+    
+    trialno <- data$trial
+    data1 <- as.matrix(data[,2:dim(data)[2]])
+    
+    confidence <- data.frame()
+    
+    
+    for (trial in trialno){
+      cireaches <- data1[which(data$trial == trial), ]
+      
+      if (type == "t"){
+        cireaches <- cireaches[!is.na(cireaches)]
+        citrial <- t.interval(data = cireaches, variance = var(cireaches), conf.level = 0.95)
+      } else if(type == "b"){
+        citrial <- getBSConfidenceInterval(data = cireaches, resamples = 1000)
+      }
+      
+      if (prod(dim(confidence)) == 0){
+        confidence <- citrial
+      } else {
+        confidence <- rbind(confidence, citrial)
+      }
+      
+      write.csv(confidence, file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Reachaftereffects_CI.csv', group), row.names = F) 
+      
+    }
+  }
+}
+
+plotMirrorRAE <- function(groups = c('30', '60'), target='inline') {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig3_reachaftereffects.svg', width=7, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  meanGroupReaches <- list() #empty list so that it plots the means last
+  
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(NA, NA, xlim = c(0,11), ylim = c(-10,5), 
+       xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Rate of deadaptation per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(0), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  axis(1, at = c(1, 4, 7, 10)) #tick marks for x axis
+  axis(2, at = c(-10, -5, 0, 5)) #tick marks for y axis
+  
+  for(group in groups){
+    #read in files created by getGroupConfidenceInterval in filehandling.R
+    groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Reachaftereffects_CI.csv', group))
+    
+    colourscheme <- getOnlineColourScheme(groups = group)
+    #take only first, last and middle columns of file
+    lower <- groupconfidence[,1]
+    upper <- groupconfidence[,3]
+    mid <- groupconfidence[,2]
+    
+    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    
+    #upper and lower bounds create a polygon
+    #polygon creates it from low left to low right, then up right to up left -> use rev
+    #x is just trial nnumber, y depends on values of bounds
+    polygon(x = c(c(1:10), rev(c(1:10))), y = c(lower, rev(upper)), border=NA, col=col)
+    
+    meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+  }
+  
+  
+  for (group in groups) {
+    # plot mean reaches for each group
+    col <- colourscheme[[group]][['S']]
+    lines(meanGroupReaches[[group]],col=col,lty=1)
+  }
+  
+  #add legend
+  legend(7,-7,legend=c('30° target','60° target'),
+         col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+         lty=1,bty='n',cex=1,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
 
 # renaming files (unused) ----
 # getNewFilenames <- function(){

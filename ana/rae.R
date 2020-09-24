@@ -871,6 +871,238 @@ plotCollapsedBlockedIndRAE <- function(group='noninstructed', maxppid=15, locati
   
 }
 
+# Aftereffects Individual Target Analysis for Mirror----
+# Assess high variance in Mir reversal, by looking into learning curves for each target (7.5, 15, 22.5)
+getRAEParticipantTargetCurve <- function(group, id, location){
+  #same as rotation, we look into percentage of compensation, but note that magnitude to compensate differs per target
+  alignedTraining <- getParticipantTaskData(group, id, taskno = 1, task = 'aligned') #these values will change if need nocursor or localization
+  
+  if (id%%2 == 1){
+    #mirror then rotation if odd id
+    rotatedTraining <- getParticipantTaskData(group, id, taskno = 7, task = 'washout0')
+  } else if (id%%2 == 0){
+    #if pp id is even
+    #rotation first then mirror
+    rotatedTraining <- getParticipantTaskData(group, id, taskno = 13, task = 'washout1')
+  }
+  
+  biases <- getAlignedTrainingBiases(alignedTraining, location = location) #use function to get biases
+  #AT<- getReachAngles(alignedTraining, starttrial = 1, endtrial = 45) #aligned is first 45 trials
+  RT<- getReachAngles(rotatedTraining, starttrial=0, endtrial=47, location = location) #rotated is 90 trials; appended to end of aligned
+  
+  for (biasno in c(1: dim(biases)[1])){ #from 1 to however many biases there are in data
+    
+    target<- biases[biasno, 'targetangle'] #get corresponding target angle
+    bias<- biases[biasno, 'reachdev'] #get corresponding reachdev or bias
+    
+    #subtract bias from reach deviation for rotated session only
+    RT$reachdev[which(RT$targetangle == target)] <- RT$reachdev[which(RT$targetangle == target)] - bias
+    
+  }
+  #after baseline correction, we need to assign specific targets to corresponding magnitudes to compensate
+  #we have 24 possible targets, but they differ depending on which side of mirror axis they are (before or after mirror)
+  #this will affect calculations later on (due to negative values)
+  #so we separate them by amount of compensation, and whether they are before or after mirror axis
+  alltargets15bef <- c(82.5, 172.5, 262.5, 352.5) #should compensate for 15 degrees
+  alltargets15aft <- c(7.5, 97.5, 187.5, 277.5)
+  alltargets30bef <- c(75, 165, 255, 345) #30 degrees
+  alltargets30aft <- c(15, 105, 195, 285)
+  alltargets45bef <- c(67.5, 157.5, 247.5, 337.5) #45 degrees
+  alltargets45aft <- c(22.5, 112.5, 202.5, 292.5)
+  
+  angles <- unique(RT$targetangle)
+  RT['compensate'] <- NA
+  
+  #we want percentage of compensation
+  #we multily by -1 so that getting positive values mean that the hand went to the correct direction
+  #above 100 values would mean an overcompensation, 0 is going directly to target, negative values are undercompensation
+  for (target in angles){
+    if (target %in% alltargets15bef){
+      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/15)*100
+      RT$compensate[which(RT$targetangle == target)] <- 15
+    } else if (target %in% alltargets15aft){
+      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/15)*100
+      RT$compensate[which(RT$targetangle == target)] <- 15
+    } else if (target %in% alltargets30bef){
+      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/30)*100
+      RT$compensate[which(RT$targetangle == target)] <- 30
+    } else if (target %in% alltargets30aft){
+      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/30)*100
+      RT$compensate[which(RT$targetangle == target)] <- 30
+    } else if (target %in% alltargets45bef){
+      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/45)*100
+      RT$compensate[which(RT$targetangle == target)] <- 45
+    } else if (target %in% alltargets45aft){
+      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/45)*100
+      RT$compensate[which(RT$targetangle == target)] <- 45
+    }
+  }
+  #write.csv(RT, file='data/PPLCmir.csv', row.names = F)
+  return(RT)  
+}
+
+#need a function that would collect all data from all participants into one, while still separating info for each target
+getRAEGroupTargetCurve <- function(group, maxppid, location){
+  
+  if (group == 'noninstructed'){
+    participants <- seq(0,maxppid,1)
+  } else if (group == 'instructed'){
+    participants <- seq(16,maxppid,1)
+  }
+  
+  dataoutput<- data.frame() #create place holder
+  #go through each participant in this group
+  for (participant in participants) {
+    ppangles <- getRAEParticipantTargetCurve(group = group, id=participant, location = location) #for every participant, get learning curve data
+    participant <- rep(participant, nrow(ppangles))
+    dat <- cbind(participant, ppangles)
+    
+    # reaches <- ppangles$reachdev #get reach deviations column from learning curve data
+    # trial <- c(1:length(reaches)) #sets up trial column
+    # dat <- cbind(trial, reaches)
+    # #rdat <- dat$reaches
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- dat
+    } else {
+      dataoutput <- rbind(dataoutput, dat)
+    }
+  }
+  return(dataoutput)
+}
+
+getRAETargetCurve <- function(group, maxppid, location, angle){
+  
+  #each column will be one participant and their 90 trials
+  dat <- getRAEGroupTargetCurve(group=group, maxppid=maxppid,location=location)
+  
+  #return whichever data is needed
+  #angle is either 15, 30, 45 (or the amount of compensation)
+  if (angle == 15){
+    subdat <- dat[which(dat$compensate == 15), ]
+  } else if (angle == 30){
+    subdat <- dat[which(dat$compensate == 30), ]
+  } else if (angle == 45){
+    subdat <- dat[which(dat$compensate == 45), ]
+  }
+  
+  #get only columns we are interested in then transform to wide format, so that we can generate learning curves using code we already have
+  subdat <- subdat[,c(1,4)]
+  participants <- unique(subdat$participant)
+  
+  newdat <- data.frame()
+  for(pp in participants){
+    reachdev <- subdat[which(subdat$participant == pp),]
+    reachdev <- reachdev[,-1]
+    trial <- c(1:length(reachdev))
+    output <- cbind(trial, reachdev)
+    
+    if (prod(dim(newdat)) == 0){
+      newdat <- output
+    } else {
+      newdat <- cbind(newdat, reachdev)
+    }
+  }
+  return(newdat)
+}
+
+getRAEGroupTargetCurveConfidenceInterval <- function(group, maxppid, location, angles = c(15,30,45), type='t'){
+  
+  for(angle in angles){
+    data <- getRAETargetCurve(group = group, maxppid = maxppid, location = location, angle=angle) #angle = comp
+    #data <- data[,-6] #remove faulty particiapnt (pp004) so the 6th column REMOVE ONCE RESOLVED
+    data <- as.data.frame(data)
+    trialno <- data$trial
+    data1 <- as.matrix(data[,2:dim(data)[2]])
+    
+    confidence <- data.frame()
+    
+    
+    for (trial in trialno){
+      cireaches <- data1[which(data$trial == trial), ]
+      
+      if (type == "t"){
+        cireaches <- cireaches[!is.na(cireaches)]
+        citrial <- t.interval(data = cireaches, variance = var(cireaches), conf.level = 0.95)
+      } else if(type == "b"){
+        citrial <- getBSConfidenceInterval(data = cireaches, resamples = 1000)
+      }
+      
+      if (prod(dim(confidence)) == 0){
+        confidence <- citrial
+      } else {
+        confidence <- rbind(confidence, citrial)
+      }
+      if (group == 'noninstructed'){
+        write.csv(confidence, file=sprintf('data/RAE_noninstructed_CI_targetcurve%s.csv', angle), row.names = F) 
+      } else if (group == 'instructed'){
+        write.csv(confidence, file=sprintf('data/RAE_instructed_CI_targetcurve%s.csv', angle), row.names = F)
+      }
+    }
+  }
+}
+
+#for simplicity, I will make 2 functions that will generate order effects plots for non instructed and instructed groups separately
+plotIRAETargetCurve<- function(group = 'instructed', angles = c(15,30,45), target = 'inline') {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/Fig3_RAE_I_targetcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  meanGroupReaches <- list() #empty list so that it plots the means last
+  
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(NA, NA, xlim = c(0,17), ylim = c(-200,200), 
+       xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Learning Rate Across Targets", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  axis(1, at = c(1, 5, 10, 15)) #tick marks for x axis
+  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  
+  for(angle in angles){
+    #read in files created by getGroupConfidenceInterval in filehandling.R
+    groupconfidence <- read.csv(file=sprintf('data/RAE_%s_CI_targetcurve%s.csv', group, angle))
+    
+    colourscheme <- getTtypeColourScheme(angles = angle)
+    #take only first, last and middle columns of file
+    lower <- groupconfidence[,1]
+    upper <- groupconfidence[,3]
+    mid <- groupconfidence[,2]
+    
+    col <- colourscheme[[angle]][['T']] #use colour scheme according to group
+    
+    #upper and lower bounds create a polygon
+    #polygon creates it from low left to low right, then up right to up left -> use rev
+    #x is just trial nnumber, y depends on values of bounds
+    polygon(x = c(c(1:16), rev(c(1:16))), y = c(lower, rev(upper)), border=NA, col=col)
+    
+    meanGroupReaches[[angle]] <- mid #use mean to fill in empty list for each group
+  }
+  
+  
+  for (angle in angles) {
+    # plot mean reaches for each group
+    col <- colourscheme[[angle]][['S']]
+    lines(meanGroupReaches[[angle]],col=col,lty=1)
+  }
+  
+  #add legend
+  legend(12,-100,legend=c('15 deg','30 deg','45 deg'),
+         col=c(colourscheme[[15]][['S']],colourscheme[[30]][['S']],colourscheme[[45]][['S']]),
+         lty=1,bty='n',cex=1,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+
 #Reach AFtereffects: STATS----
 #Analysis should be similar to learning curves, with the addition of confirming presence of RAE for at least the first block.
 #Stats are currently only for noninstructed group
