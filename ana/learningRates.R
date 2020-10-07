@@ -1024,35 +1024,58 @@ getMIRParticipantTargetCurve <- function(group, id, location){
   alltargets30aft <- c(15, 105, 195, 285)
   alltargets45bef <- c(67.5, 157.5, 247.5, 337.5) #45 degrees
   alltargets45aft <- c(22.5, 112.5, 202.5, 292.5)
-  
+
   angles <- unique(RT$targetangle)
   RT['compensate'] <- NA
-  
+
   #we want percentage of compensation
   #we multily by -1 so that getting positive values mean that the hand went to the correct direction
   #above 100 values would mean an overcompensation, 0 is going directly to target, negative values are undercompensation
+  # for (target in angles){
+  #   if (target %in% alltargets15bef){
+  #     RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/15)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 15
+  #   } else if (target %in% alltargets15aft){
+  #     RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/15)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 15
+  #   } else if (target %in% alltargets30bef){
+  #     RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/30)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 30
+  #   } else if (target %in% alltargets30aft){
+  #     RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/30)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 30
+  #   } else if (target %in% alltargets45bef){
+  #     RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/45)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 45
+  #   } else if (target %in% alltargets45aft){
+  #     RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/45)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 45
+  #   }
+  # }
+  # #write.csv(RT, file='data/PPLCmir.csv', row.names = F)
+  
+  #use below for reachdeviation, not percent of compensation
   for (target in angles){
     if (target %in% alltargets15bef){
-      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/15)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])
       RT$compensate[which(RT$targetangle == target)] <- 15
     } else if (target %in% alltargets15aft){
-      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/15)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])*-1
       RT$compensate[which(RT$targetangle == target)] <- 15
     } else if (target %in% alltargets30bef){
-      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/30)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])
       RT$compensate[which(RT$targetangle == target)] <- 30
     } else if (target %in% alltargets30aft){
-      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/30)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])*-1
       RT$compensate[which(RT$targetangle == target)] <- 30
     } else if (target %in% alltargets45bef){
-      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/45)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])
       RT$compensate[which(RT$targetangle == target)] <- 45
     } else if (target %in% alltargets45aft){
-      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/45)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])*-1
       RT$compensate[which(RT$targetangle == target)] <- 45
     }
   }
-  #write.csv(RT, file='data/PPLCmir.csv', row.names = F)
   return(RT)  
 }
 
@@ -1171,12 +1194,12 @@ plotNIMIRTargetCurve<- function(group = 'noninstructed', angles = c(15,30,45), t
   
   #NA to create empty plot
   # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,31), ylim = c(-200,200), 
-       xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+  plot(NA, NA, xlim = c(0,31), ylim = c(-20,60), 
+       xlab = "Trial", ylab = "Angular reach deviation (deg)", frame.plot = FALSE, #frame.plot takes away borders
        main = "Learning Rate Across Targets", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  abline(h = c(0, 15, 30, 45), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 10, 20, 30)) #tick marks for x axis
-  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  axis(2, at = c(0, 15, 30, 45)) #tick marks for y axis
   
   for(angle in angles){
     #read in files created by getGroupConfidenceInterval in filehandling.R
@@ -1206,7 +1229,7 @@ plotNIMIRTargetCurve<- function(group = 'noninstructed', angles = c(15,30,45), t
   }
   
   #add legend
-  legend(20,-100,legend=c('15 deg','30 deg','45 deg'),
+  legend(20,0,legend=c('15 deg','30 deg','45 deg'),
          col=c(colourscheme[[15]][['S']],colourscheme[[30]][['S']],colourscheme[[45]][['S']]),
          lty=1,bty='n',cex=1,lwd=2)
   
@@ -1230,12 +1253,12 @@ plotIMIRTargetCurve<- function(group = 'instructed', angles = c(15,30,45), targe
   
   #NA to create empty plot
   # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,31), ylim = c(-200,200), 
-       xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
+  plot(NA, NA, xlim = c(0,31), ylim = c(-20,60), 
+       xlab = "Trial", ylab = "Angular reach deviation (deg)", frame.plot = FALSE, #frame.plot takes away borders
        main = "Learning Rate Across Targets", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  abline(h = c(0, 15, 30, 45), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 10, 20, 30)) #tick marks for x axis
-  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  axis(2, at = c(0, 15, 30, 45)) #tick marks for y axis
   
   for(angle in angles){
     #read in files created by getGroupConfidenceInterval in filehandling.R
@@ -1265,7 +1288,7 @@ plotIMIRTargetCurve<- function(group = 'instructed', angles = c(15,30,45), targe
   }
   
   #add legend
-  legend(20,-100,legend=c('15 deg','30 deg','45 deg'),
+  legend(20,0,legend=c('15 deg','30 deg','45 deg'),
          col=c(colourscheme[[15]][['S']],colourscheme[[30]][['S']],colourscheme[[45]][['S']]),
          lty=1,bty='n',cex=1,lwd=2)
   

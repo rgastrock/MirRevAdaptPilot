@@ -916,28 +916,51 @@ getRAEParticipantTargetCurve <- function(group, id, location){
   #we want percentage of compensation
   #we multily by -1 so that getting positive values mean that the hand went to the correct direction
   #above 100 values would mean an overcompensation, 0 is going directly to target, negative values are undercompensation
+  # for (target in angles){
+  #   if (target %in% alltargets15bef){
+  #     RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/15)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 15
+  #   } else if (target %in% alltargets15aft){
+  #     RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/15)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 15
+  #   } else if (target %in% alltargets30bef){
+  #     RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/30)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 30
+  #   } else if (target %in% alltargets30aft){
+  #     RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/30)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 30
+  #   } else if (target %in% alltargets45bef){
+  #     RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/45)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 45
+  #   } else if (target %in% alltargets45aft){
+  #     RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/45)*100
+  #     RT$compensate[which(RT$targetangle == target)] <- 45
+  #   }
+  # }
+  #write.csv(RT, file='data/PPLCmir.csv', row.names = F)
+  
+  #use below for reachdeviation, not percent of compensation
   for (target in angles){
     if (target %in% alltargets15bef){
-      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/15)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])
       RT$compensate[which(RT$targetangle == target)] <- 15
     } else if (target %in% alltargets15aft){
-      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/15)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])*-1
       RT$compensate[which(RT$targetangle == target)] <- 15
     } else if (target %in% alltargets30bef){
-      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/30)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])
       RT$compensate[which(RT$targetangle == target)] <- 30
     } else if (target %in% alltargets30aft){
-      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/30)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])*-1
       RT$compensate[which(RT$targetangle == target)] <- 30
     } else if (target %in% alltargets45bef){
-      RT$reachdev[which(RT$targetangle == target)] <- ((RT$reachdev[which(RT$targetangle == target)])/45)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])
       RT$compensate[which(RT$targetangle == target)] <- 45
     } else if (target %in% alltargets45aft){
-      RT$reachdev[which(RT$targetangle == target)] <- (((RT$reachdev[which(RT$targetangle == target)])*-1)/45)*100
+      RT$reachdev[which(RT$targetangle == target)] <- (RT$reachdev[which(RT$targetangle == target)])*-1
       RT$compensate[which(RT$targetangle == target)] <- 45
     }
   }
-  #write.csv(RT, file='data/PPLCmir.csv', row.names = F)
   return(RT)  
 }
 
@@ -1043,12 +1066,12 @@ getRAEGroupTargetCurveConfidenceInterval <- function(group, maxppid, location, a
 }
 
 #for simplicity, I will make 2 functions that will generate order effects plots for non instructed and instructed groups separately
-plotIRAETargetCurve<- function(group = 'instructed', angles = c(15,30,45), target = 'inline') {
+plotNIRAETargetCurve<- function(group = 'noninstructed', angles = c(15,30,45), target = 'inline') {
   
   
   #but we can save plot as svg file
   if (target=='svg') {
-    svglite(file='doc/fig/Fig3_RAE_I_targetcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    svglite(file='doc/fig/Fig3_RAE_NI_targetcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -1056,12 +1079,12 @@ plotIRAETargetCurve<- function(group = 'instructed', angles = c(15,30,45), targe
   
   #NA to create empty plot
   # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,17), ylim = c(-200,200), 
-       xlab = "Trial", ylab = "Amount of Compensation (%)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "Learning Rate Across Targets", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(-100,0, 100), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  plot(NA, NA, xlim = c(0,17), ylim = c(-11,11), 
+       xlab = "Trial", ylab = "Angular reach deviation (deg)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Rate of Deadaptation Across Targets", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(0), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
   axis(1, at = c(1, 5, 10, 15)) #tick marks for x axis
-  axis(2, at = c(-200, -100, 0, 100, 200)) #tick marks for y axis
+  axis(2, at = c(-10,-5,0,5,10)) #tick marks for y axis
   
   for(angle in angles){
     #read in files created by getGroupConfidenceInterval in filehandling.R
@@ -1091,7 +1114,67 @@ plotIRAETargetCurve<- function(group = 'instructed', angles = c(15,30,45), targe
   }
   
   #add legend
-  legend(12,-100,legend=c('15 deg','30 deg','45 deg'),
+  legend(10,-5,legend=c('15 deg','30 deg','45 deg'),
+         col=c(colourscheme[[15]][['S']],colourscheme[[30]][['S']],colourscheme[[45]][['S']]),
+         lty=1,bty='n',cex=1,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
+  
+}
+
+
+plotIRAETargetCurve<- function(group = 'instructed', angles = c(15,30,45), target = 'inline') {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg') {
+    svglite(file='doc/fig/Fig3_RAE_I_targetcurve.svg', width=12, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  meanGroupReaches <- list() #empty list so that it plots the means last
+  
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(NA, NA, xlim = c(0,17), ylim = c(-11,11), 
+       xlab = "Trial", ylab = "Angular reach deviation (deg)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Rate of Deadaptation Across Targets", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(0), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  axis(1, at = c(1, 5, 10, 15)) #tick marks for x axis
+  axis(2, at = c(-10,-5,0,5,10)) #tick marks for y axis
+  
+  for(angle in angles){
+    #read in files created by getGroupConfidenceInterval in filehandling.R
+    groupconfidence <- read.csv(file=sprintf('data/RAE_%s_CI_targetcurve%s.csv', group, angle))
+    
+    colourscheme <- getTtypeColourScheme(angles = angle)
+    #take only first, last and middle columns of file
+    lower <- groupconfidence[,1]
+    upper <- groupconfidence[,3]
+    mid <- groupconfidence[,2]
+    
+    col <- colourscheme[[angle]][['T']] #use colour scheme according to group
+    
+    #upper and lower bounds create a polygon
+    #polygon creates it from low left to low right, then up right to up left -> use rev
+    #x is just trial nnumber, y depends on values of bounds
+    polygon(x = c(c(1:16), rev(c(1:16))), y = c(lower, rev(upper)), border=NA, col=col)
+    
+    meanGroupReaches[[angle]] <- mid #use mean to fill in empty list for each group
+  }
+  
+  
+  for (angle in angles) {
+    # plot mean reaches for each group
+    col <- colourscheme[[angle]][['S']]
+    lines(meanGroupReaches[[angle]],col=col,lty=1)
+  }
+  
+  #add legend
+  legend(10,-5,legend=c('15 deg','30 deg','45 deg'),
          col=c(colourscheme[[15]][['S']],colourscheme[[30]][['S']],colourscheme[[45]][['S']]),
          lty=1,bty='n',cex=1,lwd=2)
   

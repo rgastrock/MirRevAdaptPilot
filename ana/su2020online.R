@@ -44,8 +44,10 @@ handleOneFile <- function(filename) {
   
   # remove empty lines:
   df <- df[which(!is.na(df$trialsNum)),]
+  #df <- df[which(df$trialsNum == 2),]
   
   # loop through all trials
+  #plot(x,y,type='l',col='blue',xlim=c(-1.2,1.2),ylim=c(-1.2,1.2))
   for (trialnum in c(1:dim(df)[1])) {
     
     x <- convertCellToNumVector(df$trialMouse.x[trialnum])
@@ -121,6 +123,322 @@ handleOneFile <- function(filename) {
   return(dfrd)
 }
 
+plotTestOneFile <- function() {
+  
+  par(mfrow = c(3,4))
+  datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  triallist <- c(21:30)
+  for (triali in triallist){
+    plot(NA,NA,xlim=c(-1.2,1.2),ylim=c(-1.2,1.2), xlab = 'X coords', ylab = 'Y coords', main = sprintf('Trial %d', triali))
+    points(c(0,.4*(cos((30/180)*pi))),c(0,.4*(sin((30/180)*pi))),col='black')
+    points(c(0,.4*(cos((60/180)*pi))),c(0,.4*(sin((60/180)*pi))),col='black')
+    cat(sprintf('%d\n', triali))
+    for(datafilenum in c(1:length(datafilenames))){
+      datafilename <- sprintf('data/mirrorreversal-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+      
+      #cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+      try(df <- read.csv(datafilename, stringsAsFactors = F), silent = TRUE)
+      
+      # set up vectors for relevant data:
+      trialno <- c()            #trialNum
+      targetangle_deg <- c()
+      mirror <-c()              #trialsType
+      reachdeviation_deg <- c()
+      taskno <- c()             #trialsNum
+      participant <- c()
+      
+      # remove empty lines:
+      df <- df[which(!is.na(df$trialsNum)),]
+      df <- df[which(df$trialNum == triali),]
+      
+      # loop through all trials
+      
+      
+      
+      x <- convertCellToNumVector(df$trialMouse.x)
+      y <- convertCellToNumVector(df$trialMouse.y)
+      s <- convertCellToNumVector(df$step)
+      m <- df$trialsType
+      a <- df$targetangle_deg
+      p <- df$participant
+      
+      # remove stuff that is not step==2
+      step2idx = which(s == 2)
+      x <- x[step2idx]
+      y <- y[step2idx]
+      
+      lines(x,y,type='l',col=alpha('blue', 0.1),xlim=c(-1.2,1.2),ylim=c(-1.2,1.2))
+      lines(c(0,1),c(0,0),col='black')
+      #points(c(0,cos((a/180)*pi)),c(0,sin((a/180)*pi)),col='black')
+      
+      # get first point beyond some distance (home-target is 40% of height of participant's screen)
+      # we can set a cutoff at 30% of home-target distance (30% of .4 = .12)
+      d <- sqrt(x^2 + y^2)
+      idx <- which(d > .12)[1]
+      x <- x[idx]
+      y <- y[idx]
+      
+      points(x,y,col='red')
+      
+      
+      # get angular deviation of reach from target angle:
+      # rotcoords <- rotateTrajectory(x,y,-a)
+      # x <- rotcoords[1]
+      # y <- rotcoords[2]
+      # 
+      # rd <- (atan2(y, x) / pi) * 180
+      
+      
+      #text(0,-0.1,sprintf('%0.3f',rd))
+    }
+  }
+  
+  
+}
+
+plotAlOneFile <- function() {
+  
+  par(mfrow = c(3,4))
+  datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+  triallist <- c(1:10)
+  for (triali in triallist){
+    plot(NA,NA,xlim=c(-1.2,1.2),ylim=c(-1.2,1.2), xlab = 'X coords', ylab = 'Y coords', main = sprintf('Trial %d', triali))
+    points(c(0,.4*(cos((30/180)*pi))),c(0,.4*(sin((30/180)*pi))),col='black')
+    points(c(0,.4*(cos((60/180)*pi))),c(0,.4*(sin((60/180)*pi))),col='black')
+    cat(sprintf('%d\n', triali))
+    for(datafilenum in c(1:length(datafilenames))){
+      datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+      
+      #cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+      try(df <- read.csv(datafilename, stringsAsFactors = F), silent = TRUE)
+      
+      # set up vectors for relevant data:
+      trialno <- c()            #trialNum
+      targetangle_deg <- c()
+      mirror <-c()              #trialsType
+      reachdeviation_deg <- c()
+      taskno <- c()             #trialsNum
+      participant <- c()
+      
+      # remove empty lines:
+      df <- df[which(!is.na(df$trialsNum)),]
+      df <- df[which(df$trialNum == triali),]
+      
+      # loop through all trials
+      
+      
+      
+      x <- convertCellToNumVector(df$trialMouse.x)
+      y <- convertCellToNumVector(df$trialMouse.y)
+      s <- convertCellToNumVector(df$step)
+      m <- df$trialsType
+      a <- df$targetangle_deg
+      p <- df$participant
+      
+      # remove stuff that is not step==2
+      step2idx = which(s == 2)
+      x <- x[step2idx]
+      y <- y[step2idx]
+      
+      lines(x,y,type='l',col=alpha('blue', 0.1),xlim=c(-1.2,1.2),ylim=c(-1.2,1.2))
+      lines(c(0,1),c(0,0),col='black')
+      #points(c(0,cos((a/180)*pi)),c(0,sin((a/180)*pi)),col='black')
+      
+      # get first point beyond some distance (home-target is 40% of height of participant's screen)
+      # we can set a cutoff at 30% of home-target distance (30% of .4 = .12)
+      d <- sqrt(x^2 + y^2)
+      idx <- which(d > .12)[1]
+      x <- x[idx]
+      y <- y[idx]
+      
+      points(x,y,col='red')
+      
+      
+      # get angular deviation of reach from target angle:
+      # rotcoords <- rotateTrajectory(x,y,-a)
+      # x <- rotcoords[1]
+      # y <- rotcoords[2]
+      # 
+      # rd <- (atan2(y, x) / pi) * 180
+      
+      
+      #text(0,-0.1,sprintf('%0.3f',rd))
+    }
+  }
+  
+  
+}
+
+plotOneFile <- function() {
+  
+  par(mfrow = c(3,4))
+  datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+  triallist <- c(21:30)
+  for (triali in triallist){
+    plot(NA,NA,xlim=c(-1.2,1.2),ylim=c(-1.2,1.2), xlab = 'X coords', ylab = 'Y coords', main = sprintf('Trial %d', triali))
+    points(c(0,.4*(cos((30/180)*pi))),c(0,.4*(sin((30/180)*pi))),col='black')
+    points(c(0,.4*(cos((60/180)*pi))),c(0,.4*(sin((60/180)*pi))),col='black')
+    cat(sprintf('%d\n', triali))
+    for(datafilenum in c(1:length(datafilenames))){
+      datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+      
+      #cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+      try(df <- read.csv(datafilename, stringsAsFactors = F), silent = TRUE)
+      
+      # set up vectors for relevant data:
+      trialno <- c()            #trialNum
+      targetangle_deg <- c()
+      mirror <-c()              #trialsType
+      reachdeviation_deg <- c()
+      taskno <- c()             #trialsNum
+      participant <- c()
+      
+      # remove empty lines:
+      df <- df[which(!is.na(df$trialsNum)),]
+      df <- df[which(df$trialNum == triali),]
+      
+      # loop through all trials
+      
+      
+      
+      x <- convertCellToNumVector(df$trialMouse.x)
+      y <- convertCellToNumVector(df$trialMouse.y)
+      s <- convertCellToNumVector(df$step)
+      m <- df$trialsType
+      a <- df$targetangle_deg
+      p <- df$participant
+      
+      # remove stuff that is not step==2
+      step2idx = which(s == 2)
+      x <- x[step2idx]
+      y <- y[step2idx]
+      
+      lines(x,y,type='l',col=alpha('blue', 0.1),xlim=c(-1.2,1.2),ylim=c(-1.2,1.2))
+      lines(c(0,1),c(0,0),col='black')
+      #points(c(0,cos((a/180)*pi)),c(0,sin((a/180)*pi)),col='black')
+      
+      # get first point beyond some distance (home-target is 40% of height of participant's screen)
+      # we can set a cutoff at 30% of home-target distance (30% of .4 = .12)
+      d <- sqrt(x^2 + y^2)
+      idx <- which(d > .12)[1]
+      x <- x[idx]
+      y <- y[idx]
+      
+      points(x,y,col='red')
+      
+      
+      # get angular deviation of reach from target angle:
+      # rotcoords <- rotateTrajectory(x,y,-a)
+      # x <- rotcoords[1]
+      # y <- rotcoords[2]
+      # 
+      # rd <- (atan2(y, x) / pi) * 180
+      
+      
+      #text(0,-0.1,sprintf('%0.3f',rd))
+    }
+  }
+  
+  
+}
+
+#Aligned session -----
+getAlParticipantMirrorLC <- function(filename){
+  
+  #first, implement baseline correction
+  #get Aligned biases
+  dat <- handleOneFile(filename = filename)
+  adat <- dat[which(dat$taskno == 1), ]
+  
+  return(adat)
+}
+
+getAlGroupMirrorLC <- function(group, set){
+  
+  if (set == 'su2020'){
+    datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
+    #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  } else if (set == 'fa2020'){
+    datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+  }
+  
+  
+  dataoutput<- data.frame() #create place holder
+  for(datafilenum in c(1:length(datafilenames))){
+    if (set == 'su2020'){
+      datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    } else if (set == 'fa2020'){
+      datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    }
+    
+    cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+    adat <- getAlParticipantMirrorLC(filename = datafilename)
+    if(group == '30'){
+      adat <- adat[which(adat$targetangle_deg == 30),] #get 30 degrees only
+    } else if(group == '60'){
+      adat <- adat[which(adat$targetangle_deg == 60),] #get 60 degrees only
+    }
+    
+    ppreaches <- adat$reachdeviation_deg #get reach deviations column from learning curve data
+    trial <- c(1:length(ppreaches)) #sets up trial column
+    ppdat <- data.frame(trial, ppreaches)
+    
+    ppname <- unique(adat$participant)
+    names(ppdat)[names(ppdat) == 'ppreaches'] <- ppname
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- ppdat
+    } else {
+      dataoutput <- cbind(dataoutput, ppreaches)
+      names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
+    }
+  }
+  return(dataoutput)
+  #write.csv(dataoutput, file='data/mReversalNewAlpha3-master/data/processed/learningcurves.csv', row.names = F) 
+  #Note: multiple files have no step 2 or have many trials without step 2
+  #These participant files have been removed
+  #check for any more NA values:
+  #names(which(colSums(is.na(dataoutput))>0))
+}
+
+getAlGroupMirrorConfInt <- function(groups = c('30','60'), type='t', set){
+  for (group in groups){
+    data <- getAlGroupMirrorLC(group = group, set=set)
+    
+    trialno <- data$trial
+    data1 <- as.matrix(data[,2:dim(data)[2]])
+    
+    confidence <- data.frame()
+    
+    
+    for (trial in trialno){
+      cireaches <- data1[which(data$trial == trial), ]
+      
+      if (type == "t"){
+        cireaches <- cireaches[!is.na(cireaches)]
+        citrial <- t.interval(data = cireaches, variance = var(cireaches), conf.level = 0.95)
+      } else if(type == "b"){
+        citrial <- getBSConfidenceInterval(data = cireaches, resamples = 1000)
+      }
+      
+      if (prod(dim(confidence)) == 0){
+        confidence <- citrial
+      } else {
+        confidence <- rbind(confidence, citrial)
+      }
+      if (set == 'su2020'){
+        write.csv(confidence, file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Aligned_CI.csv', group), row.names = F) 
+      } else if (set == 'fa2020'){
+        write.csv(confidence, file=sprintf('data/mirrorreversal-fall/data/processed/%s_Aligned_CI.csv', group), row.names = F) 
+      }
+      
+      
+    }
+    
+  }
+  
+}
+
 #learning curves----
 getParticipantMirrorLC <- function(filename){
   
@@ -159,84 +477,28 @@ getParticipantMirrorLC <- function(filename){
   return(mdat)
 }
 
-getAlGroupMirrorLC <- function(){
-  
-  datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
-  #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
-  
-  dataoutput<- data.frame() #create place holder
-  for(datafilenum in c(1:length(datafilenames))){
-    datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
-    cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
-    adat <- getParticipantMirrorLC(filename = datafilename)
-    #mdat <- mdat[which(mdat$targetangle_deg == 60),] #get 60 degrees only
-    
-    ppreaches <- adat$reachdeviation_deg #get reach deviations column from learning curve data
-    trial <- c(1:length(ppreaches)) #sets up trial column
-    ppdat <- data.frame(trial, ppreaches)
-    
-    ppname <- unique(adat$participant)
-    names(ppdat)[names(ppdat) == 'ppreaches'] <- ppname
-    
-    if (prod(dim(dataoutput)) == 0){
-      dataoutput <- ppdat
-    } else {
-      dataoutput <- cbind(dataoutput, ppreaches)
-      names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
-    }
-  }
-  return(dataoutput)
-  #write.csv(dataoutput, file='data/mReversalNewAlpha3-master/data/processed/learningcurves.csv', row.names = F) 
-  #Note: multiple files have no step 2 or have many trials without step 2
-  #These participant files have been removed
-  #check for any more NA values:
-  #names(which(colSums(is.na(dataoutput))>0))
-}
 
-getAlGroupMirrorConfInt <- function(type){
-  
-  data <- getAlGroupMirrorLC()
-  
-  trialno <- data$trial
-  data1 <- as.matrix(data[,2:dim(data)[2]])
-  
-  confidence <- data.frame()
-  
-  
-  for (trial in trialno){
-    cireaches <- data1[which(data$trial == trial), ]
-    
-    if (type == "t"){
-      cireaches <- cireaches[!is.na(cireaches)]
-      citrial <- t.interval(data = cireaches, variance = var(cireaches), conf.level = 0.95)
-    } else if(type == "b"){
-      citrial <- getBSConfidenceInterval(data = cireaches, resamples = 1000)
-    }
-    
-    if (prod(dim(confidence)) == 0){
-      confidence <- citrial
-    } else {
-      confidence <- rbind(confidence, citrial)
-    }
-    
-    write.csv(confidence, file='data/mReversalNewAlpha3-master/data/processed/Al_Learningcurves_CI.csv', row.names = F) 
-    
-  }
-  
-}
 
 
 #Here, each column will have participant code/identifier as header. If some participants do not learn to compensate,
 #we can remove them from further analysis using these as identifiers.
 
-getGroupMirrorLC <- function(group){
+getGroupMirrorLC <- function(group, set){
   
-  datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
-  #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  if (set == 'su2020'){
+    datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
+    #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  } else if (set == 'fa2020'){
+    datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+  }
   
   dataoutput<- data.frame() #create place holder
   for(datafilenum in c(1:length(datafilenames))){
-    datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    if (set == 'su2020'){
+      datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    } else if (set == 'fa2020'){
+      datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    }
     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
     mdat <- getParticipantMirrorLC(filename = datafilename)
     if(group == '30'){
@@ -278,15 +540,15 @@ getGroupMirrorLC <- function(group){
   
   #can keep track of deleted trials here, by using the saved csv file or counting NA values in dataoutput
   #write.csv(dataoutput, file='data/mReversalNewAlpha3-master/data/processed/30_learningcurves.csv', row.names = F) 
-  #Note: multiple files have no step 2 or have many trials without step 2
+  #Note: multiple files have no step 2 or have many trials without step 2 in su2020 data
   #These participant files have been removed
   #check for any more NA values:
   #names(which(colSums(is.na(dataoutput))>0))
 }
 
-getGroupMirrorConfInt <- function(groups = c('30','60'), type = 't'){
+getGroupMirrorConfInt <- function(groups = c('30','60'), type = 't', set){
   for(group in groups){
-    data <- getGroupMirrorLC(group = group)
+    data <- getGroupMirrorLC(group = group, set = set)
     
     trialno <- data$trial
     data1 <- as.matrix(data[,2:dim(data)[2]])
@@ -310,18 +572,23 @@ getGroupMirrorConfInt <- function(groups = c('30','60'), type = 't'){
         confidence <- rbind(confidence, citrial)
       }
       
-      write.csv(confidence, file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Learningcurves_CI.csv', group), row.names = F) 
-      
+      if (set == 'su2020'){
+        write.csv(confidence, file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Learningcurves_CI.csv', group), row.names = F) 
+      } else if (set == 'fa2020'){
+        write.csv(confidence, file=sprintf('data/mirrorreversal-fall/data/processed/%s_Learningcurves_CI.csv', group), row.names = F) 
+      }
     }
   }
 }
 
-plotMirrorLC <- function(groups = c('30', '60'), target='inline') {
+plotMirrorLC <- function(groups = c('30', '60'), target='inline', set) {
   
   
   #but we can save plot as svg file
-  if (target=='svg') {
+  if (target=='svg' & set == 'su2020') {
     svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig1_learningcurve.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  } else if (target=='svg' & set == 'fa2020'){
+    svglite(file='data/mirrorreversal-fall/doc/fig/Fig1_learningcurve.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -338,7 +605,12 @@ plotMirrorLC <- function(groups = c('30', '60'), target='inline') {
   
   for(group in groups){
     #read in files created by getGroupConfidenceInterval in filehandling.R
-    groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Learningcurves_CI.csv', group))
+    if (set == 'su2020'){
+      groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Learningcurves_CI.csv', group))
+    } else if (set == 'fa2020'){
+      groupconfidence <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_Learningcurves_CI.csv', group))
+    }
+   
     
     colourscheme <- getOnlineColourScheme(groups = group)
     #take only first, last and middle columns of file
@@ -668,14 +940,22 @@ getParticipantMirrorRAE <- function(filename){
   return(mdat)
 }
 
-getGroupMirrorRAE <- function(group){
+getGroupMirrorRAE <- function(group, set){
   
-  datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
-  #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  if (set == 'su2020'){
+    datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
+    #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  } else if (set == 'fa2020'){
+    datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+  }
   
   dataoutput<- data.frame() #create place holder
   for(datafilenum in c(1:length(datafilenames))){
-    datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    if (set == 'su2020'){
+      datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    } else if (set == 'fa2020'){
+      datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    }
     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
     mdat <- getParticipantMirrorRAE(filename = datafilename)
     if(group == '30'){
@@ -723,9 +1003,9 @@ getGroupMirrorRAE <- function(group){
   #names(which(colSums(is.na(dataoutput))>0))
 }
 
-getGroupMirrorRAEConfInt <- function(groups = c('30','60'), type = 't'){
+getGroupMirrorRAEConfInt <- function(groups = c('30','60'), type = 't', set){
   for(group in groups){
-    data <- getGroupMirrorRAE(group = group)
+    data <- getGroupMirrorRAE(group = group, set = set)
     
     trialno <- data$trial
     data1 <- as.matrix(data[,2:dim(data)[2]])
@@ -749,18 +1029,24 @@ getGroupMirrorRAEConfInt <- function(groups = c('30','60'), type = 't'){
         confidence <- rbind(confidence, citrial)
       }
       
-      write.csv(confidence, file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Reachaftereffects_CI.csv', group), row.names = F) 
+      if (set == 'su2020'){
+        write.csv(confidence, file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Reachaftereffects_CI.csv', group), row.names = F) 
+      } else if (set == 'fa2020'){
+        write.csv(confidence, file=sprintf('data/mirrorreversal-fall/data/processed/%s_Reachaftereffects_CI.csv', group), row.names = F) 
+      }
       
     }
   }
 }
 
-plotMirrorRAE <- function(groups = c('30', '60'), target='inline') {
+plotMirrorRAE <- function(groups = c('30', '60'), target='inline', set) {
   
   
   #but we can save plot as svg file
-  if (target=='svg') {
-    svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig3_reachaftereffects.svg', width=7, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  if (target=='svg' & set == 'su2020') {
+    svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig3_reachaftereffects.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  } else if (target=='svg' & set == 'fa2020'){
+    svglite(file='data/mirrorreversal-fall/doc/fig/Fig2_reachaftereffects.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
   }
   
   # create plot
@@ -777,8 +1063,11 @@ plotMirrorRAE <- function(groups = c('30', '60'), target='inline') {
   
   for(group in groups){
     #read in files created by getGroupConfidenceInterval in filehandling.R
-    groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Reachaftereffects_CI.csv', group))
-    
+    if (set == 'su2020'){
+      groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_Reachaftereffects_CI.csv', group))
+    } else if (set == 'fa2020'){
+      groupconfidence <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_Reachaftereffects_CI.csv', group))
+    }
     colourscheme <- getOnlineColourScheme(groups = group)
     #take only first, last and middle columns of file
     lower <- groupconfidence[,1]
