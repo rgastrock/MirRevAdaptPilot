@@ -344,6 +344,98 @@ plotOneFile <- function() {
   
 }
 
+#frequency plot - circular
+getParticipantCircFreq <- function(filename){
+  dat <- handleOneFile(filename = filename)
+  mdat <- dat[which(dat$taskno == 2), ]
+  
+  #transform reachdev to circular
+  mdat_angles <- as.numeric(mdat$reachdeviation_deg)
+  mdat$circ_reachdev <- as.circular(mdat_angles, type='angles', units='degrees')
+
+  return(mdat)
+}
+
+getGroupCircFreq <- function(group, set){
+  
+  if (set == 'su2020'){
+    datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
+    #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  } else if (set == 'fa2020'){
+    datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+  }
+  
+  dataoutput<- data.frame() #create place holder
+  for(datafilenum in c(1:length(datafilenames))){
+    if (set == 'su2020'){
+      datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    } else if (set == 'fa2020'){
+      datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    }
+    cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+    mdat <- getParticipantCircFreq(filename = datafilename)
+    if(group == '30'){
+      mdat <- mdat[which(mdat$targetangle_deg == 30),] #get 30 degrees only
+    } else if(group == '60'){
+      mdat <- mdat[which(mdat$targetangle_deg == 60),] #get 60 degrees only
+    }
+    
+    
+    ppreaches <- mdat$circ_reachdev #get reach deviations column from learning curve data
+    trial <- c(1:length(ppreaches)) #sets up trial column
+    ppdat <- data.frame(trial, ppreaches)
+    
+    ppname <- unique(mdat$participant)
+    names(ppdat)[names(ppdat) == 'ppreaches'] <- ppname
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- ppdat
+    } else {
+      dataoutput <- cbind(dataoutput, ppreaches)
+      names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
+    }
+  }
+  
+  # for (trialno in dataoutput$trial){
+  #   #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+  #   ndat <- as.numeric(dataoutput[trialno, 2:ncol(dataoutput)])
+  #   circ_ndat <- as.circular(ndat, type='angles', units='degrees')
+  #   trialmu <- mean.circular(circ_ndat, na.rm=TRUE)
+  #   trialsigma <- sd.circular(circ_ndat, na.rm=TRUE)
+  #   trialclip <- abs(trialmu) + (trialsigma * 2)
+  #   
+  #   ndat <- as.numeric(dataoutput[trialno, 2:ncol(dataoutput)])
+  #   trialmu <- mean(ndat, na.rm = TRUE)
+  #   trialsigma <- sd(ndat, na.rm = TRUE)
+  #   #print(trialsigma)
+  #   trialclip <- abs(trialmu) + (trialsigma * 2)
+  #   
+  #   ndat[which(abs(ndat) > trialclip)] <- NA
+  #   
+  #   dataoutput[trialno, 2:ncol(dataoutput)] <- ndat
+  # }
+  
+  return(dataoutput)
+  
+  #removed outlier procedure first. Due to circular statistics, mean and sd now differ.
+  #typical outlier removal procedure would not be valid in this case
+}
+
+plotGroupCircFreq <- function(group, set = 'fa2020'){
+  
+  dat <- getGroupCircFreq(group = group, set = set)
+  pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sCircular.pdf", group))
+  triallist <- c(1:45)
+  for(triali in triallist){
+    subdat <- dat[which(dat$trial == triali),]
+    subdat <- as.numeric(subdat[,2:ncol(subdat)])
+    subdat <- as.circular(subdat, type='angles', units='degrees')
+    plot(subdat, main = sprintf('%s-deg Target: Trial %s', group, triali))
+  }
+  dev.off()
+  
+}
+
 #frequency plot
 getParticipantFrequency <- function(filename){
   dat <- handleOneFile(filename = filename)
