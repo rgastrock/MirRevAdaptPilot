@@ -123,18 +123,20 @@ handleOneFile <- function(filename) {
   return(dfrd)
 }
 
+
+# Test pre-processed data-----
 plotTestOneFile <- function() {
   
   par(mfrow = c(3,4))
   datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
-  triallist <- c(21:30)
+  triallist <- c(21:33)
   for (triali in triallist){
     plot(NA,NA,xlim=c(-1.2,1.2),ylim=c(-1.2,1.2), xlab = 'X coords', ylab = 'Y coords', main = sprintf('Trial %d', triali))
     points(c(0,.4*(cos((30/180)*pi))),c(0,.4*(sin((30/180)*pi))),col='black')
     points(c(0,.4*(cos((60/180)*pi))),c(0,.4*(sin((60/180)*pi))),col='black')
     cat(sprintf('%d\n', triali))
     for(datafilenum in c(1:length(datafilenames))){
-      datafilename <- sprintf('data/mirrorreversal-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+      #datafilename <- sprintf('data/mirrorreversal-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
       
       #cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
       try(df <- read.csv(datafilename, stringsAsFactors = F), silent = TRUE)
@@ -339,6 +341,83 @@ plotOneFile <- function() {
     }
   }
   
+  
+}
+
+#frequency plot
+getParticipantFrequency <- function(filename){
+  dat <- handleOneFile(filename = filename)
+  mdat <- dat[which(dat$taskno == 2), ]
+  return(mdat)
+}
+
+getGroupFrequency <- function(group, set){
+  if (set == 'su2020'){
+    datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
+    #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  } else if (set == 'fa2020'){
+    datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+  }
+  
+  dataoutput<- data.frame() #create place holder
+  for(datafilenum in c(1:length(datafilenames))){
+    if (set == 'su2020'){
+      datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    } else if (set == 'fa2020'){
+      datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    }
+    cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+    mdat <- getParticipantFrequency(filename = datafilename)
+    if(group == '30'){
+      mdat <- mdat[which(mdat$targetangle_deg == 30),] #get 30 degrees only
+    } else if(group == '60'){
+      mdat <- mdat[which(mdat$targetangle_deg == 60),] #get 60 degrees only
+    }
+    
+    
+    ppreaches <- mdat$reachdeviation_deg #get reach deviations column from learning curve data
+    trial <- c(1:length(ppreaches)) #sets up trial column
+    ppdat <- data.frame(trial, ppreaches)
+    
+    ppname <- unique(mdat$participant)
+    names(ppdat)[names(ppdat) == 'ppreaches'] <- ppname
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- ppdat
+    } else {
+      dataoutput <- cbind(dataoutput, ppreaches)
+      names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
+    }
+  }
+  
+  for (trialno in dataoutput$trial){
+    #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+    ndat <- as.numeric(dataoutput[trialno, 2:ncol(dataoutput)])
+    trialmu <- mean(ndat, na.rm = TRUE)
+    trialsigma <- sd(ndat, na.rm = TRUE)
+    #print(trialsigma)
+    trialclip <- abs(trialmu) + (trialsigma * 2)
+    
+    ndat[which(abs(ndat) > trialclip)] <- NA
+    
+    dataoutput[trialno, 2:ncol(dataoutput)] <- ndat
+  }
+  
+  return(dataoutput)
+}
+
+plotGroupFrequency <- function(group, set = 'fa2020'){
+
+  dat <- getGroupFrequency(group = group, set = set)
+  pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sTargetLoc.pdf", group))
+  triallist <- c(1:45)
+  for(triali in triallist){
+    subdat <- dat[which(dat$trial == triali),]
+    subdat <- as.numeric(subdat[,2:ncol(subdat)])
+    print(densityplot(subdat, width=15, xlim=range(-200,200), xlab = 'angles', ylab="density of participant distribution", 
+                      main = sprintf('%s-deg Target: Trial %s', group, triali)))
+  }
+  dev.off()
   
 }
 
