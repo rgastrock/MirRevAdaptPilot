@@ -414,8 +414,18 @@ plotGroupFrequency <- function(group, set = 'fa2020'){
   for(triali in triallist){
     subdat <- dat[which(dat$trial == triali),]
     subdat <- as.numeric(subdat[,2:ncol(subdat)])
-    print(densityplot(subdat, width=15, xlim=range(-200,200), xlab = 'angles', ylab="density of participant distribution", 
-                      main = sprintf('%s-deg Target: Trial %s', group, triali)))
+    print(densityplot(subdat, width=45, xlim=range(-200,200), xlab = 'angles', ylab="density of participant distribution", 
+                      main = sprintf('%s-deg Target: Trial %s', group, triali),
+                      scales=list(x=list(at=c(-180, -120, -60, 0, 60, 120, 180))),
+                      panel = function(...) {
+                        panel.densityplot(...)
+                        if(group=='30'){
+                          panel.abline(v = 120, lty=2)
+                        } else if (group=='60'){
+                          panel.abline(v = 60, lty=2)
+                        }
+                        
+                      }))
   }
   dev.off()
   
@@ -514,6 +524,222 @@ getAlGroupMirrorConfInt <- function(groups = c('30','60'), type='t', set){
       
     }
     
+  }
+  
+}
+
+#learning curves: Circular----
+getParticipantCircularLC <- function(filename){
+  
+  #first, implement baseline correction
+  #get Aligned biases
+  dat <- handleOneFile(filename = filename)
+  ppname <- unique(dat$participant)
+  
+  adat <- dat[which(dat$taskno == 1), ]
+  adat_angles <- as.numeric(adat$reachdeviation_deg)
+  circ_adat <- as.circular(adat_angles, type='angles', units='degrees')
+  
+  bias30 <- adat[which(adat$targetangle_deg == 30),]
+  bias30 <- as.numeric(bias30$reachdeviation_deg)
+  circ_bias30 <- as.circular(bias30, type='angles', units='degrees')
+  circ_bias30 <- median.circular(circ_bias30)
+  
+  bias60 <- adat[which(adat$targetangle_deg == 60),]
+  bias60 <- as.numeric(bias60$reachdeviation_deg)
+  circ_bias60 <- as.circular(bias60, type='angles', units='degrees')
+  circ_bias60 <- median.circular(circ_bias60)
+  
+  #biases <- c(circ_bias30,circ_bias60)
+  # biases <- aggregate(reachdeviation_deg ~ targetangle_deg, data= adat, FUN = median)
+  
+  
+  mdat <- dat[which(dat$taskno == 2),]
+  
+  #remove bias from 30-degrees
+  mdat30 <- mdat[which(mdat$targetangle_deg == 30),]
+  mdat30_angles <- as.numeric(mdat30$reachdeviation_deg)
+  circ_mdat30 <- as.circular(mdat30_angles, type='angles', units='degrees')
+  circ_mdat30 <- circ_mdat30 - circ_bias30
+  targetangle_deg <- rep(30, length(circ_mdat30))
+  participant <- rep(ppname, length(circ_mdat30))
+  circ_mdat30 <- data.frame(targetangle_deg, circ_mdat30, participant)
+  colnames(circ_mdat30) <- c('targetangle_deg', 'circ_reachdev', 'participant')
+  #remove bias from 60-degrees
+  mdat60 <- mdat[which(mdat$targetangle_deg == 60),]
+  mdat60_angles <- as.numeric(mdat60$reachdeviation_deg)
+  circ_mdat60 <- as.circular(mdat60_angles, type='angles', units='degrees')
+  circ_mdat60 <- circ_mdat60 - circ_bias60
+  targetangle_deg <- rep(60, length(circ_mdat60))
+  participant <- rep(ppname, length(circ_mdat60))
+  circ_mdat60 <- data.frame(targetangle_deg, circ_mdat60, participant)
+  colnames(circ_mdat60) <- c('targetangle_deg', 'circ_reachdev', 'participant')
+  
+  mdat <- rbind(circ_mdat30, circ_mdat60)
+  
+  return(mdat)
+}
+
+getGroupCircularLC <- function(group, set){
+  
+  if (set == 'su2020'){
+    datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
+    #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  } else if (set == 'fa2020'){
+    datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+  }
+  
+  dataoutput<- data.frame() #create place holder
+  for(datafilenum in c(1:length(datafilenames))){
+    if (set == 'su2020'){
+      datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    } else if (set == 'fa2020'){
+      datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    }
+    cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+    mdat <- getParticipantCircularLC(filename = datafilename)
+    if(group == '30'){
+      mdat <- mdat[which(mdat$targetangle_deg == 30),] #get 30 degrees only
+    } else if(group == '60'){
+      mdat <- mdat[which(mdat$targetangle_deg == 60),] #get 60 degrees only
+    }
+    
+    
+    ppreaches <- mdat$circ_reachdev #get reach deviations column from learning curve data
+    trial <- c(1:length(ppreaches)) #sets up trial column
+    ppdat <- data.frame(trial, ppreaches)
+    
+    ppname <- unique(mdat$participant)
+    names(ppdat)[names(ppdat) == 'ppreaches'] <- ppname
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- ppdat
+    } else {
+      dataoutput <- cbind(dataoutput, ppreaches)
+      names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
+    }
+  }
+  
+  # for (trialno in dataoutput$trial){
+  #   #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+  #   ndat <- as.numeric(dataoutput[trialno, 2:ncol(dataoutput)])
+  #   circ_ndat <- as.circular(ndat, type='angles', units='degrees')
+  #   trialmu <- mean.circular(circ_ndat, na.rm=TRUE)
+  #   trialsigma <- sd.circular(circ_ndat, na.rm=TRUE)
+  #   trialclip <- abs(trialmu) + (trialsigma * 2)
+  #   
+  #   ndat <- as.numeric(dataoutput[trialno, 2:ncol(dataoutput)])
+  #   trialmu <- mean(ndat, na.rm = TRUE)
+  #   trialsigma <- sd(ndat, na.rm = TRUE)
+  #   #print(trialsigma)
+  #   trialclip <- abs(trialmu) + (trialsigma * 2)
+  #   
+  #   ndat[which(abs(ndat) > trialclip)] <- NA
+  #   
+  #   dataoutput[trialno, 2:ncol(dataoutput)] <- ndat
+  # }
+  
+  return(dataoutput)
+  
+  #removed outlier procedure first. Due to circular statistics, mean and sd now differ.
+  #typical outlier removal procedure would not be valid in this case
+}
+
+getGroupCircularConfInt <- function(groups = c('30','60'), type = 't', set){
+  for(group in groups){
+    data <- getGroupCircularLC(group=group, set=set)
+    
+    trialno <- data$trial
+    confidence <- data.frame()
+    
+    for(trial in trialno){
+      subdat <- data[which(data$trial == trial),]
+      subdat <- as.numeric(subdat[,2:ncol(subdat)])
+      circ_subdat <- as.circular(subdat, type='angles', units='degrees')
+      #generates bootstrapped CIs for parameters of a von Mises distribution
+      #circular analogue of a normal distribution
+      CI <- mle.vonmises.bootstrap.ci(circ_subdat) #default reps are 1000 and alpha at .05
+      CImid <- mean.circular(CI[['mu']])
+      CIlow <- CI[['mu.ci']][1]
+      CIhigh <- CI[['mu.ci']][2]
+      citrial <- data.frame(CIlow, CImid,CIhigh, row.names=NULL)
+      
+      if (prod(dim(confidence)) == 0){
+        confidence <- citrial
+      } else {
+        confidence <- rbind(confidence, citrial)
+      }
+      if (set == 'su2020'){
+        write.csv(confidence, file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularLC_CI.csv', group), row.names = F) 
+      } else if (set == 'fa2020'){
+        write.csv(confidence, file=sprintf('data/mirrorreversal-fall/data/processed/%s_CircularLC_CI.csv', group), row.names = F) 
+      }
+    }
+  }
+}
+
+plotCircularLC <- function(groups = c('30', '60'), target='inline', set) {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg' & set == 'su2020') {
+    svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig1B_CircularLC.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  } else if (target=='svg' & set == 'fa2020'){
+    svglite(file='data/mirrorreversal-fall/doc/fig/Fig1B_CircularLC.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  meanGroupReaches <- list() #empty list so that it plots the means last
+  
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(NA, NA, xlim = c(0,46), ylim = c(-10,125), 
+       xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
+       main = "Rate of learning per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+  abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+  axis(1, at = c(1, 15, 30, 45)) #tick marks for x axis
+  axis(2, at = c(0, 30, 60, 90, 120)) #tick marks for y axis
+  
+  for(group in groups){
+    #read in files created by getGroupConfidenceInterval in filehandling.R
+    if (set == 'su2020'){
+      groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularLC_CI.csv', group))
+    } else if (set == 'fa2020'){
+      groupconfidence <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_CircularLC_CI.csv', group))
+    }
+    
+    
+    colourscheme <- getOnlineColourScheme(groups = group)
+    #take only first, last and middle columns of file
+    lower <- groupconfidence[,1]
+    upper <- groupconfidence[,3]
+    mid <- groupconfidence[,2]
+    
+    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    
+    #upper and lower bounds create a polygon
+    #polygon creates it from low left to low right, then up right to up left -> use rev
+    #x is just trial nnumber, y depends on values of bounds
+    polygon(x = c(c(1:45), rev(c(1:45))), y = c(lower, rev(upper)), border=NA, col=col)
+    
+    meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+  }
+  
+  
+  for (group in groups) {
+    # plot mean reaches for each group
+    col <- colourscheme[[group]][['S']]
+    lines(meanGroupReaches[[group]],col=col,lty=1)
+  }
+  
+  #add legend
+  legend(32,25,legend=c('30° target','60° target'),
+         col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+         lty=1,bty='n',cex=1,lwd=2)
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
   }
   
 }

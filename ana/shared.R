@@ -1,5 +1,6 @@
 library(tidyr)
 library(lattice) #for density plot tests
+library(circular)
 library(RColorBrewer)
 library(svglite)
 library(scales)
