@@ -69,7 +69,7 @@ handleOneFile <- function(filename) {
     # get first point beyond some distance (home-target is 40% of height of participant's screen)
     # we can set a cutoff at 30% of home-target distance (30% of .4 = .12)
     d <- sqrt(x^2 + y^2)
-    idx <- which(d > .12)[1]
+    idx <- which(d > .06)[1]
     x <- x[idx]
     y <- y[idx]
     
@@ -460,15 +460,19 @@ getGroupFrequency <- function(group, set){
     }
     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
     mdat <- getParticipantFrequency(filename = datafilename)
-    if(group == '30'){
-      mdat <- mdat[which(mdat$targetangle_deg == 30),] #get 30 degrees only
-    } else if(group == '60'){
-      mdat <- mdat[which(mdat$targetangle_deg == 60),] #get 60 degrees only
+    # per target location, get reachdev for corresponding trials
+    
+    trial <- c(1:length(mdat$trialno))
+    mdat$trialno <- trial
+    for (triali in trial){
+      trialdat <- mdat[which(mdat$trialno == triali),]
+      #set reachdev to NA if not the target location we want
+      if (trialdat$targetangle_deg != group){
+        trialdat$reachdeviation_deg <- NA
+      }
+      mdat[triali,] <- trialdat
     }
-    
-    
     ppreaches <- mdat$reachdeviation_deg #get reach deviations column from learning curve data
-    trial <- c(1:length(ppreaches)) #sets up trial column
     ppdat <- data.frame(trial, ppreaches)
     
     ppname <- unique(mdat$participant)
@@ -502,7 +506,7 @@ plotGroupFrequency <- function(group, set = 'fa2020'){
 
   dat <- getGroupFrequency(group = group, set = set)
   pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sTargetLoc.pdf", group))
-  triallist <- c(1:45)
+  triallist <- c(1:90)
   for(triali in triallist){
     subdat <- dat[which(dat$trial == triali),]
     subdat <- as.numeric(subdat[,2:ncol(subdat)])
@@ -554,14 +558,19 @@ getAlGroupMirrorLC <- function(group, set){
     
     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
     adat <- getAlParticipantMirrorLC(filename = datafilename)
-    if(group == '30'){
-      adat <- adat[which(adat$targetangle_deg == 30),] #get 30 degrees only
-    } else if(group == '60'){
-      adat <- adat[which(adat$targetangle_deg == 60),] #get 60 degrees only
-    }
+    # per target location, get reachdev for corresponding trials
     
+    trial <- c(1:length(adat$trialno))
+    adat$trialno <- trial
+    for (triali in trial){
+      trialdat <- adat[which(adat$trialno == triali),]
+      #set reachdev to NA if not the target location we want
+      if (trialdat$targetangle_deg != group){
+        trialdat$reachdeviation_deg <- NA
+      }
+      adat[triali,] <- trialdat
+    }
     ppreaches <- adat$reachdeviation_deg #get reach deviations column from learning curve data
-    trial <- c(1:length(ppreaches)) #sets up trial column
     ppdat <- data.frame(trial, ppreaches)
     
     ppname <- unique(adat$participant)
@@ -626,49 +635,22 @@ getParticipantCircularLC <- function(filename){
   #first, implement baseline correction
   #get Aligned biases
   dat <- handleOneFile(filename = filename)
-  ppname <- unique(dat$participant)
+  dat$circ_rd <- as.circular(dat$reachdeviation_deg, type='angles', units='degrees')
   
   adat <- dat[which(dat$taskno == 1), ]
-  adat_angles <- as.numeric(adat$reachdeviation_deg)
-  circ_adat <- as.circular(adat_angles, type='angles', units='degrees')
-  
-  bias30 <- adat[which(adat$targetangle_deg == 30),]
-  bias30 <- as.numeric(bias30$reachdeviation_deg)
-  circ_bias30 <- as.circular(bias30, type='angles', units='degrees')
-  circ_bias30 <- median.circular(circ_bias30)
-  
-  bias60 <- adat[which(adat$targetangle_deg == 60),]
-  bias60 <- as.numeric(bias60$reachdeviation_deg)
-  circ_bias60 <- as.circular(bias60, type='angles', units='degrees')
-  circ_bias60 <- median.circular(circ_bias60)
-  
-  #biases <- c(circ_bias30,circ_bias60)
-  # biases <- aggregate(reachdeviation_deg ~ targetangle_deg, data= adat, FUN = median)
-  
+  biases <- aggregate(circ_rd ~ targetangle_deg, data= adat, FUN = median.circular) 
   
   mdat <- dat[which(dat$taskno == 2),]
   
-  #remove bias from 30-degrees
-  mdat30 <- mdat[which(mdat$targetangle_deg == 30),]
-  mdat30_angles <- as.numeric(mdat30$reachdeviation_deg)
-  circ_mdat30 <- as.circular(mdat30_angles, type='angles', units='degrees')
-  circ_mdat30 <- circ_mdat30 - circ_bias30
-  targetangle_deg <- rep(30, length(circ_mdat30))
-  participant <- rep(ppname, length(circ_mdat30))
-  circ_mdat30 <- data.frame(targetangle_deg, circ_mdat30, participant)
-  colnames(circ_mdat30) <- c('targetangle_deg', 'circ_reachdev', 'participant')
-  #remove bias from 60-degrees
-  mdat60 <- mdat[which(mdat$targetangle_deg == 60),]
-  mdat60_angles <- as.numeric(mdat60$reachdeviation_deg)
-  circ_mdat60 <- as.circular(mdat60_angles, type='angles', units='degrees')
-  circ_mdat60 <- circ_mdat60 - circ_bias60
-  targetangle_deg <- rep(60, length(circ_mdat60))
-  participant <- rep(ppname, length(circ_mdat60))
-  circ_mdat60 <- data.frame(targetangle_deg, circ_mdat60, participant)
-  colnames(circ_mdat60) <- c('targetangle_deg', 'circ_reachdev', 'participant')
-  
-  mdat <- rbind(circ_mdat30, circ_mdat60)
-  
+  for (biasno in c(1: dim(biases)[1])){ #from 1 to however many biases there are in data
+    
+    target<- biases[biasno, 'targetangle_deg'] #get corresponding target angle
+    bias<- biases[biasno, 'circ_rd'] #get corresponding reachdev or bias
+    
+    #subtract bias from reach deviation for rotated session only
+    mdat$circ_rd[which(mdat$targetangle_deg == target)] <- mdat$circ_rd[which(mdat$targetangle_deg == target)] - bias
+    
+  }
   return(mdat)
 }
 
@@ -690,15 +672,19 @@ getGroupCircularLC <- function(group, set){
     }
     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
     mdat <- getParticipantCircularLC(filename = datafilename)
-    if(group == '30'){
-      mdat <- mdat[which(mdat$targetangle_deg == 30),] #get 30 degrees only
-    } else if(group == '60'){
-      mdat <- mdat[which(mdat$targetangle_deg == 60),] #get 60 degrees only
+    # per target location, get reachdev for corresponding trials
+    
+    trial <- c(1:length(mdat$trialno))
+    mdat$trialno <- trial
+    for (triali in trial){
+      trialdat <- mdat[which(mdat$trialno == triali),]
+      #set reachdev to NA if not the target location we want
+      if (trialdat$targetangle_deg != group){
+        trialdat$circ_rd <- NA
+      }
+      mdat[triali,] <- trialdat
     }
-    
-    
-    ppreaches <- mdat$circ_reachdev #get reach deviations column from learning curve data
-    trial <- c(1:length(ppreaches)) #sets up trial column
+    ppreaches <- mdat$circ_rd #get reach deviations column from learning curve data
     ppdat <- data.frame(trial, ppreaches)
     
     ppname <- unique(mdat$participant)
@@ -737,7 +723,7 @@ getGroupCircularLC <- function(group, set){
   #typical outlier removal procedure would not be valid in this case
 }
 
-getGroupCircularConfInt <- function(groups = c('30','60'), type = 't', set){
+getGroupCircularConfInt <- function(groups = c('30','60'), set){
   for(group in groups){
     data <- getGroupCircularLC(group=group, set=set)
     
@@ -745,15 +731,15 @@ getGroupCircularConfInt <- function(groups = c('30','60'), type = 't', set){
     confidence <- data.frame()
     
     for(trial in trialno){
-      subdat <- data[which(data$trial == trial),]
-      subdat <- as.numeric(subdat[,2:ncol(subdat)])
-      circ_subdat <- as.circular(subdat, type='angles', units='degrees')
+      circ_subdat <- as.numeric(data[trial, 2:length(data)]) #get just the values, then make the circular again
+      circ_subdat <- as.circular(circ_subdat, type='angles', units='degrees')
       #generates bootstrapped CIs for parameters of a von Mises distribution
       #circular analogue of a normal distribution
-      CI <- mle.vonmises.bootstrap.ci(circ_subdat) #default reps are 1000 and alpha at .05
-      CImid <- mean.circular(CI[['mu']])
+      CI <- mle.vonmises.bootstrap.ci(circ_subdat, reps=1000, alpha = 0.05) #default reps are 1000 and alpha at .05
+      
       CIlow <- CI[['mu.ci']][1]
       CIhigh <- CI[['mu.ci']][2]
+      CImid <- mean.circular(circ_subdat, na.rm=TRUE)
       citrial <- data.frame(CIlow, CImid,CIhigh, row.names=NULL)
       
       if (prod(dim(confidence)) == 0){
@@ -785,11 +771,11 @@ plotCircularLC <- function(groups = c('30', '60'), target='inline', set) {
   
   #NA to create empty plot
   # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,46), ylim = c(-10,125), 
+  plot(NA, NA, xlim = c(0,91), ylim = c(-10,135), 
        xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
        main = "Rate of learning per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-  axis(1, at = c(1, 15, 30, 45)) #tick marks for x axis
+  axis(1, at = c(1, 30, 60, 90)) #tick marks for x axis
   axis(2, at = c(0, 30, 60, 90, 120)) #tick marks for y axis
   
   for(group in groups){
@@ -812,7 +798,7 @@ plotCircularLC <- function(groups = c('30', '60'), target='inline', set) {
     #upper and lower bounds create a polygon
     #polygon creates it from low left to low right, then up right to up left -> use rev
     #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(1:45), rev(c(1:45))), y = c(lower, rev(upper)), border=NA, col=col)
+    polygon(x = c(c(1:90), rev(c(1:90))), y = c(lower, rev(upper)), border=NA, col=col)
     
     meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
   }
@@ -825,7 +811,7 @@ plotCircularLC <- function(groups = c('30', '60'), target='inline', set) {
   }
   
   #add legend
-  legend(32,25,legend=c('30° target','60° target'),
+  legend(60,25,legend=c('30° target','60° target'),
          col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
          lty=1,bty='n',cex=1,lwd=2)
   
@@ -898,15 +884,19 @@ getGroupMirrorLC <- function(group, set){
     }
     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
     mdat <- getParticipantMirrorLC(filename = datafilename)
-    if(group == '30'){
-      mdat <- mdat[which(mdat$targetangle_deg == 30),] #get 30 degrees only
-    } else if(group == '60'){
-      mdat <- mdat[which(mdat$targetangle_deg == 60),] #get 60 degrees only
+    # per target location, get reachdev for corresponding trials
+    
+    trial <- c(1:length(mdat$trialno))
+    mdat$trialno <- trial
+    for (triali in trial){
+      trialdat <- mdat[which(mdat$trialno == triali),]
+      #set reachdev to NA if not the target location we want
+      if (trialdat$targetangle_deg != group){
+        trialdat$reachdeviation_deg <- NA
+      }
+      mdat[triali,] <- trialdat
     }
-    
-    
     ppreaches <- mdat$reachdeviation_deg #get reach deviations column from learning curve data
-    trial <- c(1:length(ppreaches)) #sets up trial column
     ppdat <- data.frame(trial, ppreaches)
     
     ppname <- unique(mdat$participant)
@@ -993,11 +983,11 @@ plotMirrorLC <- function(groups = c('30', '60'), target='inline', set) {
   
   #NA to create empty plot
   # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,46), ylim = c(-10,125), 
+  plot(NA, NA, xlim = c(0,91), ylim = c(-10,125), 
        xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
        main = "Rate of learning per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-  axis(1, at = c(1, 15, 30, 45)) #tick marks for x axis
+  axis(1, at = c(1, 30, 60, 90)) #tick marks for x axis
   axis(2, at = c(0, 30, 60, 90, 120)) #tick marks for y axis
   
   for(group in groups){
@@ -1020,7 +1010,7 @@ plotMirrorLC <- function(groups = c('30', '60'), target='inline', set) {
     #upper and lower bounds create a polygon
     #polygon creates it from low left to low right, then up right to up left -> use rev
     #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(1:45), rev(c(1:45))), y = c(lower, rev(upper)), border=NA, col=col)
+    polygon(x = c(c(1:90), rev(c(1:90))), y = c(lower, rev(upper)), border=NA, col=col)
     
     meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
   }
@@ -1033,7 +1023,7 @@ plotMirrorLC <- function(groups = c('30', '60'), target='inline', set) {
   }
   
   #add legend
-   legend(32,25,legend=c('30° target','60° target'),
+   legend(70,25,legend=c('30° target','60° target'),
          col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
          lty=1,bty='n',cex=1,lwd=2)
   
@@ -1075,15 +1065,19 @@ getGroupAllTasksLC <- function(group, set){
     }
     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
     alldat <- getParticipantAllTasksLC(filename = datafilename)
-    if(group == '30'){
-      alldat <- alldat[which(alldat$targetangle_deg == 30),] #get 30 degrees only
-    } else if(group == '60'){
-      alldat <- alldat[which(alldat$targetangle_deg == 60),] #get 60 degrees only
+    # per target location, get reachdev for corresponding trials
+    
+    trial <- c(1:length(alldat$trialno))
+    alldat$trialno <- trial
+    for (triali in trial){
+      trialdat <- alldat[which(alldat$trialno == triali),]
+      #set reachdev to NA if not the target location we want
+      if (trialdat$targetangle_deg != group){
+        trialdat$reachdeviation_deg <- NA
+      }
+      alldat[triali,] <- trialdat
     }
-    
-    
     ppreaches <- alldat$reachdeviation_deg #get reach deviations column from learning curve data
-    trial <- c(1:length(ppreaches)) #sets up trial column
     ppdat <- data.frame(trial, ppreaches)
     
     ppname <- unique(alldat$participant)
@@ -1170,12 +1164,12 @@ plotAllTasksLC <- function(groups = c('30', '60'), target='inline', set) {
   
   #NA to create empty plot
   # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,66), ylim = c(-10,125), 
+  plot(NA, NA, xlim = c(0,131), ylim = c(-10,125), 
        xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
        main = "Rate of learning per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-  abline(v = c(10, 55), col = 8, lty = 2)
-  axis(1, at = c(1, 5, 10, 25, 40, 55, 60, 65)) #tick marks for x axis
+  abline(v = c(20, 110), col = 8, lty = 2)
+  axis(1, at = c(1, 10, 21, 50, 80, 111, 120, 130)) #tick marks for x axis
   axis(2, at = c(-10, 0, 30, 60, 90, 120)) #tick marks for y axis
   
   for(group in groups){
@@ -1198,7 +1192,7 @@ plotAllTasksLC <- function(groups = c('30', '60'), target='inline', set) {
     #upper and lower bounds create a polygon
     #polygon creates it from low left to low right, then up right to up left -> use rev
     #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(1:65), rev(c(1:65))), y = c(lower, rev(upper)), border=NA, col=col)
+    polygon(x = c(c(1:130), rev(c(1:130))), y = c(lower, rev(upper)), border=NA, col=col)
     
     meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
   }
@@ -1211,7 +1205,7 @@ plotAllTasksLC <- function(groups = c('30', '60'), target='inline', set) {
   }
   
   #add legend
-  legend(32,25,legend=c('30° target','60° target'),
+  legend(80,25,legend=c('30° target','60° target'),
          col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
          lty=1,bty='n',cex=1,lwd=2)
   
@@ -1533,15 +1527,19 @@ getGroupMirrorRAE <- function(group, set){
     }
     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
     mdat <- getParticipantMirrorRAE(filename = datafilename)
-    if(group == '30'){
-      mdat <- mdat[which(mdat$targetangle_deg == 30),] #get 30 degrees only
-    } else if(group == '60'){
-      mdat <- mdat[which(mdat$targetangle_deg == 60),] #get 60 degrees only
+    # per target location, get reachdev for corresponding trials
+    
+    trial <- c(1:length(mdat$trialno))
+    mdat$trialno <- trial
+    for (triali in trial){
+      trialdat <- mdat[which(mdat$trialno == triali),]
+      #set reachdev to NA if not the target location we want
+      if (trialdat$targetangle_deg != group){
+        trialdat$reachdeviation_deg <- NA
+      }
+      mdat[triali,] <- trialdat
     }
-    
-    
     ppreaches <- mdat$reachdeviation_deg #get reach deviations column from learning curve data
-    trial <- c(1:length(ppreaches)) #sets up trial column
     ppdat <- data.frame(trial, ppreaches)
     
     ppname <- unique(mdat$participant)
@@ -1629,11 +1627,11 @@ plotMirrorRAE <- function(groups = c('30', '60'), target='inline', set) {
   
   #NA to create empty plot
   # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,11), ylim = c(-10,5), 
+  plot(NA, NA, xlim = c(0,21), ylim = c(-10,5), 
        xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
        main = "Rate of deadaptation per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
   abline(h = c(0), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-  axis(1, at = c(1, 4, 7, 10)) #tick marks for x axis
+  axis(1, at = c(1, 5, 10, 15, 20)) #tick marks for x axis
   axis(2, at = c(-10, -5, 0, 5)) #tick marks for y axis
   
   for(group in groups){
@@ -1654,7 +1652,7 @@ plotMirrorRAE <- function(groups = c('30', '60'), target='inline', set) {
     #upper and lower bounds create a polygon
     #polygon creates it from low left to low right, then up right to up left -> use rev
     #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(1:10), rev(c(1:10))), y = c(lower, rev(upper)), border=NA, col=col)
+    polygon(x = c(c(1:20), rev(c(1:20))), y = c(lower, rev(upper)), border=NA, col=col)
     
     meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
   }
@@ -1667,7 +1665,7 @@ plotMirrorRAE <- function(groups = c('30', '60'), target='inline', set) {
   }
   
   #add legend
-  legend(7,-7,legend=c('30° target','60° target'),
+  legend(15,-7,legend=c('30° target','60° target'),
          col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
          lty=1,bty='n',cex=1,lwd=2)
   
