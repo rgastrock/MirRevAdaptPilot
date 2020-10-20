@@ -115,17 +115,70 @@ getConfidenceInterval <- function(data, variance = var(data), conf.level = 0.95,
     data <- data[which(is.finite(data))] #need is.finite due to NA values
     
     samplematrix <- matrix(sample(data, size = resamples*length(data), replace = TRUE), nrow = resamples)
+    
     BS <- apply(samplematrix, c(1), FUN=FUN) 
     
     lo <- (1-conf.level)/2.
     hi <- 1 - lo
+    mid <- .50
     
     if (returndist) {
       percentiles <- data.frame(percentile=seq(.01,.99,.01),value=quantile(BS, probs=seq(.01,.99,.01)))
       densdist <- density(BS, bw='SJ', from=min(percentiles$value), to=max(percentiles$value))  
       return(list('percentiles'=percentiles, 'density'=densdist, 'CI95'=quantile(BS, probs = c(lo,hi))))
     } else {
-      return(quantile(BS, probs = c(lo,hi)))
+      return(quantile(BS, probs = c(lo,mid,hi)))
+    }
+    
+  }
+  
+}
+
+getCircularConfidenceInterval <- function(data, variance = var(data), conf.level = 0.95, method='b', resamples=1000, returndist=FALSE) {
+  
+  if (method %in% c('t-distr','t')) {
+    
+    z = qt((1 - conf.level)/2, df = length(data) - 1, lower.tail = FALSE)
+    
+    xbar = mean(data)
+    sdx = sqrt(variance/length(data))
+    
+    return(c(xbar - z * sdx, xbar + z * sdx))
+    
+  }
+  
+  # add sample z-distribution?
+  
+  # for bootstrapping:
+  
+  if (method %in% c('bootstrap','b')) {
+    
+    data <- data[which(is.finite(data))] #need is.finite due to NA values
+    
+    samplematrix <- matrix(sample(data, size = resamples*length(data), replace = TRUE), nrow = resamples)
+    BS <- c()
+    for(sample in 1:nrow(samplematrix)){
+      submat <- samplematrix[sample,]
+      submat <- as.circular(submat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      BSmean <- mean.circular(submat)
+      
+      BS <- c(BS, BSmean) #this would be numeric again, but we actually want to plot this
+      #otherwise the values for CI would be as if they were in circle (0 to 360 degrees)
+    }
+    
+    #BS <- as.circular(BS, type='angles', units='degrees')
+    #BS <- apply(samplematrix, c(1), FUN=FUN) 
+    
+    lo <- (1-conf.level)/2.
+    hi <- 1 - lo
+    mid <- .50
+    
+    if (returndist) {
+      percentiles <- data.frame(percentile=seq(.01,.99,.01),value=quantile(BS, probs=seq(.01,.99,.01)))
+      densdist <- density(BS, bw='SJ', from=min(percentiles$value), to=max(percentiles$value))  
+      return(list('percentiles'=percentiles, 'density'=densdist, 'CI95'=quantile(BS, probs = c(lo,hi))))
+    } else {
+      return(quantile(BS, probs = c(lo,mid,hi)))
     }
     
   }

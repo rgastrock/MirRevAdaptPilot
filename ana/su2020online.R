@@ -779,14 +779,14 @@ plotMirOneFileStepThree <- function() {
 }
 
 
-#density or frequency plots-----
+#density or frequency plots: CIRCULAR-----
 getParticipantCircFreq <- function(filename){
   dat <- handleOneFile(filename = filename)
   mdat <- dat[which(dat$taskno == 2), ]
   
   #transform reachdev to circular
   mdat_angles <- as.numeric(mdat$reachdeviation_deg)
-  mdat$circ_reachdev <- as.circular(mdat_angles, type='angles', units='degrees')
+  mdat$circ_reachdev <- as.circular(mdat_angles, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
 
   return(mdat)
 }
@@ -835,24 +835,6 @@ getGroupCircFreq <- function(group, set){
     }
   }
   
-  # for (trialno in dataoutput$trial){
-  #   #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
-  #   ndat <- as.numeric(dataoutput[trialno, 2:ncol(dataoutput)])
-  #   circ_ndat <- as.circular(ndat, type='angles', units='degrees')
-  #   trialmu <- mean.circular(circ_ndat, na.rm=TRUE)
-  #   trialsigma <- sd.circular(circ_ndat, na.rm=TRUE)
-  #   trialclip <- abs(trialmu) + (trialsigma * 2)
-  #   
-  #   ndat <- as.numeric(dataoutput[trialno, 2:ncol(dataoutput)])
-  #   trialmu <- mean(ndat, na.rm = TRUE)
-  #   trialsigma <- sd(ndat, na.rm = TRUE)
-  #   #print(trialsigma)
-  #   trialclip <- abs(trialmu) + (trialsigma * 2)
-  #   
-  #   ndat[which(abs(ndat) > trialclip)] <- NA
-  #   
-  #   dataoutput[trialno, 2:ncol(dataoutput)] <- ndat
-  # }
   
   return(dataoutput)
   
@@ -860,15 +842,32 @@ getGroupCircFreq <- function(group, set){
   #typical outlier removal procedure would not be valid in this case
 }
 
-plotGroupCircFreq <- function(group, set = 'fa2020'){
+plotGroupCircFreq <- function(group, set){
   
   dat <- getGroupCircFreq(group = group, set = set)
-  pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sCircular.pdf", group))
-  triallist <- c(1:90)
+  if(set == 'fa2020'){
+    pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sCircular.pdf", group))
+  } else if (set == 'su2020'){
+    pdf(sprintf("data/mReversalNewAlpha3-master/doc/fig/Distribution_%sCircular.pdf", group))
+  }
+  
+  #current fix for summer data being non-randomized and not counterbalanced
+  triallist <- dat$trial
+  
+  if(group == '30' & set == 'su2020'){
+    n <- triallist[seq(1,length(triallist),2)]
+    dat <- dat[n,]
+    triallist <- dat$trial
+  } else if (group == '60' & set == 'su2020'){
+    n <- triallist[seq(2,length(triallist),2)]
+    dat <- dat[n,]
+    triallist <- dat$trial
+  }
+  
   for(triali in triallist){
     subdat <- dat[which(dat$trial == triali),]
     subdat <- as.numeric(subdat[,2:ncol(subdat)])
-    subdat <- as.circular(subdat, type='angles', units='degrees')
+    subdat <- as.circular(subdat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
     distsubdat <- density.circular(subdat, na.rm = TRUE, bw = 15)
     plot(distsubdat, main = sprintf('%s-deg Target: Trial %s', group, triali), frame.plot = FALSE,
          axes = FALSE, points.plot = TRUE, points.col = 5,
@@ -885,7 +884,7 @@ plotGroupCircFreq <- function(group, set = 'fa2020'){
   
 }
 
-#frequency plot
+#density or frequency plots: LINEAR-----
 getParticipantFrequency <- function(filename){
   dat <- handleOneFile(filename = filename)
   mdat <- dat[which(dat$taskno == 2), ]
@@ -955,7 +954,20 @@ plotGroupFrequency <- function(group, set = 'fa2020'){
 
   dat <- getGroupFrequency(group = group, set = set)
   pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sTargetLoc.pdf", group))
-  triallist <- c(1:90)
+  
+  #current fix for summer data being non-randomized and not counterbalanced
+  triallist <- dat$trial
+  
+  if(group == '30' & set == 'su2020'){
+    n <- triallist[seq(1,length(triallist),2)]
+    dat <- dat[n,]
+    triallist <- dat$trial
+  } else if (group == '60' & set == 'su2020'){
+    n <- triallist[seq(2,length(triallist),2)]
+    dat <- dat[n,]
+    triallist <- dat$trial
+  }
+  
   for(triali in triallist){
     subdat <- dat[which(dat$trial == triali),]
     subdat <- as.numeric(subdat[,2:ncol(subdat)])
@@ -973,6 +985,100 @@ plotGroupFrequency <- function(group, set = 'fa2020'){
                       }))
   }
   dev.off()
+  
+}
+
+#test reachdev and MT----
+#plot reachdev in step 2 over MT in step 1 for trial 21
+getParticipantRDMT <- function(filename){
+  dfrd <- getParticipantCircularLC(filename = filename)
+  dfmt <- handleOneMTFile(filename = filename, step = 1)
+  dfmt <- dfmt[which(dfmt$taskno == 2),]
+  
+  subdfrd <- dfrd[which(dfrd$trialno == 21),]
+  subdfmt <- dfmt[which(dfmt$trialno == 21),]
+  
+  subdat <- data.frame(subdfrd, subdfmt$time)
+  colnames(subdat) <- c('trialno', 'targetangle_deg', 'mirror', 'reachdeviation_deg', 'taskno', 'participant', 'circ_rd', 'time')
+  
+  return(subdat)
+}
+
+getGroupRDMT <- function(group, set){
+  if (set == 'su2020'){
+    datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
+    #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  } else if (set == 'fa2020'){
+    datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+  }
+  
+  dataoutput<- data.frame() #create place holder
+  for(datafilenum in c(1:length(datafilenames))){
+    if (set == 'su2020'){
+      datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    } else if (set == 'fa2020'){
+      datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    }
+    cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+    mdat <- getParticipantRDMT(filename = datafilename)
+    # per target location, get reachdev for corresponding trials
+    
+    
+    
+    #set reachdev to NA if not the target location we want
+    if (mdat$targetangle_deg != group){
+      mdat$circ_rd <- NA
+      mdat$time <- NA
+    }
+    
+    
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- mdat
+    } else {
+      dataoutput <- rbind(dataoutput, mdat)
+      #names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
+    }
+  }
+  
+  
+  
+  return(dataoutput)
+  
+  
+}
+
+plotGroupRDMT <- function(group, target='inline', set) {
+  
+  
+  #but we can save plot as svg file
+  if (target=='svg' & set == 'su2020') {
+    svglite(file=sprintf('data/mReversalNewAlpha3-master/doc/fig/Fig5_RDMT_%s.svg', group), width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  } else if (target=='svg' & set == 'fa2020'){
+    svglite(file=sprintf('data/mirrorreversal-fall/doc/fig/Fig5_RDMT_%s.svg', group), width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+  }
+  
+  # create plot
+  #meanGroupReaches <- list() #empty list so that it plots the means last
+  dat <- getGroupRDMT(group=group, set = set)
+  #NA to create empty plot
+  # could maybe use plot.new() ?
+  plot(dat$time, dat$circ_rd, xlab = 'Movement Time, Step 1', ylab = "Circular Reach deviation, Step 2",
+       main = sprintf('%s-deg target: Trial 21', group), frame.plot = FALSE)
+  time <- dat$time
+  circrd <- dat$circ_rd
+  mod1 <- lm(circrd ~ time)
+  
+  reglinex <- seq(range(time, na.rm = TRUE)[1],range(time, na.rm = TRUE)[2],.1)
+  abX <- range(reglinex)
+  abY <- abX * mod1$coefficients[2] + mod1$coefficients[1]
+  lines(abX, abY, col='#343434')
+  
+  
+  #close everything if you saved plot as svg
+  if (target=='svg') {
+    dev.off()
+  }
   
 }
 
@@ -1001,7 +1107,7 @@ handleOneMTFile <- function(filename, step) {
   
   # loop through all trials
   for (trialnum in c(1:dim(df)[1])) {
-    
+    #print(trialnum)
     s <- convertCellToNumVector(df$step[trialnum])
     m <- df$trialsType[trialnum]
     a <- df$targetangle_deg[trialnum]
@@ -1103,15 +1209,30 @@ getGroupAllTasksMT <- function(group, set, step){
 getGroupAllTasksMTConfInt <- function(groups = c('30','60'), type = 't', set, step){
   for(group in groups){
     data <- getGroupAllTasksMT(group = group, set = set, step = step)
-    
+    #current fix for summer data being non-randomized and not counterbalanced
     trialno <- data$trial
-    data1 <- as.matrix(data[,2:dim(data)[2]])
     
+    if(group == '30' & set == 'su2020'){
+      n <- trialno[seq(1,length(trialno),2)]
+      data <- data[n,]
+      trialno <- c(1:nrow(data))
+    } else if (group == '60' & set == 'su2020'){
+      n <- trialno[seq(2,length(trialno),2)]
+      data <- data[n,]
+      trialno <- c(1:nrow(data))
+    }
+    
+    data1 <- as.matrix(data[,2:dim(data)[2]])
     confidence <- data.frame()
     
     
     for (trial in trialno){
-      cireaches <- data1[which(data$trial == trial), ]
+      if (set == 'fa2020'){
+        cireaches <- data1[which(data$trial == trial), ]
+      } else if (set == 'su2020'){
+        cireaches <- as.numeric(data[trial, 2:length(data)])
+      }
+      
       
       if (type == "t"){
         cireaches <- cireaches[!is.na(cireaches)]
@@ -1137,95 +1258,177 @@ getGroupAllTasksMTConfInt <- function(groups = c('30','60'), type = 't', set, st
 
 plotAllTasksMT <- function(groups = c('30', '60'), target='inline', set) {
   
-  
-  #but we can save plot as svg file
-  if (target=='svg' & set == 'su2020') {
-    svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig4_MovementTime.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
-  } else if (target=='svg' & set == 'fa2020'){
-    svglite(file='data/mirrorreversal-fall/doc/fig/Fig4_MovementTime.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
-  }
-  
-  # create plot
-  #meanGroupReaches <- list() #empty list so that it plots the means last
-  
-  #NA to create empty plot
-  # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,131), ylim = c(-1,11), 
-       xlab = "Trial", ylab = "Movement time (s)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(1), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-  abline(v= c(20, 110), col = 8, lty = 2)
-  axis(1, at = c(1, 10, 21, 50, 80, 111, 120, 130)) #tick marks for x axis
-  axis(2, at = c(0, 1, 2, 4, 6, 8, 10)) #tick marks for y axis
-  
-  for(group in groups){
-    #read in files created by getGroupConfidenceInterval in filehandling.R
-    if (set == 'su2020'){
-      groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_AllTasksMT_CI.csv', group))
-    } else if (set == 'fa2020'){
-      groupconfidence <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_AllTasksMT_CI.csv', group))
+  if(set == 'fa2020'){
+    #but we can save plot as svg file
+    if (target=='svg'){
+      svglite(file='data/mirrorreversal-fall/doc/fig/Fig4_MovementTime.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
     }
     
-    #split up data set for plotting purposes
-    groupconfidenceAligned <- groupconfidence[1:20,]
-    groupconfidenceLC <- groupconfidence[21:110,]
-    groupconfidenceRAE <- groupconfidence[111:130,] 
+    # create plot
+    #meanGroupReaches <- list() #empty list so that it plots the means last
+    
+    #NA to create empty plot
+    # could maybe use plot.new() ?
+    plot(NA, NA, xlim = c(0,131), ylim = c(-1,11), 
+         xlab = "Trial", ylab = "Movement time (s)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    abline(h = c(1), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    abline(v= c(20, 110), col = 8, lty = 2)
+    axis(1, at = c(1, 10, 21, 50, 80, 111, 120, 130)) #tick marks for x axis
+    axis(2, at = c(0, 1, 2, 4, 6, 8, 10)) #tick marks for y axis
+    
+    for(group in groups){
+      #read in files created by getGroupConfidenceInterval in filehandling.R
+      groupconfidence <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_AllTasksMT_CI.csv', group))
       
-    colourscheme <- getOnlineColourScheme(groups = group)
-    #plot Aligned Data
-    #take only first, last and middle columns of file
-    lower <- groupconfidenceAligned[,1]
-    upper <- groupconfidenceAligned[,3]
-    mid <- groupconfidenceAligned[,2]
+      
+      #split up data set for plotting purposes
+      groupconfidenceAligned <- groupconfidence[1:20,]
+      groupconfidenceLC <- groupconfidence[21:110,]
+      groupconfidenceRAE <- groupconfidence[111:130,] 
+      
+      colourscheme <- getOnlineColourScheme(groups = group)
+      #plot Aligned Data
+      #take only first, last and middle columns of file
+      lower <- groupconfidenceAligned[,1]
+      upper <- groupconfidenceAligned[,3]
+      mid <- groupconfidenceAligned[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(1:20), rev(c(1:20))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(1:20), y = mid,col=col,lty=1)
+      
+      #plot Mirrored Data
+      lower <- groupconfidenceLC[,1]
+      upper <- groupconfidenceLC[,3]
+      mid <- groupconfidenceLC[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(21:110), rev(c(21:110))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(21:110), y = mid,col=col,lty=1)
+      
+      #plot Wahout Data
+      #take only first, last and middle columns of file
+      lower <- groupconfidenceRAE[,1]
+      upper <- groupconfidenceRAE[,3]
+      mid <- groupconfidenceRAE[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(111:130), rev(c(111:130))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(111:130), y = mid,col=col,lty=1)
+    }
     
-    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    #add legend
+    legend(80,8,legend=c('30° target','60° target'),
+           col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+           lty=1,bty='n',cex=1,lwd=2)
     
-    #upper and lower bounds create a polygon
-    #polygon creates it from low left to low right, then up right to up left -> use rev
-    #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(1:20), rev(c(1:20))), y = c(lower, rev(upper)), border=NA, col=col)
-    col <- colourscheme[[group]][['S']]
-    lines(x = c(1:20), y = mid,col=col,lty=1)
+    #close everything if you saved plot as svg
+    if (target=='svg') {
+      dev.off()
+    }
     
-    #plot Mirrored Data
-    lower <- groupconfidenceLC[,1]
-    upper <- groupconfidenceLC[,3]
-    mid <- groupconfidenceLC[,2]
+  } else if (set == 'su2020'){
+    #but we can save plot as svg file
+    if (target=='svg') {
+      svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig4_MovementTime.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    } 
     
-    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    # create plot
+    #meanGroupReaches <- list() #empty list so that it plots the means last
     
-    #upper and lower bounds create a polygon
-    #polygon creates it from low left to low right, then up right to up left -> use rev
-    #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(21:110), rev(c(21:110))), y = c(lower, rev(upper)), border=NA, col=col)
-    col <- colourscheme[[group]][['S']]
-    lines(x = c(21:110), y = mid,col=col,lty=1)
+    #NA to create empty plot
+    # could maybe use plot.new() ?
+    plot(NA, NA, xlim = c(0,66), ylim = c(-1,11), 
+         xlab = "Trial", ylab = "Movement time (s)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    abline(h = c(1), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    abline(v= c(10, 55), col = 8, lty = 2)
+    axis(1, at = c(1, 5, 11, 25, 40, 56, 60, 65)) #tick marks for x axis
+    axis(2, at = c(0, 1, 2, 4, 6, 8, 10)) #tick marks for y axis
     
-    #plot Wahout Data
-    #take only first, last and middle columns of file
-    lower <- groupconfidenceRAE[,1]
-    upper <- groupconfidenceRAE[,3]
-    mid <- groupconfidenceRAE[,2]
+    for(group in groups){
+      #read in files created by getGroupConfidenceInterval in filehandling.R
+      groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_AllTasksMT_CI.csv', group))
+     
+      
+      #split up data set for plotting purposes
+      groupconfidenceAligned <- groupconfidence[1:10,]
+      groupconfidenceLC <- groupconfidence[11:55,]
+      groupconfidenceRAE <- groupconfidence[56:65,] 
+      
+      colourscheme <- getOnlineColourScheme(groups = group)
+      #plot Aligned Data
+      #take only first, last and middle columns of file
+      lower <- groupconfidenceAligned[,1]
+      upper <- groupconfidenceAligned[,3]
+      mid <- groupconfidenceAligned[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(1:10), rev(c(1:10))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(1:10), y = mid,col=col,lty=1)
+      
+      #plot Mirrored Data
+      lower <- groupconfidenceLC[,1]
+      upper <- groupconfidenceLC[,3]
+      mid <- groupconfidenceLC[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(11:55), rev(c(11:55))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(11:55), y = mid,col=col,lty=1)
+      
+      #plot Wahout Data
+      #take only first, last and middle columns of file
+      lower <- groupconfidenceRAE[,1]
+      upper <- groupconfidenceRAE[,3]
+      mid <- groupconfidenceRAE[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(56:65), rev(c(56:65))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(56:65), y = mid,col=col,lty=1)
+    }
     
-    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    #add legend
+    legend(35,8,legend=c('30° target','60° target'),
+           col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+           lty=1,bty='n',cex=1,lwd=2)
     
-    #upper and lower bounds create a polygon
-    #polygon creates it from low left to low right, then up right to up left -> use rev
-    #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(111:130), rev(c(111:130))), y = c(lower, rev(upper)), border=NA, col=col)
-    col <- colourscheme[[group]][['S']]
-    lines(x = c(111:130), y = mid,col=col,lty=1)
+    #close everything if you saved plot as svg
+    if (target=='svg') {
+      dev.off()
+    }
   }
   
-  #add legend
-  legend(80,8,legend=c('30° target','60° target'),
-         col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
-         lty=1,bty='n',cex=1,lwd=2)
-  
-  #close everything if you saved plot as svg
-  if (target=='svg') {
-    dev.off()
-  }
   
 }
 
@@ -1235,7 +1438,7 @@ getParticipantCircularAligned <- function(filename){
   
   #get Aligned biases
   dat <- handleOneFile(filename = filename)
-  dat$circ_rd <- as.circular(dat$reachdeviation_deg, type='angles', units='degrees')
+  dat$circ_rd <- as.circular(dat$reachdeviation_deg, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
   
   adat <- dat[which(dat$taskno == 1), ]
 
@@ -1299,26 +1502,33 @@ getGroupCircularAlignedConfInt <- function(groups = c('30','60'), set){
   for(group in groups){
     data <- getGroupCircularAligned(group=group, set=set)
     
+    #current fix for summer data being non-randomized and not counterbalanced
     trialno <- data$trial
+    
+    if(group == '30' & set == 'su2020'){
+      n <- trialno[seq(1,length(trialno),2)]
+      data <- data[n,]
+      trialno <- c(1:nrow(data))
+    } else if (group == '60' & set == 'su2020'){
+      n <- trialno[seq(2,length(trialno),2)]
+      data <- data[n,]
+      trialno <- c(1:nrow(data))
+    }
     confidence <- data.frame()
     
     for(trial in trialno){
       circ_subdat <- as.numeric(data[trial, 2:length(data)]) #get just the values, then make the circular again
-      circ_subdat <- as.circular(circ_subdat, type='angles', units='degrees')
-      #generates bootstrapped CIs for parameters of a von Mises distribution
-      #circular analogue of a normal distribution
-      CI <- mle.vonmises.bootstrap.ci(circ_subdat, reps=1000, alpha = 0.05) #default reps are 1000 and alpha at .05
+      circ_subdat <- as.circular(circ_subdat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
       
-      CIlow <- CI[['mu.ci']][1]
-      CIhigh <- CI[['mu.ci']][2]
-      CImid <- mean.circular(circ_subdat, na.rm=TRUE)
-      citrial <- data.frame(CIlow, CImid,CIhigh, row.names=NULL)
+      citrial <- getCircularConfidenceInterval(data = circ_subdat)
+      citrial <- as.numeric(citrial)
       
       if (prod(dim(confidence)) == 0){
         confidence <- citrial
       } else {
         confidence <- rbind(confidence, citrial)
       }
+
       if (set == 'su2020'){
         write.csv(confidence, file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularAligned_CI.csv', group), row.names = F) 
       } else if (set == 'fa2020'){
@@ -1330,66 +1540,122 @@ getGroupCircularAlignedConfInt <- function(groups = c('30','60'), set){
 
 plotCircularAligned <- function(groups = c('30', '60'), target='inline', set) {
   
-  
-  #but we can save plot as svg file
-  if (target=='svg' & set == 'su2020') {
-    svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig1C_CircularAligned.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
-  } else if (target=='svg' & set == 'fa2020'){
-    svglite(file='data/mirrorreversal-fall/doc/fig/Fig1C_CircularAligned.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
-  }
-  
-  # create plot
-  meanGroupReaches <- list() #empty list so that it plots the means last
-  
-  #NA to create empty plot
-  # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,21), ylim = c(-20,20), 
-       xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "Rate of learning per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(0), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-  axis(1, at = c(1, 5, 10, 15, 20)) #tick marks for x axis
-  axis(2, at = c(-15, -10, -5, 0, 5, 10, 15)) #tick marks for y axis
-  
-  for(group in groups){
-    #read in files created by getGroupConfidenceInterval in filehandling.R
-    if (set == 'su2020'){
-      groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularAligned_CI.csv', group))
-    } else if (set == 'fa2020'){
-      groupconfidence <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_CircularAligned_CI.csv', group))
+  if (set == 'fa2020'){
+    if (target=='svg') {
+      svglite(file='data/mirrorreversal-fall/doc/fig/Fig1C_CircularAligned.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
     }
     
     
-    colourscheme <- getOnlineColourScheme(groups = group)
-    #take only first, last and middle columns of file
-    lower <- groupconfidence[,1]
-    upper <- groupconfidence[,3]
-    mid <- groupconfidence[,2]
     
-    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    # create plot
+    meanGroupReaches <- list() #empty list so that it plots the means last
     
-    #upper and lower bounds create a polygon
-    #polygon creates it from low left to low right, then up right to up left -> use rev
-    #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(1:20), rev(c(1:20))), y = c(lower, rev(upper)), border=NA, col=col)
+    #NA to create empty plot
+    # could maybe use plot.new() ?
+    plot(NA, NA, xlim = c(0,21), ylim = c(-20,20), 
+         xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "Rate of learning per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    abline(h = c(0), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    axis(1, at = c(1, 5, 10, 15, 20)) #tick marks for x axis
+    axis(2, at = c(-15, -10, -5, 0, 5, 10, 15)) #tick marks for y axis
     
-    meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
-  }
-  
-  
-  for (group in groups) {
-    # plot mean reaches for each group
-    col <- colourscheme[[group]][['S']]
-    lines(meanGroupReaches[[group]],col=col,lty=1)
-  }
-  
-  #add legend
-  legend(15,-10,legend=c('30° target','60° target'),
-         col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
-         lty=1,bty='n',cex=1,lwd=2)
-  
-  #close everything if you saved plot as svg
-  if (target=='svg') {
-    dev.off()
+    for(group in groups){
+      #read in files created by getGroupConfidenceInterval in filehandling.R
+      groupconfidence <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_CircularAligned_CI.csv', group))
+      
+      
+      
+      colourscheme <- getOnlineColourScheme(groups = group)
+      #take only first, last and middle columns of file
+      lower <- groupconfidence[,1]
+      upper <- groupconfidence[,3]
+      mid <- groupconfidence[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(1:20), rev(c(1:20))), y = c(lower, rev(upper)), border=NA, col=col)
+      
+      meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+    }
+    
+    
+    for (group in groups) {
+      # plot mean reaches for each group
+      col <- colourscheme[[group]][['S']]
+      lines(meanGroupReaches[[group]],col=col,lty=1)
+    }
+    
+    #add legend
+    legend(15,-10,legend=c('30° target','60° target'),
+           col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+           lty=1,bty='n',cex=1,lwd=2)
+    
+    #close everything if you saved plot as svg
+    if (target=='svg') {
+      dev.off()
+    }
+    
+  } else if (set == 'su2020'){
+    
+    if (target=='svg') {
+      svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig1C_CircularAligned.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    }
+    
+    
+    
+    # create plot
+    meanGroupReaches <- list() #empty list so that it plots the means last
+    
+    #NA to create empty plot
+    # could maybe use plot.new() ?
+    plot(NA, NA, xlim = c(0,11), ylim = c(-20,20), 
+         xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "Rate of learning per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    abline(h = c(0), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    axis(1, at = c(1, 3, 5, 7, 10)) #tick marks for x axis
+    axis(2, at = c(-15, -10, -5, 0, 5, 10, 15)) #tick marks for y axis
+    
+    for(group in groups){
+      #read in files created by getGroupConfidenceInterval in filehandling.R
+      groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularAligned_CI.csv', group))
+      
+      
+      
+      colourscheme <- getOnlineColourScheme(groups = group)
+      #take only first, last and middle columns of file
+      lower <- groupconfidence[,1]
+      upper <- groupconfidence[,3]
+      mid <- groupconfidence[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(1:10), rev(c(1:10))), y = c(lower, rev(upper)), border=NA, col=col)
+      
+      meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+    }
+    
+    
+    for (group in groups) {
+      # plot mean reaches for each group
+      col <- colourscheme[[group]][['S']]
+      lines(meanGroupReaches[[group]],col=col,lty=1)
+    }
+    
+    #add legend
+    legend(7,-10,legend=c('30° target','60° target'),
+           col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+           lty=1,bty='n',cex=1,lwd=2)
+    
+    #close everything if you saved plot as svg
+    if (target=='svg') {
+      dev.off()
+    }
   }
   
 }
@@ -1400,7 +1666,7 @@ getParticipantCircularLC <- function(filename){
   #first, implement baseline correction
   #get Aligned biases
   dat <- handleOneFile(filename = filename)
-  dat$circ_rd <- as.circular(dat$reachdeviation_deg, type='angles', units='degrees')
+  dat$circ_rd <- as.circular(dat$reachdeviation_deg, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
   
   adat <- dat[which(dat$taskno == 1), ]
   biases <- aggregate(circ_rd ~ targetangle_deg, data= adat, FUN = median.circular) 
@@ -1491,21 +1757,27 @@ getGroupCircularLC <- function(group, set){
 getGroupCircularConfInt <- function(groups = c('30','60'), set){
   for(group in groups){
     data <- getGroupCircularLC(group=group, set=set)
-    
+    #current fix for summer data being non-randomized and not counterbalanced
     trialno <- data$trial
+    
+    if(group == '30' & set == 'su2020'){
+      n <- trialno[seq(1,length(trialno),2)]
+      data <- data[n,]
+      trialno <- c(1:nrow(data))
+    } else if (group == '60' & set == 'su2020'){
+      n <- trialno[seq(2,length(trialno),2)]
+      data <- data[n,]
+      trialno <- c(1:nrow(data))
+    }
+    
     confidence <- data.frame()
     
     for(trial in trialno){
       circ_subdat <- as.numeric(data[trial, 2:length(data)]) #get just the values, then make the circular again
-      circ_subdat <- as.circular(circ_subdat, type='angles', units='degrees')
-      #generates bootstrapped CIs for parameters of a von Mises distribution
-      #circular analogue of a normal distribution
-      CI <- mle.vonmises.bootstrap.ci(circ_subdat, reps=1000, alpha = 0.05) #default reps are 1000 and alpha at .05
+      circ_subdat <- as.circular(circ_subdat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
       
-      CIlow <- CI[['mu.ci']][1]
-      CIhigh <- CI[['mu.ci']][2]
-      CImid <- mean.circular(circ_subdat, na.rm=TRUE)
-      citrial <- data.frame(CIlow, CImid,CIhigh, row.names=NULL)
+      citrial <- getCircularConfidenceInterval(data = circ_subdat)
+      citrial <- as.numeric(citrial)
       
       if (prod(dim(confidence)) == 0){
         confidence <- citrial
@@ -1523,67 +1795,124 @@ getGroupCircularConfInt <- function(groups = c('30','60'), set){
 
 plotCircularLC <- function(groups = c('30', '60'), target='inline', set) {
   
-  
-  #but we can save plot as svg file
-  if (target=='svg' & set == 'su2020') {
-    svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig1B_CircularLC.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
-  } else if (target=='svg' & set == 'fa2020'){
-    svglite(file='data/mirrorreversal-fall/doc/fig/Fig1B_CircularLC.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
-  }
-  
-  # create plot
-  meanGroupReaches <- list() #empty list so that it plots the means last
-  
-  #NA to create empty plot
-  # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,91), ylim = c(-10,135), 
-       xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "Rate of learning per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-  axis(1, at = c(1, 30, 60, 90)) #tick marks for x axis
-  axis(2, at = c(0, 30, 60, 90, 120)) #tick marks for y axis
-  
-  for(group in groups){
-    #read in files created by getGroupConfidenceInterval in filehandling.R
-    if (set == 'su2020'){
-      groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularLC_CI.csv', group))
-    } else if (set == 'fa2020'){
-      groupconfidence <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_CircularLC_CI.csv', group))
+  if (set == 'fa2020'){
+    if (target=='svg') {
+      svglite(file='data/mirrorreversal-fall/doc/fig/Fig1B_CircularLC.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
     }
     
     
-    colourscheme <- getOnlineColourScheme(groups = group)
-    #take only first, last and middle columns of file
-    lower <- groupconfidence[,1]
-    upper <- groupconfidence[,3]
-    mid <- groupconfidence[,2]
     
-    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    # create plot
+    meanGroupReaches <- list() #empty list so that it plots the means last
     
-    #upper and lower bounds create a polygon
-    #polygon creates it from low left to low right, then up right to up left -> use rev
-    #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(1:90), rev(c(1:90))), y = c(lower, rev(upper)), border=NA, col=col)
+    #NA to create empty plot
+    # could maybe use plot.new() ?
+    plot(NA, NA, xlim = c(0,91), ylim = c(-10,135), 
+         xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "Rate of learning per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    axis(1, at = c(1, 30, 60, 90)) #tick marks for x axis
+    axis(2, at = c(0, 30, 60, 90, 120)) #tick marks for y axis
     
-    meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+    for(group in groups){
+      #read in files created by getGroupConfidenceInterval in filehandling.R
+      groupconfidence <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_CircularLC_CI.csv', group))
+      
+      
+      
+      colourscheme <- getOnlineColourScheme(groups = group)
+      #take only first, last and middle columns of file
+      lower <- groupconfidence[,1]
+      upper <- groupconfidence[,3]
+      mid <- groupconfidence[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(1:90), rev(c(1:90))), y = c(lower, rev(upper)), border=NA, col=col)
+      
+      meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+    }
+    
+    
+    for (group in groups) {
+      # plot mean reaches for each group
+      col <- colourscheme[[group]][['S']]
+      lines(meanGroupReaches[[group]],col=col,lty=1)
+    }
+    
+    #add legend
+    legend(60,25,legend=c('30° target','60° target'),
+           col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+           lty=1,bty='n',cex=1,lwd=2)
+    
+    #close everything if you saved plot as svg
+    if (target=='svg') {
+      dev.off()
+    }
+    
+  } else if (set == 'su2020'){
+    
+    if (target=='svg') {
+      svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig1B_CircularLC.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    }
+    
+    
+    
+    # create plot
+    meanGroupReaches <- list() #empty list so that it plots the means last
+    
+    #NA to create empty plot
+    # could maybe use plot.new() ?
+    plot(NA, NA, xlim = c(0,46), ylim = c(-10,135), 
+         xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "Rate of learning per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    axis(1, at = c(1, 15, 30, 45)) #tick marks for x axis
+    axis(2, at = c(0, 30, 60, 90, 120)) #tick marks for y axis
+    
+    for(group in groups){
+      #read in files created by getGroupConfidenceInterval in filehandling.R
+      groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularLC_CI.csv', group))
+      
+      
+      
+      colourscheme <- getOnlineColourScheme(groups = group)
+      #take only first, last and middle columns of file
+      lower <- groupconfidence[,1]
+      upper <- groupconfidence[,3]
+      mid <- groupconfidence[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(1:45), rev(c(1:45))), y = c(lower, rev(upper)), border=NA, col=col)
+      
+      meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+    }
+    
+    
+    for (group in groups) {
+      # plot mean reaches for each group
+      col <- colourscheme[[group]][['S']]
+      lines(meanGroupReaches[[group]],col=col,lty=1)
+    }
+    
+    #add legend
+    legend(30,25,legend=c('30° target','60° target'),
+           col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+           lty=1,bty='n',cex=1,lwd=2)
+    
+    #close everything if you saved plot as svg
+    if (target=='svg') {
+      dev.off()
+    }
   }
-  
-  
-  for (group in groups) {
-    # plot mean reaches for each group
-    col <- colourscheme[[group]][['S']]
-    lines(meanGroupReaches[[group]],col=col,lty=1)
-  }
-  
-  #add legend
-  legend(60,25,legend=c('30° target','60° target'),
-         col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
-         lty=1,bty='n',cex=1,lwd=2)
-  
-  #close everything if you saved plot as svg
-  if (target=='svg') {
-    dev.off()
-  }
+
   
 }
 
@@ -1593,7 +1922,7 @@ getParticipantCircularRAE <- function(filename){
   #first, implement baseline correction
   #get Aligned biases
   dat <- handleOneFile(filename = filename)
-  dat$circ_rd <- as.circular(dat$reachdeviation_deg, type='angles', units='degrees')
+  dat$circ_rd <- as.circular(dat$reachdeviation_deg, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
   
   adat <- dat[which(dat$taskno == 1), ]
   biases <- aggregate(circ_rd ~ targetangle_deg, data= adat, FUN = median.circular) 
@@ -1685,26 +2014,33 @@ getGroupCircularRAEConfInt <- function(groups = c('30','60'), set){
   for(group in groups){
     data <- getGroupCircularRAE(group=group, set=set)
     
+    #current fix for summer data being non-randomized and not counterbalanced
     trialno <- data$trial
+    
+    if(group == '30' & set == 'su2020'){
+      n <- trialno[seq(1,length(trialno),2)]
+      data <- data[n,]
+      trialno <- c(1:nrow(data))
+    } else if (group == '60' & set == 'su2020'){
+      n <- trialno[seq(2,length(trialno),2)]
+      data <- data[n,]
+      trialno <- c(1:nrow(data))
+    }
     confidence <- data.frame()
     
     for(trial in trialno){
       circ_subdat <- as.numeric(data[trial, 2:length(data)]) #get just the values, then make the circular again
-      circ_subdat <- as.circular(circ_subdat, type='angles', units='degrees')
-      #generates bootstrapped CIs for parameters of a von Mises distribution
-      #circular analogue of a normal distribution
-      CI <- mle.vonmises.bootstrap.ci(circ_subdat, reps=1000, alpha = 0.05) #default reps are 1000 and alpha at .05
+      circ_subdat <- as.circular(circ_subdat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
       
-      CIlow <- CI[['mu.ci']][1]
-      CIhigh <- CI[['mu.ci']][2]
-      CImid <- mean.circular(circ_subdat, na.rm=TRUE)
-      citrial <- data.frame(CIlow, CImid,CIhigh, row.names=NULL)
+      citrial <- getCircularConfidenceInterval(data = circ_subdat)
+      citrial <- as.numeric(citrial)
       
       if (prod(dim(confidence)) == 0){
         confidence <- citrial
       } else {
         confidence <- rbind(confidence, citrial)
       }
+      
       if (set == 'su2020'){
         write.csv(confidence, file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularRAE_CI.csv', group), row.names = F) 
       } else if (set == 'fa2020'){
@@ -1717,66 +2053,124 @@ getGroupCircularRAEConfInt <- function(groups = c('30','60'), set){
 plotCircularRAE <- function(groups = c('30', '60'), target='inline', set) {
   
   
-  #but we can save plot as svg file
-  if (target=='svg' & set == 'su2020') {
-    svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig2B_CircularRAE.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
-  } else if (target=='svg' & set == 'fa2020'){
-    svglite(file='data/mirrorreversal-fall/doc/fig/Fig2B_CircularRAE.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
-  }
-  
-  # create plot
-  meanGroupReaches <- list() #empty list so that it plots the means last
-  
-  #NA to create empty plot
-  # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,21), ylim = c(-20,20), 
-       xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "Rate of de-adaptation per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(0), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-  axis(1, at = c(1, 5, 10, 15, 20)) #tick marks for x axis
-  axis(2, at = c(-15, -10, -5, 0, 5, 10, 15)) #tick marks for y axis
-  
-  for(group in groups){
-    #read in files created by getGroupConfidenceInterval in filehandling.R
-    if (set == 'su2020'){
-      groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularRAE_CI.csv', group))
-    } else if (set == 'fa2020'){
-      groupconfidence <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_CircularRAE_CI.csv', group))
+  if (set == 'fa2020'){
+    if (target=='svg') {
+      svglite(file='data/mirrorreversal-fall/doc/fig/Fig2B_CircularRAE.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
     }
     
     
-    colourscheme <- getOnlineColourScheme(groups = group)
-    #take only first, last and middle columns of file
-    lower <- groupconfidence[,1]
-    upper <- groupconfidence[,3]
-    mid <- groupconfidence[,2]
     
-    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    # create plot
+    meanGroupReaches <- list() #empty list so that it plots the means last
     
-    #upper and lower bounds create a polygon
-    #polygon creates it from low left to low right, then up right to up left -> use rev
-    #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(1:20), rev(c(1:20))), y = c(lower, rev(upper)), border=NA, col=col)
+    #NA to create empty plot
+    # could maybe use plot.new() ?
+    plot(NA, NA, xlim = c(0,21), ylim = c(-20,20), 
+         xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "Rate of de-adaptation per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    abline(h = c(0), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    axis(1, at = c(1, 5, 10, 15, 20)) #tick marks for x axis
+    axis(2, at = c(-15, -10, -5, 0, 5, 10, 15)) #tick marks for y axis
     
-    meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+    for(group in groups){
+      #read in files created by getGroupConfidenceInterval in filehandling.R
+      groupconfidence <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_CircularRAE_CI.csv', group))
+      
+      
+      
+      colourscheme <- getOnlineColourScheme(groups = group)
+      #take only first, last and middle columns of file
+      lower <- groupconfidence[,1]
+      upper <- groupconfidence[,3]
+      mid <- groupconfidence[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(1:20), rev(c(1:20))), y = c(lower, rev(upper)), border=NA, col=col)
+      
+      meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+    }
+    
+    
+    for (group in groups) {
+      # plot mean reaches for each group
+      col <- colourscheme[[group]][['S']]
+      lines(meanGroupReaches[[group]],col=col,lty=1)
+    }
+    
+    #add legend
+    legend(15,-10,legend=c('30° target','60° target'),
+           col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+           lty=1,bty='n',cex=1,lwd=2)
+    
+    #close everything if you saved plot as svg
+    if (target=='svg') {
+      dev.off()
+    }
+    
+  } else if (set == 'su2020'){
+    
+    if (target=='svg') {
+      svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig2B_CircularRAE.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    }
+    
+    
+    
+    # create plot
+    meanGroupReaches <- list() #empty list so that it plots the means last
+    
+    #NA to create empty plot
+    # could maybe use plot.new() ?
+    plot(NA, NA, xlim = c(0,11), ylim = c(-20,20), 
+         xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "Rate of de-adaptation per target location", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    abline(h = c(0), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    axis(1, at = c(1, 3, 5, 7, 10)) #tick marks for x axis
+    axis(2, at = c(-15, -10, -5, 0, 5, 10, 15)) #tick marks for y axis
+    
+    for(group in groups){
+      #read in files created by getGroupConfidenceInterval in filehandling.R
+      groupconfidence <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularRAE_CI.csv', group))
+      
+      
+      
+      colourscheme <- getOnlineColourScheme(groups = group)
+      #take only first, last and middle columns of file
+      lower <- groupconfidence[,1]
+      upper <- groupconfidence[,3]
+      mid <- groupconfidence[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(1:10), rev(c(1:10))), y = c(lower, rev(upper)), border=NA, col=col)
+      
+      meanGroupReaches[[group]] <- mid #use mean to fill in empty list for each group
+    }
+    
+    
+    for (group in groups) {
+      # plot mean reaches for each group
+      col <- colourscheme[[group]][['S']]
+      lines(meanGroupReaches[[group]],col=col,lty=1)
+    }
+    
+    #add legend
+    legend(7,-10,legend=c('30° target','60° target'),
+           col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+           lty=1,bty='n',cex=1,lwd=2)
+    
+    #close everything if you saved plot as svg
+    if (target=='svg') {
+      dev.off()
+    }
   }
   
-  
-  for (group in groups) {
-    # plot mean reaches for each group
-    col <- colourscheme[[group]][['S']]
-    lines(meanGroupReaches[[group]],col=col,lty=1)
-  }
-  
-  #add legend
-  legend(15,-10,legend=c('30° target','60° target'),
-         col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
-         lty=1,bty='n',cex=1,lwd=2)
-  
-  #close everything if you saved plot as svg
-  if (target=='svg') {
-    dev.off()
-  }
   
 }
 
@@ -1896,95 +2290,172 @@ plotCircularRAE <- function(groups = c('30', '60'), target='inline', set) {
 #if we just take Circular Aligned, LC, and RAE together (i.e. their CI files saved)
 plotCircularAllTasks <- function(groups = c('30', '60'), target='inline', set) {
   
-  
-  #but we can save plot as svg file
-  if (target=='svg' & set == 'su2020') {
-    svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig3_CircularAllTasks.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
-  } else if (target=='svg' & set == 'fa2020'){
-    svglite(file='data/mirrorreversal-fall/doc/fig/Fig3_CircularAllTasks.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
-  }
-  
-  # create plot
-  #meanGroupReaches <- list() #empty list so that it plots the means last
-  
-  #NA to create empty plot
-  # could maybe use plot.new() ?
-  plot(NA, NA, xlim = c(0,131), ylim = c(-20,140), 
-       xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
-       main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
-  abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
-  abline(v= c(20, 110), col = 8, lty = 2)
-  axis(1, at = c(1, 10, 21, 50, 80, 111, 120, 130)) #tick marks for x axis
-  axis(2, at = c(-15, 0, 15, 30, 60, 90, 120)) #tick marks for y axis
-  
-  for(group in groups){
-    #read in files created by getGroupConfidenceInterval in filehandling.R
-    if (set == 'su2020'){
-      groupconfidenceAligned <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularAligned_CI.csv', group))
-      groupconfidenceLC <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularLC_CI.csv', group))
-      groupconfidenceRAE <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularRAE_CI.csv', group))
-    } else if (set == 'fa2020'){
+  if(set == 'fa2020'){
+    #but we can save plot as svg file
+    if (target=='svg'){
+      svglite(file='data/mirrorreversal-fall/doc/fig/Fig3_CircularAllTasks.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    }
+    
+    # create plot
+    #meanGroupReaches <- list() #empty list so that it plots the means last
+    
+    #NA to create empty plot
+    # could maybe use plot.new() ?
+    plot(NA, NA, xlim = c(0,131), ylim = c(-20,140), 
+         xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    abline(v= c(20, 110), col = 8, lty = 2)
+    axis(1, at = c(1, 10, 21, 50, 80, 111, 120, 130)) #tick marks for x axis
+    axis(2, at = c(-15, 0, 15, 30, 60, 90, 120)) #tick marks for y axis
+    
+    for(group in groups){
+      #read in files created by getGroupConfidenceInterval in filehandling.R
       groupconfidenceAligned <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_CircularAligned_CI.csv', group))
       groupconfidenceLC <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_CircularLC_CI.csv', group))
       groupconfidenceRAE <- read.csv(file=sprintf('data/mirrorreversal-fall/data/processed/%s_CircularRAE_CI.csv', group))
+      
+      
+      
+      colourscheme <- getOnlineColourScheme(groups = group)
+      #plot Aligned Data
+      #take only first, last and middle columns of file
+      lower <- groupconfidenceAligned[,1]
+      upper <- groupconfidenceAligned[,3]
+      mid <- groupconfidenceAligned[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(1:20), rev(c(1:20))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(1:20), y = mid,col=col,lty=1)
+      
+      #plot Mirrored Data
+      lower <- groupconfidenceLC[,1]
+      upper <- groupconfidenceLC[,3]
+      mid <- groupconfidenceLC[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(21:110), rev(c(21:110))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(21:110), y = mid,col=col,lty=1)
+      
+      #plot Wahout Data
+      #take only first, last and middle columns of file
+      lower <- groupconfidenceRAE[,1]
+      upper <- groupconfidenceRAE[,3]
+      mid <- groupconfidenceRAE[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(111:130), rev(c(111:130))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(111:130), y = mid,col=col,lty=1)
     }
     
+    #add legend
+    legend(80,0,legend=c('30° target','60° target'),
+           col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+           lty=1,bty='n',cex=1,lwd=2)
     
-    colourscheme <- getOnlineColourScheme(groups = group)
-    #plot Aligned Data
-    #take only first, last and middle columns of file
-    lower <- groupconfidenceAligned[,1]
-    upper <- groupconfidenceAligned[,3]
-    mid <- groupconfidenceAligned[,2]
+    #close everything if you saved plot as svg
+    if (target=='svg') {
+      dev.off()
+    }
+  } else if (set == 'su2020'){
+    #but we can save plot as svg file
+    if (target=='svg') {
+      svglite(file='data/mReversalNewAlpha3-master/doc/fig/Fig3_CircularAllTasks.svg', width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    }
     
-    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    # create plot
+    #meanGroupReaches <- list() #empty list so that it plots the means last
     
-    #upper and lower bounds create a polygon
-    #polygon creates it from low left to low right, then up right to up left -> use rev
-    #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(1:20), rev(c(1:20))), y = c(lower, rev(upper)), border=NA, col=col)
-    col <- colourscheme[[group]][['S']]
-    lines(x = c(1:20), y = mid,col=col,lty=1)
+    #NA to create empty plot
+    # could maybe use plot.new() ?
+    plot(NA, NA, xlim = c(0,66), ylim = c(-20,140), 
+         xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
+         main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+    abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
+    abline(v= c(10, 55), col = 8, lty = 2)
+    axis(1, at = c(1, 5, 11, 25, 40, 56, 60, 65)) #tick marks for x axis
+    axis(2, at = c(-15, 0, 15, 30, 60, 90, 120)) #tick marks for y axis
     
-    #plot Mirrored Data
-    lower <- groupconfidenceLC[,1]
-    upper <- groupconfidenceLC[,3]
-    mid <- groupconfidenceLC[,2]
+    for(group in groups){
+      #read in files created by getGroupConfidenceInterval in filehandling.R
+      groupconfidenceAligned <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularAligned_CI.csv', group))
+      groupconfidenceLC <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularLC_CI.csv', group))
+      groupconfidenceRAE <- read.csv(file=sprintf('data/mReversalNewAlpha3-master/data/processed/%s_CircularRAE_CI.csv', group))
+
+      
+      
+      colourscheme <- getOnlineColourScheme(groups = group)
+      #plot Aligned Data
+      #take only first, last and middle columns of file
+      lower <- groupconfidenceAligned[,1]
+      upper <- groupconfidenceAligned[,3]
+      mid <- groupconfidenceAligned[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(1:10), rev(c(1:10))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(1:10), y = mid,col=col,lty=1)
+      
+      #plot Mirrored Data
+      lower <- groupconfidenceLC[,1]
+      upper <- groupconfidenceLC[,3]
+      mid <- groupconfidenceLC[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(11:55), rev(c(11:55))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(11:55), y = mid,col=col,lty=1)
+      
+      #plot Wahout Data
+      #take only first, last and middle columns of file
+      lower <- groupconfidenceRAE[,1]
+      upper <- groupconfidenceRAE[,3]
+      mid <- groupconfidenceRAE[,2]
+      
+      col <- colourscheme[[group]][['T']] #use colour scheme according to group
+      
+      #upper and lower bounds create a polygon
+      #polygon creates it from low left to low right, then up right to up left -> use rev
+      #x is just trial nnumber, y depends on values of bounds
+      polygon(x = c(c(56:65), rev(c(56:65))), y = c(lower, rev(upper)), border=NA, col=col)
+      col <- colourscheme[[group]][['S']]
+      lines(x = c(56:65), y = mid,col=col,lty=1)
+    }
     
-    col <- colourscheme[[group]][['T']] #use colour scheme according to group
+    #add legend
+    legend(35,0,legend=c('30° target','60° target'),
+           col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
+           lty=1,bty='n',cex=1,lwd=2)
     
-    #upper and lower bounds create a polygon
-    #polygon creates it from low left to low right, then up right to up left -> use rev
-    #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(21:110), rev(c(21:110))), y = c(lower, rev(upper)), border=NA, col=col)
-    col <- colourscheme[[group]][['S']]
-    lines(x = c(21:110), y = mid,col=col,lty=1)
-    
-    #plot Wahout Data
-    #take only first, last and middle columns of file
-    lower <- groupconfidenceRAE[,1]
-    upper <- groupconfidenceRAE[,3]
-    mid <- groupconfidenceRAE[,2]
-    
-    col <- colourscheme[[group]][['T']] #use colour scheme according to group
-    
-    #upper and lower bounds create a polygon
-    #polygon creates it from low left to low right, then up right to up left -> use rev
-    #x is just trial nnumber, y depends on values of bounds
-    polygon(x = c(c(111:130), rev(c(111:130))), y = c(lower, rev(upper)), border=NA, col=col)
-    col <- colourscheme[[group]][['S']]
-    lines(x = c(111:130), y = mid,col=col,lty=1)
+    #close everything if you saved plot as svg
+    if (target=='svg') {
+      dev.off()
+    }
   }
   
-  #add legend
-  legend(80,0,legend=c('30° target','60° target'),
-         col=c(colourscheme[['30']][['S']],colourscheme[['60']][['S']]),
-         lty=1,bty='n',cex=1,lwd=2)
-  
-  #close everything if you saved plot as svg
-  if (target=='svg') {
-    dev.off()
-  }
   
 }
 
