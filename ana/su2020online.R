@@ -845,14 +845,15 @@ getGroupCircFreq <- function(group, set){
 plotGroupCircFreq <- function(group, set){
   
   dat <- getGroupCircFreq(group = group, set = set)
-  if(set == 'fa2020'){
-    pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sCircular.pdf", group))
-  } else if (set == 'su2020'){
-    pdf(sprintf("data/mReversalNewAlpha3-master/doc/fig/Distribution_%sCircular.pdf", group))
-  }
+  # if(set == 'fa2020'){
+  #   pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sCircular.pdf", group))
+  # } else if (set == 'su2020'){
+  #   pdf(sprintf("data/mReversalNewAlpha3-master/doc/fig/Distribution_%sCircular.pdf", group))
+  # }
   
   #current fix for summer data being non-randomized and not counterbalanced
-  triallist <- dat$trial
+  #triallist <- dat$trial
+  triallist <- c(1,2,90)
   
   if(group == '30' & set == 'su2020'){
     n <- triallist[seq(1,length(triallist),2)]
@@ -869,7 +870,7 @@ plotGroupCircFreq <- function(group, set){
     subdat <- as.numeric(subdat[,2:ncol(subdat)])
     subdat <- as.circular(subdat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
     distsubdat <- density.circular(subdat, na.rm = TRUE, bw = 15)
-    plot(distsubdat, main = sprintf('%s-deg Target: Trial %s', group, triali), frame.plot = FALSE,
+    plot(distsubdat, main = sprintf('%s° Target: Trial %s', group, triali), frame.plot = FALSE,
          axes = FALSE, points.plot = TRUE, points.col = 5,
          plot.type = 'line', xlim = c(0,360))
     if(group == '30'){
@@ -880,7 +881,7 @@ plotGroupCircFreq <- function(group, set){
     axis(1, at = c(0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 330, 300, 360))
     axis(2, at = c(0, 0.2, 0.4, 0.6, 0.8, 1))
   }
-  dev.off()
+  #dev.off()
   
 }
 
@@ -2303,7 +2304,7 @@ plotCircularAllTasks <- function(groups = c('30', '60'), target='inline', set) {
     # could maybe use plot.new() ?
     plot(NA, NA, xlim = c(0,131), ylim = c(-20,140), 
          xlab = "Trial", ylab = "Angular reach deviation (°)", frame.plot = FALSE, #frame.plot takes away borders
-         main = "", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
+         main = "Reaches across trials", xaxt = 'n', yaxt = 'n') #xaxt and yaxt to allow to specify tick marks
     abline(h = c(0, 60, 120), col = 8, lty = 2) #creates horizontal dashed lines through y =  0 and 30
     abline(v= c(20, 110), col = 8, lty = 2)
     axis(1, at = c(1, 10, 21, 50, 80, 111, 120, 130)) #tick marks for x axis
