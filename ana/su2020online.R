@@ -842,47 +842,54 @@ getGroupCircFreq <- function(group, set){
   #typical outlier removal procedure would not be valid in this case
 }
 
-plotGroupCircFreq <- function(group, set){
+plotGroupCircFreq <- function(groups = c('30', '60'), set){
   
-  dat <- getGroupCircFreq(group = group, set = set)
-  # if(set == 'fa2020'){
-  #   pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sCircular.pdf", group))
-  # } else if (set == 'su2020'){
-  #   pdf(sprintf("data/mReversalNewAlpha3-master/doc/fig/Distribution_%sCircular.pdf", group))
-  # }
-  
-  #current fix for summer data being non-randomized and not counterbalanced
-  #triallist <- dat$trial
-  triallist <- c(1,2,90)
-  
-  if(group == '30' & set == 'su2020'){
-    n <- triallist[seq(1,length(triallist),2)]
-    dat <- dat[n,]
-    triallist <- dat$trial
-  } else if (group == '60' & set == 'su2020'){
-    n <- triallist[seq(2,length(triallist),2)]
-    dat <- dat[n,]
-    triallist <- dat$trial
-  }
-  
-  for(triali in triallist){
-    subdat <- dat[which(dat$trial == triali),]
-    subdat <- as.numeric(subdat[,2:ncol(subdat)])
-    subdat <- as.circular(subdat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
-    distsubdat <- density.circular(subdat, na.rm = TRUE, bw = 15)
-    plot(distsubdat, main = sprintf('%s° Target: Trial %s', group, triali), frame.plot = FALSE,
-         axes = FALSE, points.plot = TRUE, points.col = 5,
-         plot.type = 'line', xlim = c(0,360))
-    if(group == '30'){
-      abline(v = 120, col = 8, lty = 2)
-    } else if (group == '60'){
-      abline(v = 60, col = 8, lty = 2)
+  for(group in groups){
+    dat <- getGroupCircFreq(group = group, set = set)
+    
+    # if(set == 'fa2020'){
+    #   pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sCircular.pdf", group))
+    # } else if (set == 'su2020'){
+    #   pdf(sprintf("data/mReversalNewAlpha3-master/doc/fig/Distribution_%sCircular.pdf", group))
+    # }
+    
+    #current fix for summer data being non-randomized and not counterbalanced
+    #triallist <- dat$trial
+    triallist <- c(1,2,90)
+    
+    if(group == '30' & set == 'su2020'){
+      n <- triallist[seq(1,length(triallist),2)]
+      dat <- dat[n,]
+      triallist <- dat$trial
+    } else if (group == '60' & set == 'su2020'){
+      n <- triallist[seq(2,length(triallist),2)]
+      dat <- dat[n,]
+      triallist <- dat$trial
     }
-    axis(1, at = c(0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 330, 300, 360))
-    axis(2, at = c(0, 0.2, 0.4, 0.6, 0.8, 1))
+    
+    for(triali in triallist){
+      subdat <- dat[which(dat$trial == triali),]
+      subdat <- as.numeric(subdat[,2:ncol(subdat)])
+      subdat <- as.circular(subdat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      distsubdat <- density.circular(subdat, na.rm = TRUE, bw = 15)
+      plot(distsubdat, main = sprintf('%s° Target: Trial %s', group, triali), plot.type = 'circle', shrink=1.20)
+      if(group == '30'){
+        rd <- as.circular(c(0,120), type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+        points.circular(rd, pch = 15, col = 'red')
+        lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=1.20)
+        #abline(v = 120, col = 8, lty = 2)
+      } else if (group == '60'){
+        rd <- as.circular(c(0,60), type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+        points.circular(rd, pch = 15, col = 'red')
+        lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=1.20)
+        #abline(v = 60, col = 8, lty = 2)
+      }
+      # axis(1, at = c(0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 330, 300, 360))
+      # axis(2, at = c(0, 0.2, 0.4, 0.6, 0.8, 1))
+    }
+    #dev.off()
+    
   }
-  #dev.off()
-  
 }
 
 #density or frequency plots: LINEAR-----
