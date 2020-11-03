@@ -1071,10 +1071,15 @@ plotGroupRDMT <- function(group, target='inline', set) {
   dat <- getGroupRDMT(group=group, set = set)
   #NA to create empty plot
   # could maybe use plot.new() ?
-  plot(dat$time, dat$circ_rd, xlab = 'Movement Time, Step 1', ylab = "Circular Reach deviation, Step 2",
-       main = sprintf('%s-deg target: Trial 21', group), frame.plot = FALSE)
+  plot(NA, NA, xlim = c(-1,26), ylim=c(-250,250),
+       xlab = 'Movement Time, Step 1', ylab = "Circular Reach deviation, Step 2",
+       main = sprintf('%s-deg target: Trial 21', group), frame.plot = FALSE, xaxt = 'n', yaxt = 'n')
+  axis(1, at = c(0, 5, 10, 15, 20, 25)) #tick marks for x axis
+  axis(2, at = c(-180, -120, -60, 0, 60, 120, 180)) #tick marks for y axis
   time <- dat$time
   circrd <- dat$circ_rd
+  circrd <- as.circular(circrd, type='angles', units='degrees', template='none', modulo='asis', zero=0, rotation='counter')
+  points(time,circrd)
   mod1 <- lm(circrd ~ time)
   
   reglinex <- seq(range(time, na.rm = TRUE)[1],range(time, na.rm = TRUE)[2],.1)
