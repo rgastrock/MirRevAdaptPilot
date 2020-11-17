@@ -123,6 +123,134 @@ handleOneFile <- function(filename) {
   return(dfrd)
 }
 
+#test initial trials ----
+getParticipantTrialData<- function(group, set) {
+
+  data <- getGroupCircularLC(group=group, set=set)
+  #get only participants with data for this group
+  ndat <- data[1,]
+  #get only participants with reaches in "correct" side of mirror
+  ndat[which(abs(ndat) < 90)] <- NA
+  #get only those with data
+  ndat <- ndat[,which(!is.na(ndat))]
+  #ndat <- ndat[,2:ncol(ndat)]
+  
+  #can return reachdevs for these participants
+  #return(ndat)
+  #or just return participant names
+  ppnames <- colnames(ndat)
+  return(ppnames)
+}
+
+
+getParticipantFilenames<- function(group,set) {
+  #get filenames of participants reaching in correct side, so that we can plot their trajectories
+  ppnames <- getParticipantTrialData(group=group, set=set)
+  
+  datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+  
+  filenames <- c()
+  for(participant in ppnames){
+    datafilename <- grep(participant, datafilenames, value = TRUE)
+    
+    filenames <- c(filenames, datafilename)
+  }
+  return(filenames)
+}  
+  
+plotReachTrajectories <- function(group,set){
+
+  #par(mfrow = c(5,5))
+  datafilenames <- getParticipantFilenames(group=group, set=set) #will only contain those part of group and those reaching to correct side
+  triali <- c(21)
+
+  # plot(NA,NA,xlim=c(-1.2,1.2),ylim=c(-1.2,1.2), xlab = 'X coords', ylab = 'Y coords', main = sprintf('Mir Step2, Trial %d', triali))
+  # points(c(0,.4*(cos((30/180)*pi))),c(0,.4*(sin((30/180)*pi))),col='black')
+  # points(c(0,.4*(cos((60/180)*pi))),c(0,.4*(sin((60/180)*pi))),col='black')
+  #cat(sprintf('%d\n', triali))
+  #data <- c()
+  
+  pdf(sprintf("data/mirrorreversal-fall/doc/fig/Trial1Trajectories_%sTargetLoc.pdf", group))
+  
+  for(datafilenum in c(1:length(datafilenames))){
+    datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+
+    cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+    try(df <- read.csv(datafilename, stringsAsFactors = F), silent = TRUE)
+    
+    #plot
+    pp <- unique(df$participant)
+    plot(NA,NA,xlim=c(-1.2,1.2),ylim=c(-1.2,1.2), xlab = 'X coords', ylab = 'Y coords', main = sprintf('%s-deg Target, Mirror Trial 1, ID:%s', group,pp))
+    points(c(0,.4*(cos((30/180)*pi))),c(0,.4*(sin((30/180)*pi))),col='black')
+    points(c(0,.4*(cos((60/180)*pi))),c(0,.4*(sin((60/180)*pi))),col='black')
+    # set up vectors for relevant data:
+    trialno <- c()            #trialNum
+    targetangle_deg <- c()
+    mirror <-c()              #trialsType
+    reachdeviation_deg <- c()
+    taskno <- c()             #trialsNum
+    participant <- c()
+
+    # remove empty lines:
+    df <- df[which(!is.na(df$trialsNum)),]
+    df <- df[which(df$trialNum == triali),]
+
+    # loop through all trials
+
+
+
+    x <- convertCellToNumVector(df$trialMouse.x)
+    y <- convertCellToNumVector(df$trialMouse.y)
+    s <- convertCellToNumVector(df$step)
+    m <- df$trialsType
+    a <- df$targetangle_deg
+    p <- df$participant
+
+    # remove stuff that is not step==1
+    step2idx = which(s == 2)
+    x2 <- x[step2idx]
+    y2 <- y[step2idx]
+
+    lines(x2,y2,type='l',col=alpha('blue', 1),xlim=c(-1.2,1.2),ylim=c(-1.2,1.2))
+    lines(c(0,1),c(0,0),col='black')
+    #points(c(0,cos((a/180)*pi)),c(0,sin((a/180)*pi)),col='black')
+    
+    # remove stuff that is not step==1
+    step1idx = which(s == 1)
+    x1 <- x[step1idx]
+    y1 <- y[step1idx]
+    
+    lines(x1,y1,type='l',col=alpha('grey', 1),xlim=c(-1.2,1.2),ylim=c(-1.2,1.2))
+    
+    # get first point beyond some distance (home-target is 40% of height of participant's screen)
+    # we can set a cutoff at 30% of home-target distance (20% of .4 = .08)
+    d <- sqrt(x2^2 + y2^2)
+    idx <- which(d > .08)[1]
+    x2 <- x2[idx]
+    y2 <- y2[idx]
+
+    points(x2,y2,col='red')
+
+
+    # get angular deviation of reach from target angle:
+    # rotcoords <- rotateTrajectory(x,y,-a)
+    # x <- rotcoords[1]
+    # y <- rotcoords[2]
+    # 
+    # rd <- (atan2(y, x) / pi) * 180
+
+
+    #text(0,-0.1,sprintf('%0.3f',rd))
+  }
+  dev.off()
+} 
+  
+  
+  
+  
+  
+
+
 
 #plot trajectories for step 1-----
 plotTestOneFileStepOne <- function() {
