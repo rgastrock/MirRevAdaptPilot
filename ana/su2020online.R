@@ -123,6 +123,7 @@ handleOneFile <- function(filename) {
   return(dfrd)
 }
 
+
 #test initial trials ----
 getParticipantTrialData<- function(group, set) {
 
@@ -1572,6 +1573,48 @@ plotAllTasksMT <- function(groups = c('30', '60'), target='inline', set) {
   
   
 }
+
+#clean baseline aligned----
+#baseline should be relatively straightforward (reach towards target)
+#we expect participants to have angular reach deviations within the quadrant of targets (0 to 90 degrees)
+#with target aligned to zero, this range is -30 degrees to 60 for the 30 deg target
+# range is -60 degrees to 30 for the 60 deg target
+removeOutlierAlignedReaches <- function(group, set){
+  
+  #get aligned data for specific group
+  data <- getGroupCircularAligned(group = group, set = set)
+  #set outlier values (ie out of quadrant) to NA, this depends on target location
+  for (trialno in data$trial){
+    #go through each trial, replace outlier values with NA
+    ndat <- as.numeric(data[trialno, 2:ncol(data)])
+    if (group == '30'){
+      ndat[which(ndat < -30 | ndat > 60)] <- NA
+    } else if (group == '60'){
+      ndat[which(ndat < -60 | ndat > 30)] <- NA
+    }
+    data[trialno, 2:ncol(data)] <- ndat
+  }
+  return(data)
+}
+
+#then if each participant is left with just less than 5 trials for each target, remove participant from analysis
+getParticipantsOutlierAligned <- function(group, set){
+  data <- removeOutlierAlignedReaches(group=group, set=set)
+  ppremove <- c()
+  for(pp in 2:ncol(data)){
+    ndat <- data[,pp]
+    clip <- sum(!is.na(ndat))
+    if(clip < 5){
+      ppname <- colnames(data[pp])
+      ppremove <- c(ppremove, ppname)
+    }
+  }
+  return(ppremove)
+}
+
+#PPs with below 5 trials per target
+#30 deg target: 216709 (4 trials), 218425 (2 trials), 219301 (4 trials), 221128 (4 trials)
+#60 deg target: 218425 (0 trials)
 
 
 #learning curves: Circular Aligned----
