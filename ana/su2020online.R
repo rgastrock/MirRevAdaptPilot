@@ -1684,8 +1684,9 @@ getGroupCircularAligned <- function(group, set){
 
 getGroupCircularAlignedConfInt <- function(groups = c('30','60'), set){
   for(group in groups){
-    data <- getGroupCircularAligned(group=group, set=set)
-    
+    #data <- getGroupCircularAligned(group=group, set=set)
+    # use cleaned aligned trials (i.e. only trials with reaches in correct quadrant)
+    data <- removeOutlierAlignedReaches(group=group, set=set)
     #current fix for summer data being non-randomized and not counterbalanced
     trialno <- data$trial
     
@@ -1853,6 +1854,18 @@ getParticipantCircularLC <- function(filename){
   dat$circ_rd <- as.circular(dat$reachdeviation_deg, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
   
   adat <- dat[which(dat$taskno == 1), ]
+  # use cleaned baseline data (reaches in correct quadrant)
+  for (trialno in adat$trialno){
+    #go through each trial, replace outlier values with NA
+    subadat <- adat[trialno,]
+    if (subadat$targetangle_deg == '30'){
+      subadat$circ_rd[which(subadat$circ_rd < -30 | subadat$circ_rd > 60)] <- NA
+    } else if (subadat$targetangle_deg == '60'){
+      subadat$circ_rd[which(subadat$circ_rd < -60 | subadat$circ_rd > 30)] <- NA
+    }
+    adat[trialno, ] <- subadat
+  }
+  
   biases <- aggregate(circ_rd ~ targetangle_deg, data= adat, FUN = median.circular) 
   
   mdat <- dat[which(dat$taskno == 2),]
@@ -2109,6 +2122,18 @@ getParticipantCircularRAE <- function(filename){
   dat$circ_rd <- as.circular(dat$reachdeviation_deg, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
   
   adat <- dat[which(dat$taskno == 1), ]
+  # use cleaned baseline data (reaches in correct quadrant)
+  for (trialno in adat$trialno){
+    #go through each trial, replace outlier values with NA
+    subadat <- adat[trialno,]
+    if (subadat$targetangle_deg == '30'){
+      subadat$circ_rd[which(subadat$circ_rd < -30 | subadat$circ_rd > 60)] <- NA
+    } else if (subadat$targetangle_deg == '60'){
+      subadat$circ_rd[which(subadat$circ_rd < -60 | subadat$circ_rd > 30)] <- NA
+    }
+    adat[trialno, ] <- subadat
+  }
+  
   biases <- aggregate(circ_rd ~ targetangle_deg, data= adat, FUN = median.circular) 
   
   mdat <- dat[which(dat$taskno == 3),]
