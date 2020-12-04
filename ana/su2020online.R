@@ -1331,9 +1331,60 @@ plotCheckGroupCircFreq <- function(groups = c('30', '60'), set){
   }
 }
 
+#include a plot showing frequency of participants with move throughs per trial
+getParticipantMoveThrough <- function(group,set){
+  
+  
+  dat1 <- getCheckGroupStep1Samp(group=group, set=set)
+  
+  #current fix for summer data being non-randomized and not counterbalanced
+  #triallist <- dat$trial
+  triallist <- c(1:90)
+  
+  if(group == '30' & set == 'su2020'){
+    n <- triallist[seq(1,length(triallist),2)]
+    dat <- dat[n,]
+    triallist <- dat$trial
+  } else if (group == '60' & set == 'su2020'){
+    n <- triallist[seq(2,length(triallist),2)]
+    dat <- dat[n,]
+    triallist <- dat$trial
+  }
+  
+  trial <- c()
+  ppno <- c()
+  for(triali in triallist){
+    subdat1 <- dat1[which(dat1$trial == triali),]
+    subdat1 <- as.numeric(subdat1[,2:ncol(subdat1)])
+    ppthrough <- sum(subdat1[which(subdat1 == 1)])
+    
+    trial <- c(trial, triali)
+    ppno <- c(ppno, ppthrough)
+  }
+  ppmovethrough <- data.frame(trial,ppno)
+  
+  return(ppmovethrough)
+}
 
-
-
+plotParticipantMoveThrough <- function(groups=c('30','60'),set){
+  
+  if(set == 'fa2020'){
+    pdf("data/mirrorreversal-fall/doc/fig/ParticipantMoveThrough.pdf", width=11, pointsize = 8.5)
+  } else if (set == 'su2020'){
+    pdf("data/mReversalNewAlpha3-master/doc/fig/ParticipantMoveThrough.pdf")
+  }
+  
+  for(group in groups){
+    data <- getParticipantMoveThrough(group=group, set=set)
+    barplot(data$ppno~data$trial, xlab = 'Trial', ylab = 'Frequency of Participants',
+            main = sprintf('Participants with move throughs: %s Deg. Target', group), axes = FALSE, #axisnames=FALSE,
+            ylim = c(-1,31))
+    #axis(1, at = c(1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90))
+    axis(2, at = c(0, 2, 4, 6, 8, 10, 20, 30)) #tick marks for y axis
+  }
+  dev.off()
+  
+}
 
 
 #density or frequency plots: LINEAR-----
