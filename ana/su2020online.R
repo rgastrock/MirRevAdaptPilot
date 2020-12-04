@@ -909,82 +909,83 @@ plotMirOneFileStepThree <- function() {
 
 
 #density or frequency plots: CIRCULAR-----
-getParticipantCircFreq <- function(filename){
-  dat <- handleOneFile(filename = filename)
-  mdat <- dat[which(dat$taskno == 2), ]
-  
-  #transform reachdev to circular
-  mdat_angles <- as.numeric(mdat$reachdeviation_deg)
-  mdat$circ_reachdev <- as.circular(mdat_angles, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+# getParticipantCircFreq <- function(filename){
+#   dat <- handleOneFile(filename = filename)
+#   mdat <- dat[which(dat$taskno == 2), ]
+#   
+#   #transform reachdev to circular
+#   mdat_angles <- as.numeric(mdat$reachdeviation_deg)
+#   mdat$circ_reachdev <- as.circular(mdat_angles, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+# 
+#   return(mdat)
+# }
 
-  return(mdat)
-}
-
-getGroupCircFreq <- function(group, set){
-  
-  if (set == 'su2020'){
-    datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
-    #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
-  } else if (set == 'fa2020'){
-    datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
-  }
-  
-  dataoutput<- data.frame() #create place holder
-  for(datafilenum in c(1:length(datafilenames))){
-    if (set == 'su2020'){
-      datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
-    } else if (set == 'fa2020'){
-      datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
-    }
-    cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
-    mdat <- getParticipantCircFreq(filename = datafilename)
-    # per target location, get reachdev for corresponding trials
-    
-    trial <- c(1:length(mdat$trialno))
-    mdat$trialno <- trial
-    for (triali in trial){
-      trialdat <- mdat[which(mdat$trialno == triali),]
-      #set reachdev to NA if not the target location we want
-      if (trialdat$targetangle_deg != group){
-        trialdat$reachdeviation_deg <- NA
-      }
-      mdat[triali,] <- trialdat
-    }
-    ppreaches <- mdat$reachdeviation_deg #get reach deviations column from learning curve data
-    ppdat <- data.frame(trial, ppreaches)
-    
-    ppname <- unique(mdat$participant)
-    names(ppdat)[names(ppdat) == 'ppreaches'] <- ppname
-    
-    if (prod(dim(dataoutput)) == 0){
-      dataoutput <- ppdat
-    } else {
-      dataoutput <- cbind(dataoutput, ppreaches)
-      names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
-    }
-  }
-  
-  
-  return(dataoutput)
-  
-  #removed outlier procedure first. Due to circular statistics, mean and sd now differ.
-  #typical outlier removal procedure would not be valid in this case
-}
+# getGroupCircFreq <- function(group, set){
+#   
+#   if (set == 'su2020'){
+#     datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
+#     #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+#   } else if (set == 'fa2020'){
+#     datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+#   }
+#   
+#   dataoutput<- data.frame() #create place holder
+#   for(datafilenum in c(1:length(datafilenames))){
+#     if (set == 'su2020'){
+#       datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+#     } else if (set == 'fa2020'){
+#       datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+#     }
+#     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+#     mdat <- getParticipantCircFreq(filename = datafilename)
+# 
+#     # per target location, get reachdev for corresponding trials
+#     
+#     trial <- c(1:length(mdat$trialno))
+#     mdat$trialno <- trial
+#     for (triali in trial){
+#       trialdat <- mdat[which(mdat$trialno == triali),]
+#       #set reachdev to NA if not the target location we want
+#       if (trialdat$targetangle_deg != group){
+#         trialdat$reachdeviation_deg <- NA
+#       }
+#       mdat[triali,] <- trialdat
+#     }
+#     ppreaches <- mdat$reachdeviation_deg #get reach deviations column from learning curve data
+#     ppdat <- data.frame(trial, ppreaches)
+#     
+#     ppname <- unique(mdat$participant)
+#     names(ppdat)[names(ppdat) == 'ppreaches'] <- ppname
+#     
+#     if (prod(dim(dataoutput)) == 0){
+#       dataoutput <- ppdat
+#     } else {
+#       dataoutput <- cbind(dataoutput, ppreaches)
+#       names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
+#     }
+#   }
+#   
+#   
+#   return(dataoutput)
+#   
+#   #removed outlier procedure first. Due to circular statistics, mean and sd now differ.
+#   #typical outlier removal procedure would not be valid in this case
+# }
 
 plotGroupCircFreq <- function(groups = c('30', '60'), set){
   
   for(group in groups){
-    dat <- getGroupCircFreq(group = group, set = set)
-    
-    # if(set == 'fa2020'){
-    #   pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sCircular.pdf", group))
-    # } else if (set == 'su2020'){
-    #   pdf(sprintf("data/mReversalNewAlpha3-master/doc/fig/Distribution_%sCircular.pdf", group))
-    # }
+    #dat <- getGroupCircFreq(group = group, set = set)
+    dat <- getGroupCircularLC(group=group, set=set)
+    if(set == 'fa2020'){
+      pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sCircular.pdf", group))
+    } else if (set == 'su2020'){
+      pdf(sprintf("data/mReversalNewAlpha3-master/doc/fig/Distribution_%sCircular.pdf", group))
+    }
     
     #current fix for summer data being non-randomized and not counterbalanced
     #triallist <- dat$trial
-    triallist <- c(1,2,90)
+    triallist <- c(1:90)
     
     if(group == '30' & set == 'su2020'){
       n <- triallist[seq(1,length(triallist),2)]
@@ -1016,19 +1017,139 @@ plotGroupCircFreq <- function(groups = c('30', '60'), set){
       # axis(1, at = c(0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 330, 300, 360))
       # axis(2, at = c(0, 0.2, 0.4, 0.6, 0.8, 1))
     }
-    #dev.off()
+    dev.off()
     
   }
 }
 
-#density or frequency plots: LINEAR-----
-getParticipantFrequency <- function(filename){
-  dat <- handleOneFile(filename = filename)
-  mdat <- dat[which(dat$taskno == 2), ]
+#density plots according to step 1 samples----
+#make changes to handling of file
+handleOneFileCheck <- function(filename) {
+  
+  # if the file can't be read, return empty list for now
+  df <- NULL
+  try(df <- read.csv(filename, stringsAsFactors = F), silent = TRUE)
+  if (is.null(df)) {
+    return(list())
+  }
+  
+  # set up vectors for relevant data:
+  trialno <- c()            #trialNum
+  targetangle_deg <- c()
+  mirror <-c()              #trialsType
+  reachdeviation_deg <- c()
+  taskno <- c()             #trialsNum
+  participant <- c()
+  step1_samp <- c() #if there are multiple step 1 samples, then participant did not stay at home position
+  
+  # remove empty lines:
+  df <- df[which(!is.na(df$trialsNum)),]
+  #df <- df[which(df$trialsNum == 2),]
+  
+  # loop through all trials
+  #plot(x,y,type='l',col='blue',xlim=c(-1.2,1.2),ylim=c(-1.2,1.2))
+  for (trialnum in c(1:dim(df)[1])) {
+    
+    x <- convertCellToNumVector(df$trialMouse.x[trialnum])
+    y <- convertCellToNumVector(df$trialMouse.y[trialnum])
+    s <- convertCellToNumVector(df$step[trialnum])
+    m <- df$trialsType[trialnum]
+    a <- df$targetangle_deg[trialnum]
+    p <- df$participant[trialnum]
+    
+    #check how many samples for step 1
+    step1idx = which(s == 1)
+    
+    if (length(step1idx) > 2){
+      s1 <- 1 #1 means it has more than 2 samples
+    } else{
+      s1 <- 0 #0 means it only has 2 samples
+    }
+    # remove stuff that is not step==2
+    step2idx = which(s == 2)
+    x <- x[step2idx]
+    y <- y[step2idx]
+    
+    #plot(x,y,type='l',col='blue',xlim=c(-1.2,1.2),ylim=c(-1.2,1.2))
+    #lines(c(0,1),c(0,0),col='black')
+    #points(c(0,cos((a/180)*pi)),c(0,sin((a/180)*pi)),col='black')
+    
+    # get first point beyond some distance (home-target is 40% of height of participant's screen)
+    # we can set a cutoff at 30% of home-target distance (30% of .4 = .12)
+    d <- sqrt(x^2 + y^2)
+    idx <- which(d > .08)[1]
+    x <- x[idx]
+    y <- y[idx]
+    
+    #points(x,y,col='red')
+    
+    # get angular deviation of reach from target angle:
+    rotcoords <- rotateTrajectory(x,y,-a)
+    x <- rotcoords[1]
+    y <- rotcoords[2]
+    
+    rd <- (atan2(y, x) / pi) * 180
+    
+    
+    #text(0,-0.1,sprintf('%0.3f',rd))
+    
+    # store in vectors:
+    trialno <- c(trialno, trialnum)
+    targetangle_deg <- c(targetangle_deg, a)
+    mirror <-c(mirror, m)
+    reachdeviation_deg <- c(reachdeviation_deg, rd)
+    taskno <- c(taskno, df$trialsNum[trialnum])
+    participant <- c(participant, p)
+    step1_samp <- c(step1_samp, s1)
+  }
+  
+  # vectors as data frame columns:
+  dfrd <- data.frame(trialno, targetangle_deg, mirror, reachdeviation_deg, taskno, participant, step1_samp)
+  
+  
+  return(dfrd)
+}
+#participant data will now be structured differently
+getCheckParticipantCircularLC <- function(filename){
+  
+  #first, implement baseline correction
+  #get Aligned biases
+  dat <- handleOneFileCheck(filename = filename)
+  dat$circ_rd <- as.circular(dat$reachdeviation_deg, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+  
+  adat <- dat[which(dat$taskno == 1), ]
+  # use cleaned baseline data (reaches in correct quadrant)
+  for (trialno in adat$trialno){
+    #go through each trial, replace outlier values with NA
+    subadat <- adat[trialno,]
+    if (subadat$targetangle_deg == '30'){
+      subadat$circ_rd[which(subadat$circ_rd < -30 | subadat$circ_rd > 60)] <- NA
+    } else if (subadat$targetangle_deg == '60'){
+      subadat$circ_rd[which(subadat$circ_rd < -60 | subadat$circ_rd > 30)] <- NA
+    }
+    adat[trialno, ] <- subadat
+  }
+  
+  biases <- aggregate(circ_rd ~ targetangle_deg, data= adat, FUN = median.circular) 
+  
+  mdat <- dat[which(dat$taskno == 2),]
+  
+  for (biasno in c(1: dim(biases)[1])){ #from 1 to however many biases there are in data
+    
+    target<- biases[biasno, 'targetangle_deg'] #get corresponding target angle
+    bias<- biases[biasno, 'circ_rd'] #get corresponding reachdev or bias
+    
+    #subtract bias from reach deviation for rotated session only
+    mdat$circ_rd[which(mdat$targetangle_deg == target)] <- mdat$circ_rd[which(mdat$targetangle_deg == target)] - bias
+    
+  }
   return(mdat)
 }
 
-getGroupFrequency <- function(group, set){
+#grouped data will be the reachdevs to complete plot AND step1_samp
+  
+getCheckGroupCircularLC <- function(group, set){
+  
   if (set == 'su2020'){
     datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
     #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
@@ -1044,7 +1165,7 @@ getGroupFrequency <- function(group, set){
       datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
     }
     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
-    mdat <- getParticipantFrequency(filename = datafilename)
+    mdat <- getCheckParticipantCircularLC(filename = datafilename)
     # per target location, get reachdev for corresponding trials
     
     trial <- c(1:length(mdat$trialno))
@@ -1053,11 +1174,11 @@ getGroupFrequency <- function(group, set){
       trialdat <- mdat[which(mdat$trialno == triali),]
       #set reachdev to NA if not the target location we want
       if (trialdat$targetangle_deg != group){
-        trialdat$reachdeviation_deg <- NA
+        trialdat$circ_rd <- NA
       }
       mdat[triali,] <- trialdat
     }
-    ppreaches <- mdat$reachdeviation_deg #get reach deviations column from learning curve data
+    ppreaches <- mdat$circ_rd #get reach deviations column from learning curve data
     ppdat <- data.frame(trial, ppreaches)
     
     ppname <- unique(mdat$participant)
@@ -1071,59 +1192,253 @@ getGroupFrequency <- function(group, set){
     }
   }
   
-  for (trialno in dataoutput$trial){
-    #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
-    ndat <- as.numeric(dataoutput[trialno, 2:ncol(dataoutput)])
-    trialmu <- mean(ndat, na.rm = TRUE)
-    trialsigma <- sd(ndat, na.rm = TRUE)
-    #print(trialsigma)
-    trialclip <- abs(trialmu) + (trialsigma * 2)
+  return(dataoutput)
+  
+  #removed outlier procedure first. Due to circular statistics, mean and sd now differ.
+  #typical outlier removal procedure would not be valid in this case
+}
+
+getCheckGroupStep1Samp <- function(group, set){
+  
+  if (set == 'su2020'){
+    datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
+    #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+  } else if (set == 'fa2020'){
+    datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+  }
+  
+  dataoutput<- data.frame() #create place holder
+  for(datafilenum in c(1:length(datafilenames))){
+    if (set == 'su2020'){
+      datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    } else if (set == 'fa2020'){
+      datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+    }
+    cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+    mdat <- getCheckParticipantCircularLC(filename = datafilename)
+    # per target location, get reachdev for corresponding trials
     
-    ndat[which(abs(ndat) > trialclip)] <- NA
+    trial <- c(1:length(mdat$trialno))
+    mdat$trialno <- trial
+    for (triali in trial){
+      trialdat <- mdat[which(mdat$trialno == triali),]
+      #set reachdev to NA if not the target location we want
+      if (trialdat$targetangle_deg != group){
+        trialdat$step1_samp <- NA
+      }
+      mdat[triali,] <- trialdat
+    }
+    ppreaches <- mdat$step1_samp #get reach deviations column from learning curve data
+    ppdat <- data.frame(trial, ppreaches)
     
-    dataoutput[trialno, 2:ncol(dataoutput)] <- ndat
+    ppname <- unique(mdat$participant)
+    names(ppdat)[names(ppdat) == 'ppreaches'] <- ppname
+    
+    if (prod(dim(dataoutput)) == 0){
+      dataoutput <- ppdat
+    } else {
+      dataoutput <- cbind(dataoutput, ppreaches)
+      names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
+    }
   }
   
   return(dataoutput)
+  
+  #removed outlier procedure first. Due to circular statistics, mean and sd now differ.
+  #typical outlier removal procedure would not be valid in this case
 }
 
-plotGroupFrequency <- function(group, set = 'fa2020'){
-
-  dat <- getGroupFrequency(group = group, set = set)
-  pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sTargetLoc.pdf", group))
+plotCheckGroupCircFreq <- function(groups = c('30', '60'), set){
   
-  #current fix for summer data being non-randomized and not counterbalanced
-  triallist <- dat$trial
-  
-  if(group == '30' & set == 'su2020'){
-    n <- triallist[seq(1,length(triallist),2)]
-    dat <- dat[n,]
-    triallist <- dat$trial
-  } else if (group == '60' & set == 'su2020'){
-    n <- triallist[seq(2,length(triallist),2)]
-    dat <- dat[n,]
-    triallist <- dat$trial
+  for(group in groups){
+    #dat <- getGroupCircFreq(group = group, set = set)
+    dat <- getCheckGroupCircularLC(group=group, set=set)
+    dat1 <- getCheckGroupStep1Samp(group=group, set=set)
+    if(set == 'fa2020'){
+      pdf(sprintf("data/mirrorreversal-fall/doc/fig/DistributionbyStep1_%sCircular.pdf", group))
+    } else if (set == 'su2020'){
+      pdf(sprintf("data/mReversalNewAlpha3-master/doc/fig/DistributionbyStep1_%sCircular.pdf", group))
+    }
+    
+    #current fix for summer data being non-randomized and not counterbalanced
+    #triallist <- dat$trial
+    triallist <- c(1:90)
+    
+    if(group == '30' & set == 'su2020'){
+      n <- triallist[seq(1,length(triallist),2)]
+      dat <- dat[n,]
+      triallist <- dat$trial
+    } else if (group == '60' & set == 'su2020'){
+      n <- triallist[seq(2,length(triallist),2)]
+      dat <- dat[n,]
+      triallist <- dat$trial
+    }
+    
+    for(triali in triallist){
+      subdat <- dat[which(dat$trial == triali),]
+      subdat <- as.numeric(subdat[,2:ncol(subdat)])
+      subdat <- as.circular(subdat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      subdat1 <- dat1[which(dat1$trial == triali),]
+      subdat1 <- as.numeric(subdat1[,2:ncol(subdat1)])
+      subdatall <- data.frame(subdat1, subdat)
+      
+      distsubdat <- density.circular(subdat, na.rm = TRUE, bw = 15)
+      plot(distsubdat, main = sprintf('%s° Target: Trial %s', group, triali), plot.type = 'circle', shrink=1.20)#1.20 original shrink, can add offset?
+      if(group == '30'){
+        rd <- as.circular(c(0,120), type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+        points.circular(rd, pch = 15, col = '#696969')
+        
+        movethrough <- subdatall[which(subdatall$subdat1 == 1),]
+        movethrough <- movethrough$subdat
+        points.circular(movethrough, pch = 1, col = '#e51636ff', next.points = .025)
+        
+        nonthrough <- subdatall[which(subdatall$subdat1 == 0),]
+        nonthrough <- nonthrough$subdat
+        points.circular(nonthrough, pch = 1, col = '#005de4ff', next.points = .05)
+        
+        lines(distsubdat, points.plot=FALSE, col='#696969', shrink=1.20)
+        
+        legend(-1.25,-0.95,legend=c('3+ Step1 samples','<3 Step1 samples'),
+               col=c('#e51636ff','#005de4ff'),
+               pch=1,bty='n',cex=1)
+        
+        #abline(v = 120, col = 8, lty = 2)
+      } else if (group == '60'){
+        rd <- as.circular(c(0,60), type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+        points.circular(rd, pch = 15, col = '#696969')
+        
+        movethrough <- subdatall[which(subdatall$subdat1 == 1),]
+        movethrough <- movethrough$subdat
+        points.circular(movethrough, pch = 1, col = '#e51636ff', next.points = .025)
+        
+        nonthrough <- subdatall[which(subdatall$subdat1 == 0),]
+        nonthrough <- nonthrough$subdat
+        points.circular(nonthrough, pch = 1, col = '#005de4ff', next.points = .05)
+        
+        lines(distsubdat, points.plot=FALSE, col='#696969', shrink=1.20)
+        
+        legend(-1.25,-0.95,legend=c('3+ Step1 samples','<3 Step1 samples'),
+               col=c('#e51636ff','#005de4ff'),
+               pch=1,bty='n',cex=1)
+        
+        #abline(v = 60, col = 8, lty = 2)
+      }
+      # axis(1, at = c(0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 330, 300, 360))
+      # axis(2, at = c(0, 0.2, 0.4, 0.6, 0.8, 1))
+    }
+    dev.off()
+    
   }
-  
-  for(triali in triallist){
-    subdat <- dat[which(dat$trial == triali),]
-    subdat <- as.numeric(subdat[,2:ncol(subdat)])
-    print(densityplot(subdat, width=45, xlim=range(-200,200), xlab = 'angles', ylab="density of participant distribution", 
-                      main = sprintf('%s-deg Target: Trial %s', group, triali),
-                      scales=list(x=list(at=c(-180, -120, -60, 0, 60, 120, 180))),
-                      panel = function(...) {
-                        panel.densityplot(...)
-                        if(group=='30'){
-                          panel.abline(v = 120, lty=2)
-                        } else if (group=='60'){
-                          panel.abline(v = 60, lty=2)
-                        }
-                        
-                      }))
-  }
-  dev.off()
-  
 }
+
+
+
+
+
+
+#density or frequency plots: LINEAR-----
+# getParticipantFrequency <- function(filename){
+#   dat <- handleOneFile(filename = filename)
+#   mdat <- dat[which(dat$taskno == 2), ]
+#   return(mdat)
+# }
+# 
+# getGroupFrequency <- function(group, set){
+#   if (set == 'su2020'){
+#     datafilenames <- list.files('data/mReversalNewAlpha3-master/data', pattern = '*.csv')
+#     #datafilenames <- list.files('data/mirrorreversal-master/data', pattern = '*.csv')
+#   } else if (set == 'fa2020'){
+#     datafilenames <- list.files('data/mirrorreversal-fall/data', pattern = '*.csv')
+#   }
+#   
+#   dataoutput<- data.frame() #create place holder
+#   for(datafilenum in c(1:length(datafilenames))){
+#     if (set == 'su2020'){
+#       datafilename <- sprintf('data/mReversalNewAlpha3-master/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+#     } else if (set == 'fa2020'){
+#       datafilename <- sprintf('data/mirrorreversal-fall/data/%s', datafilenames[datafilenum]) #change this, depending on location in directory
+#     }
+#     cat(sprintf('file %d / %d     (%s)\n',datafilenum,length(datafilenames),datafilename))
+#     mdat <- getParticipantFrequency(filename = datafilename)
+#     # per target location, get reachdev for corresponding trials
+#     
+#     trial <- c(1:length(mdat$trialno))
+#     mdat$trialno <- trial
+#     for (triali in trial){
+#       trialdat <- mdat[which(mdat$trialno == triali),]
+#       #set reachdev to NA if not the target location we want
+#       if (trialdat$targetangle_deg != group){
+#         trialdat$reachdeviation_deg <- NA
+#       }
+#       mdat[triali,] <- trialdat
+#     }
+#     ppreaches <- mdat$reachdeviation_deg #get reach deviations column from learning curve data
+#     ppdat <- data.frame(trial, ppreaches)
+#     
+#     ppname <- unique(mdat$participant)
+#     names(ppdat)[names(ppdat) == 'ppreaches'] <- ppname
+#     
+#     if (prod(dim(dataoutput)) == 0){
+#       dataoutput <- ppdat
+#     } else {
+#       dataoutput <- cbind(dataoutput, ppreaches)
+#       names(dataoutput)[names(dataoutput) == 'ppreaches'] <- ppname
+#     }
+#   }
+#   
+#   for (trialno in dataoutput$trial){
+#     #go through each trial, get reaches, calculate mean and sd, then if it is greater than 2 sd, replace with NA
+#     ndat <- as.numeric(dataoutput[trialno, 2:ncol(dataoutput)])
+#     trialmu <- mean(ndat, na.rm = TRUE)
+#     trialsigma <- sd(ndat, na.rm = TRUE)
+#     #print(trialsigma)
+#     trialclip <- abs(trialmu) + (trialsigma * 2)
+#     
+#     ndat[which(abs(ndat) > trialclip)] <- NA
+#     
+#     dataoutput[trialno, 2:ncol(dataoutput)] <- ndat
+#   }
+#   
+#   return(dataoutput)
+# }
+# 
+# plotGroupFrequency <- function(group, set = 'fa2020'){
+# 
+#   dat <- getGroupFrequency(group = group, set = set)
+#   pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sTargetLoc.pdf", group))
+#   
+#   #current fix for summer data being non-randomized and not counterbalanced
+#   triallist <- dat$trial
+#   
+#   if(group == '30' & set == 'su2020'){
+#     n <- triallist[seq(1,length(triallist),2)]
+#     dat <- dat[n,]
+#     triallist <- dat$trial
+#   } else if (group == '60' & set == 'su2020'){
+#     n <- triallist[seq(2,length(triallist),2)]
+#     dat <- dat[n,]
+#     triallist <- dat$trial
+#   }
+#   
+#   for(triali in triallist){
+#     subdat <- dat[which(dat$trial == triali),]
+#     subdat <- as.numeric(subdat[,2:ncol(subdat)])
+#     print(densityplot(subdat, width=45, xlim=range(-200,200), xlab = 'angles', ylab="density of participant distribution", 
+#                       main = sprintf('%s-deg Target: Trial %s', group, triali),
+#                       scales=list(x=list(at=c(-180, -120, -60, 0, 60, 120, 180))),
+#                       panel = function(...) {
+#                         panel.densityplot(...)
+#                         if(group=='30'){
+#                           panel.abline(v = 120, lty=2)
+#                         } else if (group=='60'){
+#                           panel.abline(v = 60, lty=2)
+#                         }
+#                         
+#                       }))
+#   }
+#   dev.off()
+#   
+# }
 
 #test reachdev and MT----
 #plot reachdev in step 2 over MT in step 1 for trial 21
