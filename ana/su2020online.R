@@ -1002,16 +1002,19 @@ plotGroupCircFreq <- function(groups = c('30', '60'), set){
       subdat <- as.numeric(subdat[,2:ncol(subdat)])
       subdat <- as.circular(subdat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
       distsubdat <- density.circular(subdat, na.rm = TRUE, bw = 15)
-      plot(distsubdat, main = sprintf('%s° Target: Trial %s', group, triali), plot.type = 'circle', shrink=1.20)
+      #prefer the plot to have a small circle, and emphasize the density
+      Xsub <- as.circular(NA, type='angles', units ='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      Ysub <- as.circular(NA, type='angles', units ='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      plot(Xsub, Ysub, main = sprintf('%s° Target: Trial %s', group, triali), plot.type = 'circle', shrink=1.5, tol = .01)
       if(group == '30'){
         rd <- as.circular(c(0,120), type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
         points.circular(rd, pch = 15, col = 'red')
-        lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=1.20)
+        lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=0.85)
         #abline(v = 120, col = 8, lty = 2)
       } else if (group == '60'){
         rd <- as.circular(c(0,60), type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
         points.circular(rd, pch = 15, col = 'red')
-        lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=1.20)
+        lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=0.85)
         #abline(v = 60, col = 8, lty = 2)
       }
       # axis(1, at = c(0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 330, 300, 360))
@@ -1283,7 +1286,10 @@ plotCheckGroupCircFreq <- function(groups = c('30', '60'), set){
       subdatall <- data.frame(subdat1, subdat)
       
       distsubdat <- density.circular(subdat, na.rm = TRUE, bw = 15)
-      plot(distsubdat, main = sprintf('%s° Target: Trial %s', group, triali), plot.type = 'circle', shrink=1.20)#1.20 original shrink, can add offset?
+      #prefer the plot to have a small circle, and emphasize the density
+      Xsub <- as.circular(NA, type='angles', units ='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      Ysub <- as.circular(NA, type='angles', units ='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      plot(Xsub, Ysub, main = sprintf('%s° Target: Trial %s', group, triali), plot.type = 'circle', shrink=1.5, tol = .01)
       if(group == '30'){
         rd <- as.circular(c(0,120), type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
         points.circular(rd, pch = 15, col = '#696969')
@@ -1296,7 +1302,7 @@ plotCheckGroupCircFreq <- function(groups = c('30', '60'), set){
         nonthrough <- nonthrough$subdat
         points.circular(nonthrough, pch = 1, col = '#005de4ff', next.points = .05)
         
-        lines(distsubdat, points.plot=FALSE, col='#696969', shrink=1.20)
+        lines(distsubdat, points.plot=FALSE, col='#696969', shrink=.85)
         
         legend(-1.25,-0.95,legend=c('3+ Step1 samples','<3 Step1 samples'),
                col=c('#e51636ff','#005de4ff'),
@@ -1315,7 +1321,7 @@ plotCheckGroupCircFreq <- function(groups = c('30', '60'), set){
         nonthrough <- nonthrough$subdat
         points.circular(nonthrough, pch = 1, col = '#005de4ff', next.points = .05)
         
-        lines(distsubdat, points.plot=FALSE, col='#696969', shrink=1.20)
+        lines(distsubdat, points.plot=FALSE, col='#696969', shrink=.85)
         
         legend(-1.25,-0.95,legend=c('3+ Step1 samples','<3 Step1 samples'),
                col=c('#e51636ff','#005de4ff'),
