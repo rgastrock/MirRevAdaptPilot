@@ -977,15 +977,15 @@ plotGroupCircFreq <- function(groups = c('30', '60'), set){
   for(group in groups){
     #dat <- getGroupCircFreq(group = group, set = set)
     dat <- getGroupCircularLC(group=group, set=set)
-    if(set == 'fa2020'){
-      pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sCircular.pdf", group))
-    } else if (set == 'su2020'){
-      pdf(sprintf("data/mReversalNewAlpha3-master/doc/fig/Distribution_%sCircular.pdf", group))
-    }
+    # if(set == 'fa2020'){
+    #   pdf(sprintf("data/mirrorreversal-fall/doc/fig/Distribution_%sCircular.pdf", group))
+    # } else if (set == 'su2020'){
+    #   pdf(sprintf("data/mReversalNewAlpha3-master/doc/fig/Distribution_%sCircular.pdf", group))
+    # }
     
     #current fix for summer data being non-randomized and not counterbalanced
     #triallist <- dat$trial
-    triallist <- c(1:90)
+    triallist <- c(1,2,90)
     
     if(group == '30' & set == 'su2020'){
       n <- triallist[seq(1,length(triallist),2)]
@@ -1003,18 +1003,21 @@ plotGroupCircFreq <- function(groups = c('30', '60'), set){
       subdat <- as.circular(subdat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
       distsubdat <- density.circular(subdat, na.rm = TRUE, bw = 15)
       #prefer the plot to have a small circle, and emphasize the density
-      Xsub <- as.circular(NA, type='angles', units ='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
-      Ysub <- as.circular(NA, type='angles', units ='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
-      plot(Xsub, Ysub, main = sprintf('%s° Target: Trial %s', group, triali), plot.type = 'circle', shrink=1.5, tol = .01)
+      #Xsub <- as.circular(NA, type='angles', units ='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      #Ysub <- as.circular(NA, type='angles', units ='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      #plot(Xsub, Ysub, main = sprintf('%s° Target: Trial %s', group, triali), plot.type = 'circle', shrink=1.5, tol = .01)
+      plot(distsubdat, main = sprintf('%s° Target: Trial %s', group, triali), plot.type = 'circle', shrink=1.3)
       if(group == '30'){
         rd <- as.circular(c(0,120), type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
         points.circular(rd, pch = 15, col = 'red')
-        lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=0.85)
+        #lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=0.85)
+        lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=1.3)
         #abline(v = 120, col = 8, lty = 2)
       } else if (group == '60'){
         rd <- as.circular(c(0,60), type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
         points.circular(rd, pch = 15, col = 'red')
-        lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=0.85)
+        #lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=0.85)
+        lines(distsubdat, points.plot=TRUE, col=4, points.col=4, shrink=1.3)
         #abline(v = 60, col = 8, lty = 2)
       }
       # axis(1, at = c(0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 330, 300, 360))
