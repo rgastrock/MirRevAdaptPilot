@@ -1340,6 +1340,97 @@ plotCheckGroupCircFreq <- function(groups = c('30', '60'), set){
   }
 }
 
+#plot for presentations below, but is similar to pdf generated above
+plotPresentCheckGroupCircFreq <- function(groups = c('30', '60'), target='inline', set){
+  for (group in groups){
+    #but we can save plot as svg file
+    if (target=='svg' & set == 'fa2020'){
+      svglite(file=sprintf('data/mirrorreversal-fall/doc/fig/Fig14_DistributionbyStep1_%sCircular.svg', group), width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    } else if (target=='svg' & set == 'su2020'){
+      svglite(file=sprintf('data/mReversalNewAlpha3-master/doc/fig/Fig14_DistributionbyStep1_%sCircular.svg', group), width=10, height=7, pointsize=14, system_fonts=list(sans="Arial"))
+    }
+    
+    
+    
+    #dat <- getGroupCircFreq(group = group, set = set)
+    dat <- getCheckGroupCircularLC(group=group, set=set)
+    dat1 <- getCheckGroupStep1Samp(group=group, set=set)
+    
+    #current fix for summer data being non-randomized and not counterbalanced
+    #triallist <- dat$trial
+    #triallist <- c(1:90)
+    triallist <- c(1)
+    
+    if(group == '30' & set == 'su2020'){
+      n <- triallist[seq(1,length(triallist),2)]
+      dat <- dat[which(dat$trial %in% n),]
+      triallist <- dat$trial
+    } else if (group == '60' & set == 'su2020'){
+      triallist <- c(2)
+    }
+    
+    for(triali in triallist){
+      subdat <- dat[which(dat$trial == triali),]
+      subdat <- as.numeric(subdat[,2:ncol(subdat)])
+      subdat <- as.circular(subdat, type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      subdat1 <- dat1[which(dat1$trial == triali),]
+      subdat1 <- as.numeric(subdat1[,2:ncol(subdat1)])
+      subdatall <- data.frame(subdat1, subdat)
+      
+      distsubdat <- density.circular(subdat, na.rm = TRUE, bw = 15)
+      #prefer the plot to have a small circle, and emphasize the density
+      Xsub <- as.circular(NA, type='angles', units ='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      Ysub <- as.circular(NA, type='angles', units ='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+      plot(Xsub, Ysub, main = sprintf('%s° target: Mirror trial %s', group, triali), plot.type = 'circle', shrink=1.5, tol = .01)
+      if(group == '30'){
+        rd <- as.circular(c(0,120), type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+        points.circular(rd, pch = 15, col = '#A9A9A9ff')
+        
+        movethrough <- subdatall[which(subdatall$subdat1 == 1),]
+        movethrough <- movethrough$subdat
+        points.circular(movethrough, pch = 1, col = '#ff8200ff', next.points = .025)
+        
+        nonthrough <- subdatall[which(subdatall$subdat1 == 0),]
+        nonthrough <- nonthrough$subdat
+        points.circular(nonthrough, pch = 1, col = '#c400c4ff', next.points = .05)
+        
+        lines(distsubdat, points.plot=FALSE, col='#A9A9A9ff', shrink=.85)
+        
+        legend(-1.25,-0.95,legend=c('with exploration','without exploration'),
+               col=c('#ff8200ff','#c400c4ff'),
+               pch=1,bty='n',cex=1)
+        
+        #abline(v = 120, col = 8, lty = 2)
+      } else if (group == '60'){
+        rd <- as.circular(c(0,60), type='angles', units='degrees', template = 'none', modulo = 'asis', zero = 0, rotation = 'counter')
+        points.circular(rd, pch = 15, col = '#A9A9A9ff')
+        
+        movethrough <- subdatall[which(subdatall$subdat1 == 1),]
+        movethrough <- movethrough$subdat
+        points.circular(movethrough, pch = 1, col = '#ff8200ff', next.points = .025)
+        
+        nonthrough <- subdatall[which(subdatall$subdat1 == 0),]
+        nonthrough <- nonthrough$subdat
+        points.circular(nonthrough, pch = 1, col = '#c400c4ff', next.points = .05)
+        
+        lines(distsubdat, points.plot=FALSE, col='#A9A9A9ff', shrink=.85)
+        
+        legend(-1.25,-0.95,legend=c('with exploration','without exploration'),
+               col=c('#ff8200ff','#c400c4ff'),
+               pch=1,bty='n',cex=1)
+        
+        #abline(v = 60, col = 8, lty = 2)
+      }
+      # axis(1, at = c(0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 330, 300, 360))
+      # axis(2, at = c(0, 0.2, 0.4, 0.6, 0.8, 1))
+    }
+    #close everything if you saved plot as svg
+    if (target=='svg') {
+      dev.off()
+    }
+  }
+}
+
 #include a plot showing frequency of participants with move throughs per trial
 getParticipantMoveThrough <- function(group,set){
   
