@@ -1235,9 +1235,9 @@ getRAELongFormat <- function(groups = c('noninstructed','instructed'), maxppid =
 }
 
 #First, we confirm the presence of aftereffects
-getBlockedAlignedData <- function(group = 'noninstructed', blockdefs){
+getBlockedAlignedData <- function(group, blockdefs){
   LCaov <- data.frame()
-  curves <- read.csv('data/ALIGNED_noninstructed_long.csv', stringsAsFactors=FALSE)  
+  curves <- read.csv(sprintf('data/ALIGNED_%s_long.csv', group), stringsAsFactors=FALSE)  
   participants <- unique(curves$participant)
   #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
   #curves <- curves[,-1] #take away trial column
@@ -1296,12 +1296,12 @@ getBlockedAlignedData <- function(group = 'noninstructed', blockdefs){
   return(LCaov)
 }
 
-getBlockedRAEAOV <- function(perturbations = c('ROT','MIR'), group = 'noninstructed', blockdefs) {
+getBlockedRAEAOV <- function(perturbations = c('ROT','MIR'), group, blockdefs) {
   #function reads in aftereffects_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   #to include instructed group, just create another for loop here
   for (perturb in perturbations){  
-    curves <- read.csv(sprintf('data/%s_noninstructed_aftereffects_long.csv',perturb), stringsAsFactors=FALSE)  
+    curves <- read.csv(sprintf('data/%s_%s_aftereffects_long.csv',perturb,group), stringsAsFactors=FALSE)  
     participants <- unique(curves$participant)
     #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
     #curves <- curves[,-1] #take away trial column
@@ -1361,13 +1361,13 @@ getBlockedRAEAOV <- function(perturbations = c('ROT','MIR'), group = 'noninstruc
   
 }
 
-RAEt.test <- function() {
+RAEt.test <- function(group) {
   
   blockdefs <- list('first'=c(1,12),'second'=c(13,12),'last'=c(37,12))
-  LC4test1 <- getBlockedAlignedData(blockdefs=blockdefs)
+  LC4test1 <- getBlockedAlignedData(group=group,blockdefs=blockdefs)
   
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(43,6)) #6 trials per block
-  LC4test2 <- getBlockedRAEAOV(blockdefs=blockdefs)
+  LC4test2 <- getBlockedRAEAOV(group=group,blockdefs=blockdefs)
   
   LC4test <- rbind(LC4test1, LC4test2)
   LC4test$participant <- as.factor(LC4test$participant)
@@ -1392,12 +1392,12 @@ RAEt.test <- function() {
 #similar to how we analyzed learning curves.
 
 #Below are stats similar to learning curves. Looking into washout at three different blocks of washout training.
-reachaftereffectsANOVA <- function() {
+reachaftereffectsANOVA <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(43,6)) #6 trials per block
   
-  LC4aov <- getBlockedRAEAOV(blockdefs=blockdefs)                      
+  LC4aov <- getBlockedRAEAOV(group=group,blockdefs=blockdefs)                      
   
   #looking into interaction below:
   #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
@@ -1409,14 +1409,14 @@ reachaftereffectsANOVA <- function() {
   print(firstAOV[1:3]) #so that it doesn't print the aov object as well
 }
 
-RAEComparisonMeans <- function(){
+RAEComparisonMeans <- function(group){
   
   #can plot interaction just to eyeball it:
-  plot(interactionMeans(lm(compensation ~ block * perturbtype, data=LC4aov), factors=c('perturbtype', 'block'), atx='block'))
+  #plot(interactionMeans(lm(compensation ~ block * perturbtype, data=LC4aov), factors=c('perturbtype', 'block'), atx='block'))
   
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(43,6))
   
-  LC4aov <- getBlockedRAEAOV(blockdefs=blockdefs) 
+  LC4aov <- getBlockedRAEAOV(group=group,blockdefs=blockdefs) 
   secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
   
   #nice(secondAOV, correction = 'none') #correction set to none since first AOV reveals no violation of sphericity
@@ -1430,24 +1430,24 @@ RAEComparisonMeans <- function(){
   print(cellmeans)
 }
 
-RAEComparisonsAllBlocks <- function(method='bonferroni'){
+RAEComparisonsAllBlocks <- function(group,method='bonferroni'){
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(43,6))
   
-  LC4aov <- getBlockedRAEAOV(blockdefs=blockdefs) 
+  LC4aov <- getBlockedRAEAOV(group=group,blockdefs=blockdefs) 
   secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
   #based on cellmeans, confidence intervals and plots give us an idea of what contrasts we want to compare
   
-  ROT_firstvsROT_second  <- c(1,0,-1,0,0,0)
-  ROT_firstvsROT_last    <- c(1,0,0,0,-1,0)
-  MIR_firstvsMIR_second  <- c(0,1,0,-1,0,0)
-  MIR_firstvsMIR_last    <- c(0,1,0,0,0,-1)
+  MIR_firstvsMIR_second  <- c(1,0,-1,0,0,0)
+  MIR_firstvsMIR_last    <- c(1,0,0,0,-1,0)
+  ROT_firstvsROT_second  <- c(0,1,0,-1,0,0)
+  ROT_firstvsROT_last    <- c(0,1,0,0,0,-1)
   ROT_firstvsMIR_first   <- c(1,-1,0,0,0,0)
   ROT_secondvsMIR_second <- c(0,0,1,-1,0,0)
   ROT_lastvsMIR_last     <- c(0,0,0,0,1,-1)
   
-  contrastList <- list('Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
-                       'Block1: MIR vs. Block2: MIR'=MIR_firstvsMIR_second, 'Block1: MIR vs. Block3: MIR'=MIR_firstvsMIR_last,
+  contrastList <- list('Block1: MIR vs. Block2: MIR'=MIR_firstvsMIR_second, 'Block1: MIR vs. Block3: MIR'=MIR_firstvsMIR_last,
+                       'Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
                        'Block1: ROT vs. MIR'=ROT_firstvsMIR_first, 'Block2: ROT vs. MIR'=ROT_secondvsMIR_second, 'Block3: ROT vs. MIR'=ROT_lastvsMIR_last)
   
   comparisons<- contrast(emmeans(secondAOV$aov,specs=c('perturbtype','block')), contrastList, adjust=method)

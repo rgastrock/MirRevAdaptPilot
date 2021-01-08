@@ -1778,12 +1778,12 @@ getLearningCurvesLongFormat <- function(groups = c('noninstructed','instructed')
   }
 }
 
-getBlockedLearningCurvesAOV <- function(perturbations = c('ROT','MIR'), group = 'noninstructed', blockdefs) {
+getBlockedLearningCurvesAOV <- function(perturbations = c('ROT','MIR'), group, blockdefs) {
   #function reads in learningcurves_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   #to include instructed group, just create another for loop here
   for (perturb in perturbations){  
-    curves <- read.csv(sprintf('data/%s_noninstructed_learningcurves_long.csv',perturb), stringsAsFactors=FALSE)  
+    curves <- read.csv(sprintf('data/%s_%s_learningcurves_long.csv',perturb, group), stringsAsFactors=FALSE)  
     participants <- unique(curves$participant)
     #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
     #curves <- curves[,-1] #take away trial column
@@ -1843,12 +1843,13 @@ getBlockedLearningCurvesAOV <- function(perturbations = c('ROT','MIR'), group = 
   
 }
 
-learningCurvesANOVA <- function() {
+learningCurvesANOVA <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
+  #blockdefs <- list('first'=c(13,6),'second'=c(19,6),'last'=c(85,6))
   
-  LC4aov <- getBlockedLearningCurvesAOV(blockdefs=blockdefs)                      
+  LC4aov <- getBlockedLearningCurvesAOV(group=group,blockdefs=blockdefs)                      
   
   #looking into interaction below:
   #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
@@ -1861,14 +1862,15 @@ learningCurvesANOVA <- function() {
 }
 #there is a main effect of block, and a block x perturbtype interaction
 
-learningcurveComparisonMeans <- function(){
+learningcurveComparisonMeans <- function(group){
   
   #can plot interaction just to eyeball it:
-  plot(interactionMeans(lm(compensation ~ block * perturbtype, data=LC4aov), factors=c('perturbtype', 'block'), atx='block'))
+  #plot(interactionMeans(lm(compensation ~ block * perturbtype, data=LC4aov), factors=c('perturbtype', 'block'), atx='block'))
   
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6))
+  #blockdefs <- list('first'=c(13,6),'second'=c(19,6),'last'=c(85,6))
   
-  LC4aov <- getBlockedLearningCurvesAOV(blockdefs=blockdefs) 
+  LC4aov <- getBlockedLearningCurvesAOV(group=group,blockdefs=blockdefs) 
   secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
   
   #nice(secondAOV, correction = 'none') #correction set to none since first AOV reveals no violation of sphericity
@@ -1882,24 +1884,25 @@ learningcurveComparisonMeans <- function(){
   print(cellmeans)
 }
 
-learningcurveComparisonsAllBlocks <- function(method='bonferroni'){
+learningcurveComparisonsAllBlocks <- function(group,method='bonferroni'){
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6))
+  #blockdefs <- list('first'=c(13,6),'second'=c(19,6),'last'=c(85,6))
   
-  LC4aov <- getBlockedLearningCurvesAOV(blockdefs=blockdefs) 
+  LC4aov <- getBlockedLearningCurvesAOV(group=group,blockdefs=blockdefs) 
   secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
   #based on cellmeans, confidence intervals and plots give us an idea of what contrasts we want to compare
   
-  ROT_firstvsROT_second  <- c(1,0,-1,0,0,0)
-  ROT_firstvsROT_last    <- c(1,0,0,0,-1,0)
-  MIR_firstvsMIR_second  <- c(0,1,0,-1,0,0)
-  MIR_firstvsMIR_last    <- c(0,1,0,0,0,-1)
+  MIR_firstvsMIR_second  <- c(1,0,-1,0,0,0)
+  MIR_firstvsMIR_last    <- c(1,0,0,0,-1,0)
+  ROT_firstvsROT_second  <- c(0,1,0,-1,0,0)
+  ROT_firstvsROT_last    <- c(0,1,0,0,0,-1)
   ROT_firstvsMIR_first   <- c(1,-1,0,0,0,0)
   ROT_secondvsMIR_second <- c(0,0,1,-1,0,0)
   ROT_lastvsMIR_last     <- c(0,0,0,0,1,-1)
   
-  contrastList <- list('Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
-                       'Block1: MIR vs. Block2: MIR'=MIR_firstvsMIR_second, 'Block1: MIR vs. Block3: MIR'=MIR_firstvsMIR_last,
+  contrastList <- list('Block1: MIR vs. Block2: MIR'=MIR_firstvsMIR_second, 'Block1: MIR vs. Block3: MIR'=MIR_firstvsMIR_last,
+                       'Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
                        'Block1: ROT vs. MIR'=ROT_firstvsMIR_first, 'Block2: ROT vs. MIR'=ROT_secondvsMIR_second, 'Block3: ROT vs. MIR'=ROT_lastvsMIR_last)
 
   comparisons<- contrast(emmeans(secondAOV$aov,specs=c('perturbtype','block')), contrastList, adjust=method)
@@ -1944,12 +1947,12 @@ getLearningCurvesLongFormatWONear <- function(groups = c('noninstructed','instru
   }
 }
 
-getBlockedLearningCurvesAOVWONear <- function(perturbations = c('ROT','MIR'), group = 'noninstructed', blockdefs) {
+getBlockedLearningCurvesAOVWONear <- function(perturbations = c('ROT','MIR'), group, blockdefs) {
   #function reads in learningcurves_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   #to include instructed group, just create another for loop here
   for (perturb in perturbations){  
-    curves <- read.csv(sprintf('data/%s_noninstructed_learningcurves_long_wonear.csv',perturb), stringsAsFactors=FALSE)  
+    curves <- read.csv(sprintf('data/%s_%s_learningcurves_long_wonear.csv',perturb,group), stringsAsFactors=FALSE)  
     participants <- unique(curves$participant)
     #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
     #curves <- curves[,-1] #take away trial column
@@ -2009,12 +2012,12 @@ getBlockedLearningCurvesAOVWONear <- function(perturbations = c('ROT','MIR'), gr
   
 }
 
-learningCurvesANOVAWONear <- function() {
+learningCurvesANOVAWONear <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(55,6)) #6 trials per block
   
-  LC4aov <- getBlockedLearningCurvesAOV(blockdefs=blockdefs)                      
+  LC4aov <- getBlockedLearningCurvesAOV(group=group,blockdefs=blockdefs)                      
   
   #looking into interaction below:
   #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
@@ -2027,14 +2030,14 @@ learningCurvesANOVAWONear <- function() {
 }
 #there is a main effect of block, and a block x perturbtype interaction
 
-learningcurveComparisonMeansWONear <- function(){
+learningcurveComparisonMeansWONear <- function(group){
   
   #can plot interaction just to eyeball it:
-  plot(interactionMeans(lm(compensation ~ block * perturbtype, data=LC4aov), factors=c('perturbtype', 'block'), atx='block'))
+  #plot(interactionMeans(lm(compensation ~ block * perturbtype, data=LC4aov), factors=c('perturbtype', 'block'), atx='block'))
   
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(55,6))
   
-  LC4aov <- getBlockedLearningCurvesAOVWONear(blockdefs=blockdefs) 
+  LC4aov <- getBlockedLearningCurvesAOVWONear(group=group,blockdefs=blockdefs) 
   secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
   
   #nice(secondAOV, correction = 'none') #correction set to none since first AOV reveals no violation of sphericity
@@ -2048,24 +2051,24 @@ learningcurveComparisonMeansWONear <- function(){
   print(cellmeans)
 }
 
-learningcurveComparisonsAllBlocksWONear <- function(method='bonferroni'){
+learningcurveComparisonsAllBlocksWONear <- function(group, method='bonferroni'){
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(55,6))
   
-  LC4aov <- getBlockedLearningCurvesAOVWONear(blockdefs=blockdefs) 
+  LC4aov <- getBlockedLearningCurvesAOVWONear(group=group,blockdefs=blockdefs) 
   secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
   #based on cellmeans, confidence intervals and plots give us an idea of what contrasts we want to compare
   
-  ROT_firstvsROT_second  <- c(1,0,-1,0,0,0)
-  ROT_firstvsROT_last    <- c(1,0,0,0,-1,0)
-  MIR_firstvsMIR_second  <- c(0,1,0,-1,0,0)
-  MIR_firstvsMIR_last    <- c(0,1,0,0,0,-1)
+  MIR_firstvsMIR_second  <- c(1,0,-1,0,0,0)
+  MIR_firstvsMIR_last    <- c(1,0,0,0,-1,0)
+  ROT_firstvsROT_second  <- c(0,1,0,-1,0,0)
+  ROT_firstvsROT_last    <- c(0,1,0,0,0,-1)
   ROT_firstvsMIR_first   <- c(1,-1,0,0,0,0)
   ROT_secondvsMIR_second <- c(0,0,1,-1,0,0)
   ROT_lastvsMIR_last     <- c(0,0,0,0,1,-1)
   
-  contrastList <- list('Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
-                       'Block1: MIR vs. Block2: MIR'=MIR_firstvsMIR_second, 'Block1: MIR vs. Block3: MIR'=MIR_firstvsMIR_last,
+  contrastList <- list('Block1: MIR vs. Block2: MIR'=MIR_firstvsMIR_second, 'Block1: MIR vs. Block3: MIR'=MIR_firstvsMIR_last,
+                       'Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
                        'Block1: ROT vs. MIR'=ROT_firstvsMIR_first, 'Block2: ROT vs. MIR'=ROT_secondvsMIR_second, 'Block3: ROT vs. MIR'=ROT_lastvsMIR_last)
   
   comparisons<- contrast(emmeans(secondAOV$aov,specs=c('perturbtype','block')), contrastList, adjust=method)
@@ -2073,5 +2076,5 @@ learningcurveComparisonsAllBlocksWONear <- function(method='bonferroni'){
   print(comparisons)
 }
 
-#Findings are pretty much the same, except that difference in block 1 and 2 for mirror is not quite significant p = .07
+#Findings are pretty much the same, except that difference in block 1 and 2 for mir is not quite significant p = .07
 #The trend that mirror is higher by second block is kept consistent however.

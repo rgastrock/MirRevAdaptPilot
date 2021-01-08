@@ -973,34 +973,35 @@ plotIBlockedRT <- function(target='inline'){
   YUp <- as.numeric(dat$V3)
   
   plot(c(1:length(Y)), Y, type = 'n', axes = FALSE,
-       xlab = 'Blocks', ylab = 'Reaction Time (ms)', main = 'Mean Reaction Time across Blocks and Tasks',
-       xlim = c(0,51), ylim = c(0,1000))
+       xlab = 'Blocks', ylab = 'Reaction time (ms)', main = '',
+       xlim = c(0,51), ylim = c(0,810))
   
   #labs <- c('1:AL','9:ROT','24:WASH','32:MIR','47:WASH','54')
   #axis(side=1, at=c(1,9,24,32,47,54), labels=labs)
   axis(side=1, at=c(1,5,20,28,43,50))
   #mtext('Trial & Task', side = 1, outer = TRUE, line=-1, cex = 1)
-  axis(side=2, at=c(0, 200, 300, 400,500, 600, 700, 800, 1000),las=2)
+  axis(side=2, at=c(0, 200, 400,600,800),las=2)
   
   #abline(h = c(400,700), col = 'black', lty = 2)
   abline(v = c(4.5,19.5,27.5,42.5), col = 8, lty = 2)
   
-  #localization
-  lines(X1,Y[1:4], col = alpha("#696969ff", 1))#aligned
-  lines(X3, Y[5:19], col = alpha("#e51636ff", 1))#rotation
-  lines(X5, Y[20:27], col = alpha("#ff8200ff", 1))#rotwashout
-  lines(X7, Y[28:42], col = alpha("#005de4ff", 1))#mirror
-  lines(X9, Y[43:50], col = alpha("#c400c4ff", 1))#mirwashout
-  
-  polygon(x = c(X1, rev(X1)), y = c(YLow[1:4], rev(YUp[1:4])), border=NA, col="#6969692f")
+  polygon(x = c(X1, rev(X1)), y = c(YLow[1:4], rev(YUp[1:4])), border=NA, col=alpha("#b4b4b4",.5))
   polygon(x = c(X3, rev(X3)), y = c(YLow[5:19], rev(YUp[5:19])), border=NA, col="#e516362f")
-  polygon(x = c(X5, rev(X5)), y = c(YLow[20:27], rev(YUp[20:27])), border=NA, col="#ff82002f")
+  polygon(x = c(X5, rev(X5)), y = c(YLow[20:27], rev(YUp[20:27])), border=NA, col="#e516362f")
   polygon(x = c(X7, rev(X7)), y = c(YLow[28:42], rev(YUp[28:42])), border=NA, col="#005de42f")
-  polygon(x = c(X9, rev(X9)), y = c(YLow[43:50], rev(YUp[43:50])), border=NA, col="#c400c42f")
+  polygon(x = c(X9, rev(X9)), y = c(YLow[43:50], rev(YUp[43:50])), border=NA, col="#005de42f")
+  
+  lines(X1,Y[1:4], col = alpha("#000000", 1))#aligned
+  lines(X3, Y[5:19], col = alpha("#e51636ff", 1))#rotation
+  lines(X5, Y[20:27], col = alpha("#e51636ff", 1))#rotwashout
+  lines(X7, Y[28:42], col = alpha("#005de4ff", 1))#mirror
+  lines(X9, Y[43:50], col = alpha("#005de4ff", 1))#mirwashout
+  
+  
   
   #add legend
-  legend(43,1000,legend=c('Aligned','Rotation','Washout: ROT','Mirror Reversal','Washout: MIR'),
-         col=c("#696969ff", "#e51636ff", "#ff8200ff", "#005de4ff", "#c400c4ff"),
+  legend(27,200,legend=c('Aligned','Rotation and washout','Mirror Reversal and washout'),
+         col=c("#000000", "#e51636ff", "#005de4ff"),
          lty=1,bty='n',cex=0.8,lwd=2)
   
   #close everything if you saved plot as svg
@@ -1102,9 +1103,9 @@ getRTLongFormat <- function(groups = c('noninstructed','instructed'), maxppid = 
 }
 
 #First, we grab data from aligned, since it is the baseline for all
-getRTBlockedAlignedData <- function(group = 'noninstructed', blockdefs){
+getRTBlockedAlignedData <- function(group, blockdefs){
   LCaov <- data.frame()
-  curves <- read.csv('data/ALIGNED_noninstructed_RT_long.csv', stringsAsFactors=FALSE)  
+  curves <- read.csv(sprintf('data/ALIGNED_%s_RT_long.csv', group), stringsAsFactors=FALSE)  
   participants <- unique(curves$participant)
   #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
   #curves <- curves[,-1] #take away trial column
@@ -1165,12 +1166,12 @@ getRTBlockedAlignedData <- function(group = 'noninstructed', blockdefs){
 
 #Then grab data for washout and perturb types
 
-getRTBlockedPerturbData <- function(perturbations = c('ROT','MIR'), group = 'noninstructed', blockdefs) {
+getRTBlockedPerturbData <- function(perturbations = c('ROT','MIR'), group, blockdefs) {
   #function reads in aftereffects_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   #to include instructed group, just create another for loop here
   for (perturb in perturbations){  
-    curves <- read.csv(sprintf('data/%s_noninstructed_RT_long.csv',perturb), stringsAsFactors=FALSE)  
+    curves <- read.csv(sprintf('data/%s_%s_RT_long.csv',perturb,group), stringsAsFactors=FALSE)  
     participants <- unique(curves$participant)
     #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
     #curves <- curves[,-1] #take away trial column
@@ -1230,12 +1231,12 @@ getRTBlockedPerturbData <- function(perturbations = c('ROT','MIR'), group = 'non
   
 }
 
-getRTBlockedWashoutData <- function(perturbations = c('ROTWASH','MIRWASH'), group = 'noninstructed', blockdefs) {
+getRTBlockedWashoutData <- function(perturbations = c('ROTWASH','MIRWASH'), group, blockdefs) {
   #function reads in aftereffects_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   #to include instructed group, just create another for loop here
   for (perturb in perturbations){  
-    curves <- read.csv(sprintf('data/%s_noninstructed_RT_long.csv',perturb), stringsAsFactors=FALSE)  
+    curves <- read.csv(sprintf('data/%s_%s_RT_long.csv',perturb, group), stringsAsFactors=FALSE)  
     participants <- unique(curves$participant)
     #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
     #curves <- curves[,-1] #take away trial column
@@ -1302,16 +1303,16 @@ getRTBlockedWashoutData <- function(perturbations = c('ROTWASH','MIRWASH'), grou
 # PERTURB:  blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6))
 # we compare all first blocks of perturb and washout types to last block of aligned
 
-RTt.test <- function() {
+RTt.test <- function(group) {
   
   blockdefs <- list('first'=c(1,12),'second'=c(13,12),'last'=c(37,12))
-  LC4test1 <- getRTBlockedAlignedData(blockdefs=blockdefs)
+  LC4test1 <- getRTBlockedAlignedData(group=group,blockdefs=blockdefs)
   
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
-  LC4test2 <- getRTBlockedPerturbData(blockdefs=blockdefs)
+  LC4test2 <- getRTBlockedPerturbData(group=group,blockdefs=blockdefs)
   
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(43,6)) #6 trials per block
-  LC4test3 <- getRTBlockedWashoutData(blockdefs=blockdefs)
+  LC4test3 <- getRTBlockedWashoutData(group=group,blockdefs=blockdefs)
   
   LC4test <- rbind(LC4test1, LC4test2, LC4test3)
   LC4test$participant <- as.factor(LC4test$participant)
@@ -1361,12 +1362,12 @@ RTt.test <- function() {
 
 # We only see significant differences for ROT and MIR but not the washouts. So we'll only explore ROT and MIR further.
 
-reactiontimeANOVA <- function() {
+reactiontimeANOVA <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
   
-  LC4aov <- getRTBlockedPerturbData(blockdefs=blockdefs)                      
+  LC4aov <- getRTBlockedPerturbData(group=group,blockdefs=blockdefs)                      
   
   #looking into interaction below:
   #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
@@ -1378,14 +1379,14 @@ reactiontimeANOVA <- function() {
   print(firstAOV[1:3]) #so that it doesn't print the aov object as well
 }
 
-RTComparisonMeans <- function(){
+RTComparisonMeans <- function(group){
   
   #can plot interaction just to eyeball it:
-  plot(interactionMeans(lm(compensation ~ block * perturbtype, data=LC4aov), factors=c('perturbtype', 'block'), atx='block'))
+  #plot(interactionMeans(lm(compensation ~ block * perturbtype, data=LC4aov), factors=c('perturbtype', 'block'), atx='block'))
   
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6))
   
-  LC4aov <- getRTBlockedPerturbData(blockdefs=blockdefs) 
+  LC4aov <- getRTBlockedPerturbData(group=group,blockdefs=blockdefs) 
   secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
   
   #nice(secondAOV, correction = 'none') #correction set to none since first AOV reveals no violation of sphericity
@@ -1399,24 +1400,24 @@ RTComparisonMeans <- function(){
   print(cellmeans)
 }
 
-RTComparisonsAllBlocks <- function(method='bonferroni'){
+RTComparisonsAllBlocks <- function(group,method='bonferroni'){
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6))
   
-  LC4aov <- getRTBlockedPerturbData(blockdefs=blockdefs) 
+  LC4aov <- getRTBlockedPerturbData(group=group,blockdefs=blockdefs) 
   secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
   #based on cellmeans, confidence intervals and plots give us an idea of what contrasts we want to compare
   
-  ROT_firstvsROT_second  <- c(1,0,-1,0,0,0)
-  ROT_firstvsROT_last    <- c(1,0,0,0,-1,0)
-  MIR_firstvsMIR_second  <- c(0,1,0,-1,0,0)
-  MIR_firstvsMIR_last    <- c(0,1,0,0,0,-1)
+  MIR_firstvsMIR_second  <- c(1,0,-1,0,0,0)
+  MIR_firstvsMIR_last    <- c(1,0,0,0,-1,0)
+  ROT_firstvsROT_second  <- c(0,1,0,-1,0,0)
+  ROT_firstvsROT_last    <- c(0,1,0,0,0,-1)
   ROT_firstvsMIR_first   <- c(1,-1,0,0,0,0)
   ROT_secondvsMIR_second <- c(0,0,1,-1,0,0)
   ROT_lastvsMIR_last     <- c(0,0,0,0,1,-1)
   
-  contrastList <- list('Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
-                       'Block1: MIR vs. Block2: MIR'=MIR_firstvsMIR_second, 'Block1: MIR vs. Block3: MIR'=MIR_firstvsMIR_last,
+  contrastList <- list('Block1: MIR vs. Block2: MIR'=MIR_firstvsMIR_second, 'Block1: MIR vs. Block3: MIR'=MIR_firstvsMIR_last,
+                       'Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
                        'Block1: ROT vs. MIR'=ROT_firstvsMIR_first, 'Block2: ROT vs. MIR'=ROT_secondvsMIR_second, 'Block3: ROT vs. MIR'=ROT_lastvsMIR_last)
   
   comparisons<- contrast(emmeans(secondAOV$aov,specs=c('perturbtype','block')), contrastList, adjust=method)
@@ -2392,34 +2393,35 @@ plotIBlockedMT <- function(target='inline'){
   YUp <- as.numeric(dat$V3)
   
   plot(c(1:length(Y)), Y, type = 'n', axes = FALSE,
-       xlab = 'Blocks', ylab = 'Reaction Time (ms)', main = 'Mean Reaction Time across Blocks and Tasks',
-       xlim = c(0,51), ylim = c(0,301))
+       xlab = 'Blocks', ylab = 'Movement time (ms)', main = '',
+       xlim = c(0,51), ylim = c(0,251))
   
   #labs <- c('1:AL','9:ROT','24:WASH','32:MIR','47:WASH','54')
   #axis(side=1, at=c(1,9,24,32,47,54), labels=labs)
   axis(side=1, at=c(1,5,20,28,43,50))
   #mtext('Trial & Task', side = 1, outer = TRUE, line=-1, cex = 1)
-  axis(side=2, at=c(0, 100, 150, 200, 250, 300),las=2)
+  axis(side=2, at=c(0, 100, 150, 200, 250),las=2)
   
   #abline(h = c(400,700), col = 'black', lty = 2)
   abline(v = c(4.5,19.5,27.5,42.5), col = 8, lty = 2)
   
-  #localization
-  lines(X1,Y[1:4], col = alpha("#696969ff", 1))#aligned
-  lines(X3, Y[5:19], col = alpha("#e51636ff", 1))#rotation
-  lines(X5, Y[20:27], col = alpha("#ff8200ff", 1))#rotwashout
-  lines(X7, Y[28:42], col = alpha("#005de4ff", 1))#mirror
-  lines(X9, Y[43:50], col = alpha("#c400c4ff", 1))#mirwashout
-  
-  polygon(x = c(X1, rev(X1)), y = c(YLow[1:4], rev(YUp[1:4])), border=NA, col="#6969692f")
+  polygon(x = c(X1, rev(X1)), y = c(YLow[1:4], rev(YUp[1:4])), border=NA, col=alpha("#b4b4b4",.5))
   polygon(x = c(X3, rev(X3)), y = c(YLow[5:19], rev(YUp[5:19])), border=NA, col="#e516362f")
-  polygon(x = c(X5, rev(X5)), y = c(YLow[20:27], rev(YUp[20:27])), border=NA, col="#ff82002f")
+  polygon(x = c(X5, rev(X5)), y = c(YLow[20:27], rev(YUp[20:27])), border=NA, col="#e516362f")
   polygon(x = c(X7, rev(X7)), y = c(YLow[28:42], rev(YUp[28:42])), border=NA, col="#005de42f")
-  polygon(x = c(X9, rev(X9)), y = c(YLow[43:50], rev(YUp[43:50])), border=NA, col="#c400c42f")
+  polygon(x = c(X9, rev(X9)), y = c(YLow[43:50], rev(YUp[43:50])), border=NA, col="#005de42f")
+  
+  lines(X1,Y[1:4], col = alpha("#000000", 1))#aligned
+  lines(X3, Y[5:19], col = alpha("#e51636ff", 1))#rotation
+  lines(X5, Y[20:27], col = alpha("#e51636ff", 1))#rotwashout
+  lines(X7, Y[28:42], col = alpha("#005de4ff", 1))#mirror
+  lines(X9, Y[43:50], col = alpha("#005de4ff", 1))#mirwashout
+  
+  
   
   #add legend
-  legend(43,300,legend=c('Aligned','Rotation','Washout: ROT','Mirror Reversal','Washout: MIR'),
-         col=c("#696969ff", "#e51636ff", "#ff8200ff", "#005de4ff", "#c400c4ff"),
+  legend(27,50,legend=c('Aligned','Rotation and washout','Mirror Reversal and washout'),
+         col=c("#000000", "#e51636ff", "#005de4ff"),
          lty=1,bty='n',cex=0.8,lwd=2)
   
   #close everything if you saved plot as svg
@@ -2521,9 +2523,9 @@ getMTLongFormat <- function(groups = c('noninstructed','instructed'), maxppid = 
 }
 
 #First, we grab data from aligned, since it is the baseline for all
-getMTBlockedAlignedData <- function(group = 'noninstructed', blockdefs){
+getMTBlockedAlignedData <- function(group, blockdefs){
   LCaov <- data.frame()
-  curves <- read.csv('data/ALIGNED_noninstructed_MT_long.csv', stringsAsFactors=FALSE)  
+  curves <- read.csv(sprintf('data/ALIGNED_%s_MT_long.csv',group), stringsAsFactors=FALSE)  
   participants <- unique(curves$participant)
   #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
   #curves <- curves[,-1] #take away trial column
@@ -2584,12 +2586,12 @@ getMTBlockedAlignedData <- function(group = 'noninstructed', blockdefs){
 
 #Then grab data for washout and perturb types
 
-getMTBlockedPerturbData <- function(perturbations = c('ROT','MIR'), group = 'noninstructed', blockdefs) {
+getMTBlockedPerturbData <- function(perturbations = c('ROT','MIR'), group, blockdefs) {
   #function reads in aftereffects_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   #to include instructed group, just create another for loop here
   for (perturb in perturbations){  
-    curves <- read.csv(sprintf('data/%s_noninstructed_MT_long.csv',perturb), stringsAsFactors=FALSE)  
+    curves <- read.csv(sprintf('data/%s_%s_MT_long.csv',perturb,group), stringsAsFactors=FALSE)  
     participants <- unique(curves$participant)
     #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
     #curves <- curves[,-1] #take away trial column
@@ -2649,12 +2651,12 @@ getMTBlockedPerturbData <- function(perturbations = c('ROT','MIR'), group = 'non
   
 }
 
-getMTBlockedWashoutData <- function(perturbations = c('ROTWASH','MIRWASH'), group = 'noninstructed', blockdefs) {
+getMTBlockedWashoutData <- function(perturbations = c('ROTWASH','MIRWASH'), group, blockdefs) {
   #function reads in aftereffects_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   #to include instructed group, just create another for loop here
   for (perturb in perturbations){  
-    curves <- read.csv(sprintf('data/%s_noninstructed_MT_long.csv',perturb), stringsAsFactors=FALSE)  
+    curves <- read.csv(sprintf('data/%s_%s_MT_long.csv',perturb,group), stringsAsFactors=FALSE)  
     participants <- unique(curves$participant)
     #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
     #curves <- curves[,-1] #take away trial column
@@ -2721,16 +2723,16 @@ getMTBlockedWashoutData <- function(perturbations = c('ROTWASH','MIRWASH'), grou
 # PERTURB:  blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6))
 # we compare all first blocks of perturb and washout types to last block of aligned
 
-MTt.test <- function() {
+MTt.test <- function(group) {
   
   blockdefs <- list('first'=c(1,12),'second'=c(13,12),'last'=c(37,12))
-  LC4test1 <- getMTBlockedAlignedData(blockdefs=blockdefs)
+  LC4test1 <- getMTBlockedAlignedData(group=group,blockdefs=blockdefs)
   
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
-  LC4test2 <- getMTBlockedPerturbData(blockdefs=blockdefs)
+  LC4test2 <- getMTBlockedPerturbData(group=group,blockdefs=blockdefs)
   
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(43,6)) #6 trials per block
-  LC4test3 <- getMTBlockedWashoutData(blockdefs=blockdefs)
+  LC4test3 <- getMTBlockedWashoutData(group=group,blockdefs=blockdefs)
   
   LC4test <- rbind(LC4test1, LC4test2, LC4test3)
   LC4test$participant <- as.factor(LC4test$participant)
@@ -2796,13 +2798,20 @@ MTt.test <- function() {
 #One issue that arises is that ezANOVA needs complete cases for it to complete the analysis. P001, has a lot of deleted MIR MT trials.
 # This results in MIR 2nd block to be a NaN. I remove this participant from analyses below.
 
-movementtimePerturbANOVA <- function() {
+movementtimePerturbANOVA <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
   
-  LC4aov <- getMTBlockedPerturbData(blockdefs=blockdefs)
-  LC4aov <- LC4aov[-which(LC4aov$participant == 'p1'),]
+  LC4aov <- getMTBlockedPerturbData(group=group,blockdefs=blockdefs)
+  
+  if(group == 'noninstructed'){
+    LC4aov <- LC4aov[-which(LC4aov$participant == 'p1'),]
+  } else if (group == 'instructed'){
+    LC4aov <- LC4aov[-which(LC4aov$participant == 'p13'),]
+  }
+  
+  
   
   #looking into interaction below:
   #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
@@ -2816,61 +2825,69 @@ movementtimePerturbANOVA <- function() {
 
 #No main effects, not interaction effects. Further analysis below is commented out as it is unnecessary.
 
-# MTPerturbComparisonMeans <- function(){
-#   
-#   #can plot interaction just to eyeball it:
-#   plot(interactionMeans(lm(compensation ~ block * perturbtype, data=LC4aov), factors=c('perturbtype', 'block'), atx='block'))
-#   
-#   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6))
-#   
-#   LC4aov <- getMTBlockedPerturbData(blockdefs=blockdefs)
-#   LC4aov <- LC4aov[-which(LC4aov$participant == 'p1'),]
-#   secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
-#   
-#   #nice(secondAOV, correction = 'none') #correction set to none since first AOV reveals no violation of sphericity
-#   #summary(secondAOV) #shows all results
-#   #run code above for figuring out df
-#   #output is the same
-#   #follow-ups using emmeans
-#   
-#   cellmeans <- emmeans(secondAOV,specs=c('perturbtype','block'))
-#   #cellmeans <- lsmeans(secondAOV$aov,specs=c('perturbtype','block'))
-#   print(cellmeans)
-# }
-# 
-# MTPerturbComparisonsAllBlocks <- function(method='bonferroni'){
-#   #styles <- getStyle()
-#   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6))
-#   
-#   LC4aov <- getMTBlockedPerturbData(blockdefs=blockdefs) 
-#   LC4aov <- LC4aov[-which(LC4aov$participant == 'p1'),]
-#   secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
-#   #based on cellmeans, confidence intervals and plots give us an idea of what contrasts we want to compare
-#   
-#   ROT_firstvsROT_second  <- c(1,0,-1,0,0,0)
-#   ROT_firstvsROT_last    <- c(1,0,0,0,-1,0)
-#   MIR_firstvsMIR_second  <- c(0,1,0,-1,0,0)
-#   MIR_firstvsMIR_last    <- c(0,1,0,0,0,-1)
-#   ROT_firstvsMIR_first   <- c(1,-1,0,0,0,0)
-#   ROT_secondvsMIR_second <- c(0,0,1,-1,0,0)
-#   ROT_lastvsMIR_last     <- c(0,0,0,0,1,-1)
-#   
-#   contrastList <- list('Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
-#                        'Block1: MIR vs. Block2: MIR'=MIR_firstvsMIR_second, 'Block1: MIR vs. Block3: MIR'=MIR_firstvsMIR_last,
-#                        'Block1: ROT vs. MIR'=ROT_firstvsMIR_first, 'Block2: ROT vs. MIR'=ROT_secondvsMIR_second, 'Block3: ROT vs. MIR'=ROT_lastvsMIR_last)
-#   
-#   comparisons<- contrast(emmeans(secondAOV$aov,specs=c('perturbtype','block')), contrastList, adjust=method)
-#   
-#   print(comparisons)
-# }
+MTPerturbComparisonMeans <- function(group){
+
+  #can plot interaction just to eyeball it:
+  #plot(interactionMeans(lm(compensation ~ block * perturbtype, data=LC4aov), factors=c('perturbtype', 'block'), atx='block'))
+
+  blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6))
+
+  LC4aov <- getMTBlockedPerturbData(group=group, blockdefs=blockdefs)
+  if(group == 'noninstructed'){
+    LC4aov <- LC4aov[-which(LC4aov$participant == 'p1'),]
+  } else if (group == 'instructed'){
+    LC4aov <- LC4aov[-which(LC4aov$participant == 'p13'),]
+  }
+  secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
+
+  #nice(secondAOV, correction = 'none') #correction set to none since first AOV reveals no violation of sphericity
+  #summary(secondAOV) #shows all results
+  #run code above for figuring out df
+  #output is the same
+  #follow-ups using emmeans
+
+  cellmeans <- emmeans(secondAOV,specs=c('perturbtype','block'))
+  #cellmeans <- lsmeans(secondAOV$aov,specs=c('perturbtype','block'))
+  print(cellmeans)
+}
+
+MTPerturbComparisonsAllBlocks <- function(group, method='bonferroni'){
+  #styles <- getStyle()
+  blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6))
+
+  LC4aov <- getMTBlockedPerturbData(group=group,blockdefs=blockdefs)
+  if(group == 'noninstructed'){
+    LC4aov <- LC4aov[-which(LC4aov$participant == 'p1'),]
+  } else if (group == 'instructed'){
+    LC4aov <- LC4aov[-which(LC4aov$participant == 'p13'),]
+  }
+  secondAOV <- aov_ez("participant","compensation",LC4aov,within=c("perturbtype","block"))
+  #based on cellmeans, confidence intervals and plots give us an idea of what contrasts we want to compare
+
+  MIR_firstvsMIR_second  <- c(1,0,-1,0,0,0)
+  MIR_firstvsMIR_last    <- c(1,0,0,0,-1,0)
+  ROT_firstvsROT_second  <- c(0,1,0,-1,0,0)
+  ROT_firstvsROT_last    <- c(0,1,0,0,0,-1)
+  ROT_firstvsMIR_first   <- c(1,-1,0,0,0,0)
+  ROT_secondvsMIR_second <- c(0,0,1,-1,0,0)
+  ROT_lastvsMIR_last     <- c(0,0,0,0,1,-1)
+
+  contrastList <- list('Block1: MIR vs. Block2: MIR'=MIR_firstvsMIR_second, 'Block1: MIR vs. Block3: MIR'=MIR_firstvsMIR_last,
+                       'Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
+                       'Block1: ROT vs. MIR'=ROT_firstvsMIR_first, 'Block2: ROT vs. MIR'=ROT_secondvsMIR_second, 'Block3: ROT vs. MIR'=ROT_lastvsMIR_last)
+
+  comparisons<- contrast(emmeans(secondAOV$aov,specs=c('perturbtype','block')), contrastList, adjust=method)
+
+  print(comparisons)
+}
 
 #washout data has complete data (include p001 in analysis; results do not differ whether or not we include this participant).
-movementtimeWashoutANOVA <- function() {
+movementtimeWashoutANOVA <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(43,6)) #6 trials per block
   
-  LC4aov <- getMTBlockedWashoutData(blockdefs=blockdefs)
+  LC4aov <- getMTBlockedWashoutData(group=group,blockdefs=blockdefs)
   #remove participant below?
   #LC4aov <- LC4aov[-which(LC4aov$participant == 'p1'),]
   

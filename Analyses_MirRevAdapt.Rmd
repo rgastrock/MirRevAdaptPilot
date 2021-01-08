@@ -1,0 +1,464 @@
+---
+title: "Mirror reversal (de novo learning) versus visuomotor rotation (motor adaptation)"
+author: "Raphael Gastrock"
+output: html_document
+---
+
+# Overview
+
+This document discusses figures and statistics for the De novo learning and Adaptation experiment. This experiment had participants train with both a visuomotor rotation and mirror reversal, in order to investigate the behavioral mechanisms that distinguish the two motor learning types. These behavioral experiments are meant to be a pilot study, for investigating the two tasks using EEG methods.
+
+# Set up the R enviornment
+
+We have written code that pre-processes the data, plots figures, and runs statistical tests. Import the sources below:
+
+```{r message=FALSE, warning=FALSE}
+source('ana/shared.R')
+source('ana/learningRates.R')
+source('ana/rae.R')
+source('ana/RTandMT.R')
+source('ana/pathlength.R')
+source('ana/ordereffects.R')
+source('ana/KINE4225.R')
+```
+
+# Order Effects
+
+The experiment is a within-subjects design. That is, some participants start with the rotation followed by the mirror task, and vice-versa. In addition to this, each perturbation is presented on either the vertical or horizontal axis of the workspace, which are also counterbalanced across participants. Target locations in relation to this directional axis are also counterbalanced across participants. Therefore, to ensure that our results are not confounded by these factors, we need to ensure that there are no effects for perturbation order, perturbation axis, and target location.
+
+## Perturbation order
+
+There are two groups: instructed and non-instructed. The instructed group was told about the nature of each perturbation and was given a strategy to counter for it. We comapre order effects for each group. For perturbation order, the expectation is that performance for each perturbation should not be different, regardless of whether participants experienced it before or after the other perturbation.
+
+### Rotation: Non-instructed
+
+```{r}
+plotNIROTOrderEffects()
+```
+
+```{r}
+ROTordereffectsANOVA(group='noninstructed')
+```
+
+There are no order effects, regardless of whether participants experience the rotation before or after the other perturbation.
+
+### Rotation: Instructed
+
+```{r}
+plotIROTOrderEffects()
+```
+
+```{r}
+ROTordereffectsANOVA(group='instructed')
+```
+
+There are no order effects, regardless of whether participants experience the rotation before or after the other perturbation.
+
+### Mirror: Non-instructed
+
+```{r}
+plotNIMIROrderEffects()
+```
+
+```{r}
+MIRordereffectsANOVA(group='noninstructed')
+```
+
+There are no order effects, regardless of whether participants experience the mirror reversal before or after the other perturbation.
+
+### Mirror: Instructed
+
+```{r}
+plotIMIROrderEffects()
+```
+
+```{r}
+MIRordereffectsANOVA(group='instructed')
+```
+
+There are no order effects, regardless of whether participants experience the mirror reversal before or after the other perturbation.
+
+## Target location
+
+### Rotation: Non-instructed
+
+```{r}
+plotNIROTTargetEffects()
+```
+
+```{r}
+ROTtargeteffectsANOVA(group='noninstructed')
+```
+
+There are no order effects, regardless of whether targets are located before or after the perturbation axis.
+
+### Rotation: Instructed
+
+```{r}
+plotIROTTargetEffects()
+```
+
+```{r}
+ROTtargeteffectsANOVA(group='instructed')
+```
+
+There are no order effects, regardless of whether targets are located before or after the perturbation axis.
+
+### Mirror: Non-instructed
+
+```{r}
+plotNIMIRTargetEffects()
+```
+
+```{r}
+MIRtargeteffectsANOVA(group='noninstructed')
+```
+
+There are no order effects, regardless of whether targets are located before or after the perturbation axis.
+
+### Mirror: Instructed
+
+```{r}
+plotIMIRTargetEffects()
+```
+
+```{r}
+MIRtargeteffectsANOVA(group='instructed')
+```
+
+There are no order effects, regardless of whether targets are located before or after the perturbation axis.
+
+## Perturbation Axis
+
+### Rotation: Non-instructed
+
+```{r}
+plotNIROTAxisEffects()
+```
+
+```{r}
+ROTaxiseffectsANOVA(group='noninstructed')
+```
+
+There are no order effects, regardless of whether the perturbation is on the horizontal or vertical axis of the workspace.
+
+### Rotation: Instructed
+
+```{r}
+plotIROTAxisEffects()
+```
+
+```{r}
+ROTaxiseffectsANOVA(group='instructed')
+```
+
+There are no order effects, regardless of whether the perturbation is on the horizontal or vertical axis of the workspace.
+
+### Mirror: Non-instructed
+
+```{r}
+plotNIMIRAxisEffects()
+```
+
+```{r}
+MIRaxiseffectsANOVA(group='noninstructed')
+```
+
+There are no order effects, regardless of whether the perturbation is on the horizontal or vertical axis of the workspace.
+
+### Mirror: Instructed
+
+```{r}
+plotIMIRAxisEffects()
+```
+
+```{r}
+MIRaxiseffectsANOVA(group='instructed')
+```
+
+There are no order effects, regardless of whether the perturbation is on the horizontal or vertical axis of the workspace.
+
+# Learning Rates
+
+We then compare the progression of learning across trials between the rotation and mirror tasks. The y-axis will be amount of compensation in percentage. This is because while the rotation magnitude is consistently 30-degrees, angular reach deviations for the mirror wil differ depending on the target distance from the mirror axis. The mirror task will require reach deviations of 15, 30, or 45 degrees. Here, 100% would mean perfect compensation, 0% would be no compensation or reaching directly to the target, and negative values are compensations in the wrong direction relative to the target.
+
+## Non - instructed group
+
+The plots below will show grouped and individual data for the learning curves for each perturbation.
+
+```{r}
+plotPTypeLearningCurves(group='noninstructed')
+```
+
+```{r}
+plotCollapsedBlockedIndLC(group='noninstructed')
+```
+
+Participants learn both perturbation types by the end of 90 trials, but variability is greater for the mirror task.
+
+### Stats
+
+```{r}
+learningCurvesANOVA(group='noninstructed')
+```
+
+```{r}
+learningcurveComparisonMeans(group='noninstructed')
+```
+
+```{r, warning=FALSE}
+learningcurveComparisonsAllBlocks(group='noninstructed', method='bonferroni')
+```
+
+For each block, there is no statistically significant difference between the two perturbations. However, learning develops differently across blocks for each perturbation type. For the rotation, Block 1 differs from blocks 2 and 3 respectively. For the mirror task, block 1 does NOT differ from block 2, but is significantly different from block 3.
+
+## Instructed group
+
+The plots below will show grouped and individual data for the learning curves for each perturbation.
+
+```{r}
+plotPTypeLearningCurves(group='instructed')
+```
+
+```{r}
+plotCollapsedBlockedIndLC(group='instructed', maxppid=31)
+```
+
+Instructions provide an advantage during the first trials of training. Variability is greater for the mirror task.
+
+### Stats
+
+```{r}
+learningCurvesANOVA(group='instructed')
+```
+
+No main or interaction effects are observed for the Instructed group. Not shown here, blocks 3 and 4 do show a significant difference between the rotation and mirror tasks.
+
+## Learning Curves without target near mirror axis
+
+Removing target near the mirror axis reduces variability in the learning curve for the mirror task. One possible explanation is that the near target could lead participants to easily move to either side of the mirror, thereby exaggerating the compensation measures. Here, I show the data if this target is removed.
+
+```{r}
+plotROTLearningCurvesWONear()
+plotMIRLearningCurvesWONear()
+```
+
+We can then re-run the analyses, to check if it changes the results.
+
+Results for the non-instructed group:
+
+```{r warning=FALSE}
+learningCurvesANOVAWONear(group='noninstructed')
+learningcurveComparisonMeansWONear(group='noninstructed')
+learningcurveComparisonsAllBlocksWONear(group='noninstructed')
+```
+
+Results for the instructed group:
+
+```{r warning=FALSE}
+learningCurvesANOVAWONear(group='instructed')
+```
+
+The only difference is that mirror blocks 1 and 2 are no longer different from each other. But, given that all other findings hold regardless of group, our main conclusions in relation to comparing the rotation from the mirror task are still the same.
+
+# Reach Aftereffects
+
+We then use washout trials following perturbation training to see whether reach aftereffects are observed or not.
+
+## Non-instructed group
+
+```{r}
+plotPTypeAftereffects(group='noninstructed')
+```
+
+```{r}
+plotCollapsedBlockedIndRAE(group='noninstructed')
+```
+
+Aftereffects are observed following the rotation task, but not the mirror reversal.
+
+### Stats
+
+We can compare the last block of the aligned session to the first block of the washout session, for each perturbation. A significant difference suggests the presence of reach aftereffects.
+
+```{r}
+RAEt.test(group='noninstructed')
+```
+
+The test confirms that only rotation training leads to aftereffects. We can then compare the rotation from the mirror task across blocks.
+
+```{r}
+reachaftereffectsANOVA(group='noninstructed')
+```
+
+```{r}
+RAEComparisonMeans(group='noninstructed')
+```
+
+```{r warning=FALSE}
+RAEComparisonsAllBlocks(group='noninstructed', method='bonferroni')
+```
+
+Rotation and Mirror are significantly different for the first two blocks, but not by the last block. Only the rotation differs across blocks.
+
+## Instructed group
+
+```{r}
+plotPTypeAftereffects(group='instructed')
+```
+
+```{r}
+plotCollapsedBlockedIndRAE(group='instructed', maxppid=31)
+```
+
+### Stats
+
+We can compare the last block of the aligned session to the first block of the washout session, for each perturbation. A significant difference suggests the presence of reach aftereffects.
+
+```{r}
+RAEt.test(group='instructed')
+```
+
+The test confirms that only rotation training leads to aftereffects. We can then compare the rotation from the mirror task across blocks.
+
+```{r}
+reachaftereffectsANOVA(group='instructed')
+```
+
+```{r}
+RAEComparisonMeans(group='instructed')
+```
+
+```{r warning=FALSE}
+RAEComparisonsAllBlocks(group='instructed', method='bonferroni')
+```
+
+Rotation and Mirror are significantly different for the first two blocks, but not by the last block. Rotation block 1 significantly differs from block 3, confirming the presence of reach aftereffects.
+
+# Reaction Time
+
+Other behavioral measures would involve movement initiation and execution. Below are reaction times across experiment blocks.
+
+## Non-instructed group
+
+```{r}
+plotNIBlockedRT()
+```
+
+### Stats
+
+```{r}
+RTt.test(group='noninstructed')
+```
+
+Either perturbation slows down RTs initially. However, rotation RTs are not different from aligned RTs by the end of training. Mirror RTs taper off to near baseline levels, but are still significantly different from aligned RTs by the end of training. Washout RTs for each perturbation do not differ from aligned RTs. Mirror RTs are clearly slower than rotation RTs at the start of perturbation training.
+
+We can then compare RTs for the two perturbations across trials/blocks.
+
+```{r warning=FALSE}
+reactiontimeANOVA(group='noninstructed')
+RTComparisonMeans(group='noninstructed')
+RTComparisonsAllBlocks(group='noninstructed', method='bonferroni')
+```
+
+There are no differences across blocks for the rotation RTs, but mirror RTs are different early on in learning from those at the end. Rotation and mirror RTs differ for the first two blocks, but not by the last block.
+
+## Instructed group
+
+```{r}
+plotIBlockedRT()
+```
+
+### Stats
+
+```{r}
+RTt.test(group='instructed')
+```
+
+Results for the instructed groups are similar to those in the non-instructed group.
+
+We can then compare RTs for the two perturbations across trials/blocks.
+
+```{r warning=FALSE}
+reactiontimeANOVA(group='instructed')
+RTComparisonMeans(group='instructed')
+RTComparisonsAllBlocks(group='instructed', method='bonferroni')
+```
+
+Results are similar to those in the non-instructed group.
+
+# Movement Times
+
+Below are movement times across experiment blocks.
+
+## Non-instructed group
+
+```{r}
+plotNIBlockedMT()
+```
+
+### Stats
+
+```{r}
+MTt.test(group='noninstructed')
+```
+
+MTs for the rotation are faster than the aligned MTs during the first and last blocks of both perturbation training and washout. MTs for the mirror task are not different from the aligned MTs, except during the last block of perturbation training.
+
+We can then compare MTs for the two perturbations across trials/blocks. We can also look into the washout data further, given that it differs from the aligned session for the rotation. Note that pasrticipant 001 has been removed from the MT perturbation analysis, due to missing values. Data for this participant is included for the washout ANOVA.
+
+```{r warning=FALSE}
+movementtimePerturbANOVA(group='noninstructed')
+movementtimeWashoutANOVA(group='noninstructed')
+```
+
+There are no effects observed, suggesting that rotation and mirror MTs do not differ during perturbation and washout trials.
+
+## Instructed group
+
+```{r}
+plotIBlockedMT()
+```
+
+### Stats
+
+```{r}
+MTt.test(group='instructed')
+```
+
+No differences are observed between aligned MTs and training and washout MTs for either perturbation.
+
+For completeness, we can also compare rotation and mirror MTs for both perturbation and washout trials. Similar to the outlier participant in the non-instructed group, participant 013 is removed for the perturbation trials.
+
+```{r warning=FALSE}
+movementtimePerturbANOVA(group='instructed')
+movementtimeWashoutANOVA(group='instructed')
+```
+
+No effects are observed for washout trials, but during perturbation training, there is an effect of block. We can analyze this further:
+
+```{r warning=FALSE}
+MTPerturbComparisonMeans(group='instructed')
+MTPerturbComparisonsAllBlocks(group='instructed')
+```
+
+The main effect of block was driven by the difference between mirror MTs during the first and last block of training.
+
+# Path Length
+
+Path length measures the path/trajectory that participants move through during the reach within perturbation trials. A smaller path length indicates that they moved as smooth and as accurate as possible to the target.
+
+## Non-instructed group
+
+```{r}
+plotPTypePathLength(group='noninstructed')
+```
+
+## Instructed group
+
+```{r}
+plotPTypePathLength(group='instructed')
+```
+
+
+There seems to be an effect of instructions, as path lengths for the instructed group do not show a difference, but path lengths for the mirror trials in the non-instructed group show a larger variability especially during early learning. This suggests that lack of knowledge about the nature of the perturbation corresponds to more exploration within the reaching movement.

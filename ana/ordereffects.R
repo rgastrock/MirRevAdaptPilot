@@ -439,10 +439,15 @@ plotIMIROrderEffects <- function(group = 'instructed', conditions = c(1,2), targ
 # We are only analyzing noninstructed group for now
 # Start with ROT
 
-ROTgetLongFormat <- function(conditions=c(1,2)){
+ROTgetLongFormat <- function(conditions=c(1,2), group){
   
   for (condition in conditions){
-    ROT1dat <- getROTOrderEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    if(group == 'noninstructed'){
+      ROT1dat <- getROTOrderEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    } else if(group == 'instructed'){
+      ROT1dat <- getROTOrderEffects(group='instructed',maxppid=31,location='maxvel',condition=condition)
+    }
+    
     
     if(condition == 1){
       ppcols <- c('First_p1','First_p2', 'First_p3', 'First_p4', 'First_p5', 'First_p6', 'First_p7', 'First_p8')
@@ -455,15 +460,18 @@ ROTgetLongFormat <- function(conditions=c(1,2)){
     
     #gather(data, the pp cols changed to rows, reachdev values to rows, specify how many ppcols to change)
     longdata <- gather(ROT1dat, participant, compensation, ppcols[1:length(ppcols)], factor_key=TRUE)
-    write.csv(longdata, file=sprintf('data/ROT_ordereffects_long_%s.csv',condition), row.names = F)
+
+    write.csv(longdata, file=sprintf('data/ROT_%s_ordereffects_long_%s.csv',group, condition), row.names = F)
+
+    
   }
 }
 
-ROTgetBlockedOrderEffectsAOV <- function(conditions = c(1,2), blockdefs) {
+ROTgetBlockedOrderEffectsAOV <- function(conditions = c(1,2), blockdefs, group) {
   #function reads in learningcurves_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   for (condition in conditions){  
-    curves <- read.csv(sprintf('data/ROT_ordereffects_long_%s.csv',condition), stringsAsFactors=FALSE)  
+    curves <- read.csv(sprintf('data/ROT_%s_ordereffects_long_%s.csv',group,condition), stringsAsFactors=FALSE)  
     participants <- unique(curves$participant)
     #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
     #curves <- curves[,-1] #take away trial column
@@ -523,12 +531,12 @@ ROTgetBlockedOrderEffectsAOV <- function(conditions = c(1,2), blockdefs) {
   
 }
 
-ROTordereffectsANOVA <- function() {
+ROTordereffectsANOVA <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
   
-  LC4aov <- ROTgetBlockedOrderEffectsAOV(blockdefs=blockdefs)                      
+  LC4aov <- ROTgetBlockedOrderEffectsAOV(blockdefs=blockdefs, group=group)                      
   
   #looking into interaction below:
   #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
@@ -541,10 +549,15 @@ ROTordereffectsANOVA <- function() {
 }
 
 #Then do the same for MIR
-MIRgetLongFormat <- function(conditions=c(1,2)){
+MIRgetLongFormat <- function(conditions=c(1,2), group){
   
   for (condition in conditions){
-    MIR1dat <- getMIROrderEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    if(group == 'noninstructed'){
+      MIR1dat <- getMIROrderEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    } else if(group == 'instructed'){
+      MIR1dat <- getMIROrderEffects(group='instructed',maxppid=31,location='maxvel',condition=condition)
+    }
+    
     
     if(condition == 1){
       ppcols <- c('First_p1','First_p2', 'First_p3', 'First_p4', 'First_p5', 'First_p6', 'First_p7', 'First_p8')
@@ -557,15 +570,15 @@ MIRgetLongFormat <- function(conditions=c(1,2)){
     
     #gather(data, the pp cols changed to rows, reachdev values to rows, specify how many ppcols to change)
     longdata <- gather(MIR1dat, participant, compensation, ppcols[1:length(ppcols)], factor_key=TRUE)
-    write.csv(longdata, file=sprintf('data/MIR_ordereffects_long_%s.csv',condition), row.names = F)
+    write.csv(longdata, file=sprintf('data/MIR_%s_ordereffects_long_%s.csv',group,condition), row.names = F)
   }
 }
 
-MIRgetBlockedOrderEffectsAOV <- function(conditions = c(1,2), blockdefs) {
+MIRgetBlockedOrderEffectsAOV <- function(conditions = c(1,2), blockdefs, group) {
   #function reads in learningcurves_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   for (condition in conditions){  
-    curves <- read.csv(sprintf('data/MIR_ordereffects_long_%s.csv',condition), stringsAsFactors=FALSE)  
+    curves <- read.csv(sprintf('data/MIR_%s_ordereffects_long_%s.csv',group, condition), stringsAsFactors=FALSE)  
     participants <- unique(curves$participant)
     #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
     #curves <- curves[,-1] #take away trial column
@@ -625,12 +638,12 @@ MIRgetBlockedOrderEffectsAOV <- function(conditions = c(1,2), blockdefs) {
   
 }
 
-MIRordereffectsANOVA <- function() {
+MIRordereffectsANOVA <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
   
-  LC4aov <- MIRgetBlockedOrderEffectsAOV(blockdefs=blockdefs)                      
+  LC4aov <- MIRgetBlockedOrderEffectsAOV(blockdefs=blockdefs, group=group)                      
   
   #looking into interaction below:
   #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
@@ -966,10 +979,15 @@ plotIROTTargetEffects <- function(group = 'instructed', conditions = c(1,2), tar
 
 #Target Effect Stats: ROT----
 
-ROTgetTargetLongFormat <- function(conditions=c(1,2)){
+ROTgetTargetLongFormat <- function(conditions=c(1,2), group){
   
   for (condition in conditions){
-    ROT1dat <- getROTTargetEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    if(group == 'noninstructed'){
+      ROT1dat <- getROTTargetEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    } else if(group == 'instructed'){
+      ROT1dat <- getROTTargetEffects(group='instructed',maxppid=31,location='maxvel',condition=condition)
+    }
+    
     
     if(condition == 1){
       ppcols <- c('First_p1','First_p2', 'First_p3', 'First_p4', 'First_p5', 'First_p6', 'First_p7', 'First_p8')
@@ -982,15 +1000,15 @@ ROTgetTargetLongFormat <- function(conditions=c(1,2)){
     
     #gather(data, the pp cols changed to rows, reachdev values to rows, specify how many ppcols to change)
     longdata <- gather(ROT1dat, participant, compensation, ppcols[1:length(ppcols)], factor_key=TRUE)
-    write.csv(longdata, file=sprintf('data/ROT_targeteffects_long_%s.csv',condition), row.names = F)
+    write.csv(longdata, file=sprintf('data/ROT_%s_targeteffects_long_%s.csv',group, condition), row.names = F)
   }
 }
 
-ROTgetBlockedTargetEffectsAOV <- function(conditions = c(1,2), blockdefs) {
+ROTgetBlockedTargetEffectsAOV <- function(conditions = c(1,2), blockdefs, group) {
   #function reads in learningcurves_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   for (condition in conditions){  
-    curves <- read.csv(sprintf('data/ROT_targeteffects_long_%s.csv',condition), stringsAsFactors=FALSE)
+    curves <- read.csv(sprintf('data/ROT_%s_targeteffects_long_%s.csv',group, condition), stringsAsFactors=FALSE)
     if (condition == 1){
       curves$compensation <- (curves$compensation*-1)
     }
@@ -1053,12 +1071,12 @@ ROTgetBlockedTargetEffectsAOV <- function(conditions = c(1,2), blockdefs) {
   
 }
 
-ROTtargeteffectsANOVA <- function() {
+ROTtargeteffectsANOVA <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
   
-  LC4aov <- ROTgetBlockedTargetEffectsAOV(blockdefs=blockdefs)                      
+  LC4aov <- ROTgetBlockedTargetEffectsAOV(blockdefs=blockdefs, group=group)                      
   
   #looking into interaction below:
   #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
@@ -1386,10 +1404,15 @@ plotIMIRTargetEffects <- function(group = 'instructed', conditions = c(1,2), tar
 
 #Target Effect Stats: MIR----
 
-MIRgetTargetLongFormat <- function(conditions=c(1,2)){
+MIRgetTargetLongFormat <- function(conditions=c(1,2),group){
   
   for (condition in conditions){
-    MIR1dat <- getMIRTargetEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    if(group == 'noninstructed'){
+      MIR1dat <- getMIRTargetEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    } else if(group == 'instructed'){
+      MIR1dat <- getMIRTargetEffects(group='instructed',maxppid=31,location='maxvel',condition=condition)
+    }
+    
     
     if(condition == 1){
       ppcols <- c('First_p1','First_p2', 'First_p3', 'First_p4', 'First_p5', 'First_p6', 'First_p7', 'First_p8')
@@ -1402,15 +1425,15 @@ MIRgetTargetLongFormat <- function(conditions=c(1,2)){
     
     #gather(data, the pp cols changed to rows, reachdev values to rows, specify how many ppcols to change)
     longdata <- gather(MIR1dat, participant, compensation, ppcols[1:length(ppcols)], factor_key=TRUE)
-    write.csv(longdata, file=sprintf('data/MIR_targeteffects_long_%s.csv',condition), row.names = F)
+    write.csv(longdata, file=sprintf('data/MIR_%s_targeteffects_long_%s.csv',group,condition), row.names = F)
   }
 }
 
-MIRgetBlockedTargetEffectsAOV <- function(conditions = c(1,2), blockdefs) {
+MIRgetBlockedTargetEffectsAOV <- function(conditions = c(1,2), blockdefs, group) {
   #function reads in learningcurves_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   for (condition in conditions){  
-    curves <- read.csv(sprintf('data/MIR_targeteffects_long_%s.csv',condition), stringsAsFactors=FALSE)
+    curves <- read.csv(sprintf('data/MIR_%s_targeteffects_long_%s.csv',group,condition), stringsAsFactors=FALSE)
     if (condition == 2){
       curves$compensation <- (curves$compensation*-1)
     }
@@ -1473,12 +1496,12 @@ MIRgetBlockedTargetEffectsAOV <- function(conditions = c(1,2), blockdefs) {
   
 }
 
-MIRtargeteffectsANOVA <- function() {
+MIRtargeteffectsANOVA <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
   
-  LC4aov <- MIRgetBlockedTargetEffectsAOV(blockdefs=blockdefs)                      
+  LC4aov <- MIRgetBlockedTargetEffectsAOV(blockdefs=blockdefs, group=group)                      
   
   #looking into interaction below:
   #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
@@ -1928,10 +1951,15 @@ plotIMIRAxisEffects <- function(group = 'instructed', conditions = c(1,2), targe
 # We are only analyzing noninstructed group for now
 # Start with ROT
 
-ROTgetAxisLongFormat <- function(conditions=c(1,2)){
+ROTgetAxisLongFormat <- function(conditions=c(1,2), group){
   
   for (condition in conditions){
-    ROT1dat <- getROTAxisEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    if(group == 'noninstructed'){
+      ROT1dat <- getROTAxisEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    } else if(group == 'instructed'){
+      ROT1dat <- getROTAxisEffects(group='instructed',maxppid=31,location='maxvel',condition=condition)
+    }
+    
     
     if(condition == 1){
       ppcols <- c('First_p1','First_p2', 'First_p3', 'First_p4', 'First_p5', 'First_p6', 'First_p7', 'First_p8')
@@ -1944,15 +1972,15 @@ ROTgetAxisLongFormat <- function(conditions=c(1,2)){
     
     #gather(data, the pp cols changed to rows, reachdev values to rows, specify how many ppcols to change)
     longdata <- gather(ROT1dat, participant, compensation, ppcols[1:length(ppcols)], factor_key=TRUE)
-    write.csv(longdata, file=sprintf('data/ROT_axiseffects_long_%s.csv',condition), row.names = F)
+    write.csv(longdata, file=sprintf('data/ROT_%s_axiseffects_long_%s.csv',group,condition), row.names = F)
   }
 }
 
-ROTgetBlockedAxisEffectsAOV <- function(conditions = c(1,2), blockdefs) {
+ROTgetBlockedAxisEffectsAOV <- function(conditions = c(1,2), blockdefs, group) {
   #function reads in learningcurves_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   for (condition in conditions){  
-    curves <- read.csv(sprintf('data/ROT_axiseffects_long_%s.csv',condition), stringsAsFactors=FALSE)  
+    curves <- read.csv(sprintf('data/ROT_%s_axiseffects_long_%s.csv',group,condition), stringsAsFactors=FALSE)  
     participants <- unique(curves$participant)
     #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
     #curves <- curves[,-1] #take away trial column
@@ -2012,12 +2040,12 @@ ROTgetBlockedAxisEffectsAOV <- function(conditions = c(1,2), blockdefs) {
   
 }
 
-ROTaxiseffectsANOVA <- function() {
+ROTaxiseffectsANOVA <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
   
-  LC4aov <- ROTgetBlockedAxisEffectsAOV(blockdefs=blockdefs)                      
+  LC4aov <- ROTgetBlockedAxisEffectsAOV(blockdefs=blockdefs, group=group)                      
   
   #looking into interaction below:
   #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
@@ -2030,10 +2058,15 @@ ROTaxiseffectsANOVA <- function() {
 }
 
 #Then do the same for MIR
-MIRgetAxisLongFormat <- function(conditions=c(1,2)){
+MIRgetAxisLongFormat <- function(conditions=c(1,2), group){
   
   for (condition in conditions){
-    MIR1dat <- getMIRAxisEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    if(group == 'noninstructed'){
+      MIR1dat <- getMIRAxisEffects(group='noninstructed',maxppid=15,location='maxvel',condition=condition)
+    } else if(group == 'instructed'){
+      MIR1dat <- getMIRAxisEffects(group='instructed',maxppid=31,location='maxvel',condition=condition)
+    }
+    
     
     if(condition == 1){
       ppcols <- c('First_p1','First_p2', 'First_p3', 'First_p4', 'First_p5', 'First_p6', 'First_p7', 'First_p8')
@@ -2046,15 +2079,15 @@ MIRgetAxisLongFormat <- function(conditions=c(1,2)){
     
     #gather(data, the pp cols changed to rows, reachdev values to rows, specify how many ppcols to change)
     longdata <- gather(MIR1dat, participant, compensation, ppcols[1:length(ppcols)], factor_key=TRUE)
-    write.csv(longdata, file=sprintf('data/MIR_axiseffects_long_%s.csv',condition), row.names = F)
+    write.csv(longdata, file=sprintf('data/MIR_%s_axiseffects_long_%s.csv',group,condition), row.names = F)
   }
 }
 
-MIRgetBlockedAxisEffectsAOV <- function(conditions = c(1,2), blockdefs) {
+MIRgetBlockedAxisEffectsAOV <- function(conditions = c(1,2), blockdefs,group) {
   #function reads in learningcurves_long.csv file then creates a df with cols participant, block, reachdev
   LCaov <- data.frame()
   for (condition in conditions){  
-    curves <- read.csv(sprintf('data/MIR_axiseffects_long_%s.csv',condition), stringsAsFactors=FALSE)  
+    curves <- read.csv(sprintf('data/MIR_%s_axiseffects_long_%s.csv',group,condition), stringsAsFactors=FALSE)  
     participants <- unique(curves$participant)
     #R <- dim(curves)[1] # not needed, checks if rows=90 (correct trial numbers)
     #curves <- curves[,-1] #take away trial column
@@ -2114,12 +2147,12 @@ MIRgetBlockedAxisEffectsAOV <- function(conditions = c(1,2), blockdefs) {
   
 }
 
-MIRaxiseffectsANOVA <- function() {
+MIRaxiseffectsANOVA <- function(group) {
   
   #styles <- getStyle()
   blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
   
-  LC4aov <- MIRgetBlockedAxisEffectsAOV(blockdefs=blockdefs)                      
+  LC4aov <- MIRgetBlockedAxisEffectsAOV(blockdefs=blockdefs, group=group)                      
   
   #looking into interaction below:
   #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
