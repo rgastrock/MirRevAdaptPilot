@@ -1,7 +1,7 @@
 #test circle for where the centre is, so that we can fix the offset in experiment
 #run one trial and only get step 0
 
-df <- read.csv(file = 'data/p001-1-0.csv') #manually change filenames every test
+df <- read.csv(file = 'data/circlefit/p001-1-0.csv') #manually change filenames every test
 
 df <- df[which(df$step == 0),] #get only step 0, because we drew a circle with the pen
 
