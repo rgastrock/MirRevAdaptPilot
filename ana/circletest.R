@@ -1,48 +1,3 @@
-#test circle for where the centre is, so that we can fix the offset in experiment
-#run one trial and only get step 0
-
-df <- read.csv(file = 'data/circlefit/p001-1-0.csv') #manually change filenames every test
-
-df <- df[which(df$step == 0),] #get only step 0, because we drew a circle with the pen
-
-plot(df$mousex_px, df$mousey_px)
-
-#remove the line going to centre (look at df to identify which point this line starts from)
-points(-15,-185,pch=2, col='red') #roughly the line starts at (mouseX, mouseY)
-# x going down is another indicator that these are samples for the line (cut samples below corresonding time of this point)
-dfnew <- df[which(df$time_ms < 2800),] #change ms per try
-plot(dfnew$mousex_px, dfnew$mousey_px)
-
-dat <- data.frame(dfnew$mousex_px, dfnew$mousey_px)
-colnames(dat) <- c('x','y')
-
-#monitor pixels
-px_x <- 1024
-px_y <- 768
-#tablet workspace in cm (12.1 x 8.4 inches)
-cm_x <- 30.734
-cm_y <- 21.336
-
-#picel per cm ratio
-PPC_x <- px_x/cm_x
-PPC_y <- px_y/cm_y
-
-# from here, we calculate mouse x and y in cm
-mousex_cm <- dat$x/PPC_x
-mousey_cm <- dat$y/PPC_y
-
-plot(mousex_cm, mousey_cm, asp=1)
-
-#use modified circle fitting function
-#if unsure of radius, function will specify radius of your data
-fit1 <- circleFitR(x=mousex_cm, y=mousey_cm, radius = 4.8)
-
-points(fit1$x, fit1$y, col='red') #centre of circle from data points
-
-#see if a line will fit data well
-a <- seq(0, 2*pi, length.out = 181)
-lines((sin(a)*4.8)+(fit1$x), (cos(a)*4.8)+(fit1$y), asp=1, col='blue') #multiply by radius, then add offsets
-
 #' @title Get origin for points that should fall on a circle
 #' @param x The x-coordinates of the data.
 #' @param y The y-coordinates of the data. 
@@ -122,18 +77,18 @@ circleFitR <- function(x, y, radius = 5, verbosity=0) {
   
   coords  <- data.frame(x, y)
   
-
-    
-    library(optimx)
-    
-    lower <- c(min(coords$x)-radius,min(coords$y)-radius,0.001)
-    upper <- c(max(coords$x)+radius,max(coords$y)+radius,radius*3)
-    
-    circlefit <- optimx(par=c('x'=0, 'y'=0, 'radius'=radius), circleFitRError, gr = NULL, method='L-BFGS-B', lower=lower, upper=upper, coords=coords)
-    
-    return(list('x'=circlefit$x, 'y'=circlefit$y, 'radius'=circlefit$radius))
-    
-
+  
+  
+  library(optimx)
+  
+  lower <- c(min(coords$x)-radius,min(coords$y)-radius,0.001)
+  upper <- c(max(coords$x)+radius,max(coords$y)+radius,radius*3)
+  
+  circlefit <- optimx(par=c('x'=0, 'y'=0, 'radius'=radius), circleFitRError, gr = NULL, method='L-BFGS-B', lower=lower, upper=upper, coords=coords)
+  
+  return(list('x'=circlefit$x, 'y'=circlefit$y, 'radius'=circlefit$radius))
+  
+  
   
 }
 
@@ -168,6 +123,53 @@ circleFitError <- function(par, coords, radius){
   return(mean((sqrt((coords$x - par['x'])^2 + (coords$y - par['y'])^2) - radius)^2, na.rm=TRUE))
   
 }
+
+
+#test circle for where the centre is, so that we can fix the offset in experiment
+#run one trial and only get step 0
+
+df <- read.csv(file = 'data/circlefit/p000-1-0.csv') #manually change filenames every test
+
+df <- df[which(df$step == 0),] #get only step 0, because we drew a circle with the pen
+
+plot(df$mousex_px, df$mousey_px)
+
+#remove the line going to centre (look at df to identify which point this line starts from)
+points(-50,-190,pch=2, col='red') #roughly the line starts at (mouseX, mouseY)
+# x going down is another indicator that these are samples for the line (cut samples below corresonding time of this point)
+dfnew <- df[which(df$time_ms < 3500),] #change ms per try
+plot(dfnew$mousex_px, dfnew$mousey_px)
+
+dat <- data.frame(dfnew$mousex_px, dfnew$mousey_px)
+colnames(dat) <- c('x','y')
+
+#monitor pixels
+px_x <- 1024
+px_y <- 768
+#tablet workspace in cm (12.1 x 8.4 inches)
+cm_x <- 30.734
+cm_y <- 21.336
+
+#picel per cm ratio
+PPC_x <- px_x/cm_x
+PPC_y <- px_y/cm_y
+
+# from here, we calculate mouse x and y in cm
+mousex_cm <- dat$x/PPC_x
+mousey_cm <- dat$y/PPC_y
+
+plot(mousex_cm, mousey_cm, asp=1)
+
+#use modified circle fitting function
+#if unsure of radius, function will specify radius of your data
+fit1 <- circleFitR(x=mousex_cm, y=mousey_cm, radius = 5.5)
+
+points(fit1$x, fit1$y, col='red') #centre of circle from data points
+
+#see if a line will fit data well
+a <- seq(0, 2*pi, length.out = 181)
+lines((sin(a)*5.5)+(fit1$x), (cos(a)*5.5)+(fit1$y), asp=1, col='blue') #multiply by radius, then add offsets
+
 
 
 #script to test circle where targets are located
