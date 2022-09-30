@@ -1905,15 +1905,27 @@ learningcurveComparisonsAllBlocks <- function(group,method='bonferroni'){
                        'Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
                        'Block1: ROT vs. MIR'=ROT_firstvsMIR_first, 'Block2: ROT vs. MIR'=ROT_secondvsMIR_second, 'Block3: ROT vs. MIR'=ROT_lastvsMIR_last)
 
-  comparisons<- contrast(emmeans(secondAOV$aov,specs=c('perturbtype','block')), contrastList, adjust=method)
+  comparisons<- contrast(emmeans(secondAOV,specs=c('perturbtype','block')), contrastList, adjust=method)
   
   print(comparisons)
 }
 
-#pending question of whether this analysis is correct. We already know that variability between rot and mir is different.
-#This is further supported by a levene's test of compensation~perturbtype which is significant.
-#emmeans assumes that assumptions are met, so it might be using a wrong model for posthoc comparisons.
-#what is an appropriate test?
+#effect size
+learningCurveComparisonsAllBlocksEffSize <- function(group, method = 'bonferroni'){
+  comparisons <- learningcurveComparisonsAllBlocks(group=group,method=method)
+  #we can use eta-squared as effect size
+  #% of variance in DV(percentcomp) accounted for 
+  #by the difference between target1 and target2
+  comparisonsdf <- as.data.frame(comparisons)
+  etasq <- ((comparisonsdf$t.ratio)^2)/(((comparisonsdf$t.ratio)^2)+(comparisonsdf$df))
+  comparisons1 <- cbind(comparisonsdf,etasq)
+  
+  effectsize <- data.frame(comparisons1$contrast, comparisons1$etasq)
+  colnames(effectsize) <- c('contrast', 'etasquared')
+  #print(comparisons)
+  print(effectsize)
+}
+
 
 #Learning Curves STATS WITHOUT NEAR TARGET----
 #Stats are currently only for Non-instructed group
@@ -2071,9 +2083,25 @@ learningcurveComparisonsAllBlocksWONear <- function(group, method='bonferroni'){
                        'Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
                        'Block1: ROT vs. MIR'=ROT_firstvsMIR_first, 'Block2: ROT vs. MIR'=ROT_secondvsMIR_second, 'Block3: ROT vs. MIR'=ROT_lastvsMIR_last)
   
-  comparisons<- contrast(emmeans(secondAOV$aov,specs=c('perturbtype','block')), contrastList, adjust=method)
+  comparisons<- contrast(emmeans(secondAOV,specs=c('perturbtype','block')), contrastList, adjust=method)
   
   print(comparisons)
+}
+
+#effect size
+learningCurveComparisonsAllBlocksWONearEffSize <- function(group, method = 'bonferroni'){
+  comparisons <- learningcurveComparisonsAllBlocksWONear(group=group,method=method)
+  #we can use eta-squared as effect size
+  #% of variance in DV(percentcomp) accounted for 
+  #by the difference between target1 and target2
+  comparisonsdf <- as.data.frame(comparisons)
+  etasq <- ((comparisonsdf$t.ratio)^2)/(((comparisonsdf$t.ratio)^2)+(comparisonsdf$df))
+  comparisons1 <- cbind(comparisonsdf,etasq)
+  
+  effectsize <- data.frame(comparisons1$contrast, comparisons1$etasq)
+  colnames(effectsize) <- c('contrast', 'etasquared')
+  #print(comparisons)
+  print(effectsize)
 }
 
 #Findings are pretty much the same, except that difference in block 1 and 2 for mir is not quite significant p = .07

@@ -1325,23 +1325,23 @@ RTt.test <- function(group) {
   
   cat('Aligned (last block) compared to Rotation (first block):\n')
   print(t.test(ALdat$compensation, ROTdat$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, ROTdat$compensation))
   
   cat('Aligned (last block) compared to Mirror (first block):\n')
   print(t.test(ALdat$compensation, MIRdat$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, MIRdat$compensation))
   
   cat('Aligned (last block) compared to Rotation Washout (first block):\n')
   print(t.test(ALdat$compensation, ROTWASHdat$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, ROTWASHdat$compensation))
   
   cat('Aligned (last block) compared to Mirror Washout (first block):\n')
   print(t.test(ALdat$compensation, MIRWASHdat$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, MIRWASHdat$compensation))
   
   #I add a comparison of last block of ROT and MIR compared to aligned, since block 1 for these differed.
   ROTdatlast <- LC4test[which(LC4test$block == 'last' & LC4test$perturbtype == 'ROT'),]
@@ -1350,13 +1350,13 @@ RTt.test <- function(group) {
   
   cat('Aligned (last block) compared to Rotation (last block):\n')
   print(t.test(ALdat$compensation, ROTdatlast$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, ROTdatlast$compensation))
   
   cat('Aligned (last block) compared to Mirror (last block):\n')
   print(t.test(ALdat$compensation, MIRdatlast$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, MIRdatlast$compensation))
   
 }
 
@@ -1420,9 +1420,25 @@ RTComparisonsAllBlocks <- function(group,method='bonferroni'){
                        'Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
                        'Block1: ROT vs. MIR'=ROT_firstvsMIR_first, 'Block2: ROT vs. MIR'=ROT_secondvsMIR_second, 'Block3: ROT vs. MIR'=ROT_lastvsMIR_last)
   
-  comparisons<- contrast(emmeans(secondAOV$aov,specs=c('perturbtype','block')), contrastList, adjust=method)
+  comparisons<- contrast(emmeans(secondAOV,specs=c('perturbtype','block')), contrastList, adjust=method)
   
   print(comparisons)
+}
+
+#effect size
+RTComparisonsAllBlocksEffSize <- function(group, method = 'bonferroni'){
+  comparisons <- RTComparisonsAllBlocks(group=group,method=method)
+  #we can use eta-squared as effect size
+  #% of variance in DV(percentcomp) accounted for 
+  #by the difference between target1 and target2
+  comparisonsdf <- as.data.frame(comparisons)
+  etasq <- ((comparisonsdf$t.ratio)^2)/(((comparisonsdf$t.ratio)^2)+(comparisonsdf$df))
+  comparisons1 <- cbind(comparisonsdf,etasq)
+  
+  effectsize <- data.frame(comparisons1$contrast, comparisons1$etasq)
+  colnames(effectsize) <- c('contrast', 'etasquared')
+  #print(comparisons)
+  print(effectsize)
 }
 
 #So block 1 differs from aligned for ROT and MIR, but not washouts
@@ -2745,23 +2761,23 @@ MTt.test <- function(group) {
   
   cat('Aligned (last block) compared to Rotation (first block):\n')
   print(t.test(ALdat$compensation, ROTdat$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, ROTdat$compensation))
   
   cat('Aligned (last block) compared to Mirror (first block):\n')
   print(t.test(ALdat$compensation, MIRdat$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, MIRdat$compensation))
   
   cat('Aligned (last block) compared to Rotation Washout (first block):\n')
   print(t.test(ALdat$compensation, ROTWASHdat$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, ROTWASHdat$compensation))
   
   cat('Aligned (last block) compared to Mirror Washout (first block):\n')
   print(t.test(ALdat$compensation, MIRWASHdat$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, MIRWASHdat$compensation))
   
   #I add a comparison of last block of ROT and MIR compared to aligned, and ROTWASH and MIRWASH last blocks.
   ROTdatlast <- LC4test[which(LC4test$block == 'last' & LC4test$perturbtype == 'ROT'),]
@@ -2771,23 +2787,23 @@ MTt.test <- function(group) {
   
   cat('Aligned (last block) compared to Rotation (last block):\n')
   print(t.test(ALdat$compensation, ROTdatlast$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, ROTdatlast$compensation))
   
   cat('Aligned (last block) compared to Mirror (last block):\n')
   print(t.test(ALdat$compensation, MIRdatlast$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, MIRdatlast$compensation))
   
   cat('Aligned (last block) compared to Rotation Washout (last block):\n')
   print(t.test(ALdat$compensation, ROTWASHdatlast$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, ROTWASHdatlast$compensation))
   
   cat('Aligned (last block) compared to Mirror Washout (last block):\n')
   print(t.test(ALdat$compensation, MIRWASHdatlast$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, MIRWASHdatlast$compensation))
   
 }
 
@@ -2876,9 +2892,25 @@ MTPerturbComparisonsAllBlocks <- function(group, method='bonferroni'){
                        'Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
                        'Block1: ROT vs. MIR'=ROT_firstvsMIR_first, 'Block2: ROT vs. MIR'=ROT_secondvsMIR_second, 'Block3: ROT vs. MIR'=ROT_lastvsMIR_last)
 
-  comparisons<- contrast(emmeans(secondAOV$aov,specs=c('perturbtype','block')), contrastList, adjust=method)
+  comparisons<- contrast(emmeans(secondAOV,specs=c('perturbtype','block')), contrastList, adjust=method)
 
   print(comparisons)
+}
+
+#effect size
+MTPerturbComparisonsAllBlocksEffSize <- function(group, method = 'bonferroni'){
+  comparisons <- MTPerturbComparisonsAllBlocks(group=group,method=method)
+  #we can use eta-squared as effect size
+  #% of variance in DV(percentcomp) accounted for 
+  #by the difference between target1 and target2
+  comparisonsdf <- as.data.frame(comparisons)
+  etasq <- ((comparisonsdf$t.ratio)^2)/(((comparisonsdf$t.ratio)^2)+(comparisonsdf$df))
+  comparisons1 <- cbind(comparisonsdf,etasq)
+  
+  effectsize <- data.frame(comparisons1$contrast, comparisons1$etasq)
+  colnames(effectsize) <- c('contrast', 'etasquared')
+  #print(comparisons)
+  print(effectsize)
 }
 
 #washout data has complete data (include p001 in analysis; results do not differ whether or not we include this participant).

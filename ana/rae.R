@@ -1376,15 +1376,15 @@ RAEt.test <- function(group) {
   ROTdat <- LC4test[which(LC4test$block == 'first' & LC4test$perturbtype == 'ROT'),]
   MIRdat <-LC4test[which(LC4test$block == 'first' & LC4test$perturbtype == 'MIR'),]
   
-  cat('Aligned (last block) compared to Rotation (first block):\n')
+  cat('Aligned (last block) compared to Rotation Washout (first block):\n')
   print(t.test(ALdat$compensation, ROTdat$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, ROTdat$compensation))
   
-  cat('Aligned (last block) compared to Mirror (first block):\n')
+  cat('Aligned (last block) compared to Mirror Washout (first block):\n')
   print(t.test(ALdat$compensation, MIRdat$compensation, paired = TRUE))
-  # cat('Effect Size - Cohen d:\n')
-  # print(cohensD(subdf$pred_update, mu=0))
+  cat('Effect Size - Cohen d:\n')
+  print(cohensD(ALdat$compensation, MIRdat$compensation))
   
 }
 
@@ -1450,9 +1450,25 @@ RAEComparisonsAllBlocks <- function(group,method='bonferroni'){
                        'Block1: ROT vs. Block2: ROT'=ROT_firstvsROT_second, 'Block1: ROT vs. Block3: ROT'=ROT_firstvsROT_last,
                        'Block1: ROT vs. MIR'=ROT_firstvsMIR_first, 'Block2: ROT vs. MIR'=ROT_secondvsMIR_second, 'Block3: ROT vs. MIR'=ROT_lastvsMIR_last)
   
-  comparisons<- contrast(emmeans(secondAOV$aov,specs=c('perturbtype','block')), contrastList, adjust=method)
+  comparisons<- contrast(emmeans(secondAOV,specs=c('perturbtype','block')), contrastList, adjust=method)
   
   print(comparisons)
+}
+
+#effect size
+RAEComparisonsAllBlocksEffSize <- function(group, method = 'bonferroni'){
+  comparisons <- RAEComparisonsAllBlocks(group=group,method=method)
+  #we can use eta-squared as effect size
+  #% of variance in DV(percentcomp) accounted for 
+  #by the difference between target1 and target2
+  comparisonsdf <- as.data.frame(comparisons)
+  etasq <- ((comparisonsdf$t.ratio)^2)/(((comparisonsdf$t.ratio)^2)+(comparisonsdf$df))
+  comparisons1 <- cbind(comparisonsdf,etasq)
+  
+  effectsize <- data.frame(comparisons1$contrast, comparisons1$etasq)
+  colnames(effectsize) <- c('contrast', 'etasquared')
+  #print(comparisons)
+  print(effectsize)
 }
 
 #ROT differs from MIR for the first 2 blocks, but are not different at the end.
