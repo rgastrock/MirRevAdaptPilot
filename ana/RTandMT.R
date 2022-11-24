@@ -1447,7 +1447,7 @@ RTComparisonsAllBlocksEffSize <- function(group, method = 'bonferroni'){
 #No differences across blocks within ROT, but there are for MIR
 
 # Movement time analysis ----
-
+# note
 getMTTrials <- function(group, id, task, taskno){
   #allows for this function to work with each file
   #specify pp id, the task type, and task number
