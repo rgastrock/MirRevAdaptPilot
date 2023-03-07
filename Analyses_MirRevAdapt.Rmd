@@ -6,7 +6,7 @@ output: html_document
 
 # Overview
 
-This document discusses figures and statistics for the in-person version of the de no learning versus adaptation experiment. This experiment had participants train with both a visuomotor rotation and mirror reversal, in order to investigate the behavioral mechanisms that distinguish the two motor learning types.
+This document discusses figures and statistics for the tablet (in-laboratory) experiment of the de no learning versus adaptation study. This experiment had each participant train with both a visuomotor rotation and mirror reversal, in order to investigate the behavioral mechanisms that distinguish the two motor learning types.
 
 # Set up the R enviornment
 
@@ -24,7 +24,7 @@ source('ana/KINE4225.R')
 
 # Order Effects
 
-The experiment is a within-subjects design. That is, some participants start with the rotation followed by the mirror task, and vice-versa. In addition to this, each perturbation is presented on either the vertical or horizontal axis of the workspace, which are also counterbalanced across participants. Target locations in relation to this directional axis are also counterbalanced across participants. Therefore, to ensure that our results are not confounded by these factors, we need to ensure that there are no effects for perturbation order, perturbation axis, and target location.
+In the experiment, some participants start with the rotation followed by the mirror task, and vice-versa. In addition to this, each perturbation is presented on either the vertical or horizontal axis of the workspace, which are also counterbalanced across participants. Target locations in relation to this directional axis are also counterbalanced across participants. Therefore, to ensure that our results are not confounded by these factors, we need to ensure that there are no effects for perturbation order, perturbation axis, and target location.
 
 ## Perturbation order
 

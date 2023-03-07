@@ -10,6 +10,7 @@ library(phia) #used for interactionMeans
 library(emmeans)
 library(afex) #used for aov_ez
 library(lsr) #for cohensD
+library(BayesFactor)
 
 #Generic Functions----
 
