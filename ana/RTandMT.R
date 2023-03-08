@@ -2821,11 +2821,11 @@ movementtimePerturbANOVA <- function(group) {
   
   LC4aov <- getMTBlockedPerturbData(group=group,blockdefs=blockdefs)
   
-  if(group == 'noninstructed'){
-    LC4aov <- LC4aov[-which(LC4aov$participant == 'p1'),]
-  } else if (group == 'instructed'){
-    LC4aov <- LC4aov[-which(LC4aov$participant == 'p13'),]
-  }
+  # if(group == 'noninstructed'){
+  #   LC4aov <- LC4aov[-which(LC4aov$participant == 'p1'),]
+  # } else if (group == 'instructed'){
+  #   LC4aov <- LC4aov[-which(LC4aov$participant == 'p13'),]
+  # }
   
   
   

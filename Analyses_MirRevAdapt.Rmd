@@ -19,12 +19,14 @@ source('ana/rae.R')
 source('ana/RTandMT.R')
 source('ana/pathlength.R')
 source('ana/ordereffects.R')
-source('ana/KINE4225.R')
+source('ana/addplots.R')
 ```
 
 # Order Effects
 
 In the experiment, some participants start with the rotation followed by the mirror task, and vice-versa. In addition to this, each perturbation is presented on either the vertical or horizontal axis of the workspace, which are also counterbalanced across participants. Target locations in relation to this directional axis are also counterbalanced across participants. Therefore, to ensure that our results are not confounded by these factors, we need to ensure that there are no effects for perturbation order, perturbation axis, and target location.
+
+For the statistical tests, "diffcond" refers to the perturbation order, axis, or target location (i.e. conditions we are testing for order effects). "Block" refers to sets of 6 trials, for the first, second, and last set during perturbation training.
 
 ## Perturbation order
 
@@ -38,9 +40,10 @@ plotNIROTOrderEffects()
 
 ```{r}
 ROTordereffectsANOVA(group='noninstructed')
+ROTordereffectsBayesANOVA(group = 'noninstructed')
 ```
 
-There are no order effects, regardless of whether participants experience the rotation before or after the other perturbation.
+There are no order effects, regardless of whether participants experience the rotation before or after the other perturbation. There is a main effect of block, but this is expected given the progression of learning across training trials.
 
 ### Rotation: Instructed
 
@@ -50,9 +53,10 @@ plotIROTOrderEffects()
 
 ```{r}
 ROTordereffectsANOVA(group='instructed')
+ROTordereffectsBayesANOVA(group='instructed')
 ```
 
-There are no order effects, regardless of whether participants experience the rotation before or after the other perturbation.
+The results are similar to those in the non-instructed group. There are no order effects, but there is a main effect of block.
 
 ### Mirror: Non-instructed
 
@@ -62,9 +66,10 @@ plotNIMIROrderEffects()
 
 ```{r}
 MIRordereffectsANOVA(group='noninstructed')
+MIRordereffectsBayesANOVA(group='noninstructed')
 ```
 
-There are no order effects, regardless of whether participants experience the mirror reversal before or after the other perturbation.
+There are no order effects, regardless of whether participants experience the mirror reversal before or after the other perturbation. But, we do find a main effect of block.
 
 ### Mirror: Instructed
 
@@ -74,11 +79,14 @@ plotIMIROrderEffects()
 
 ```{r}
 MIRordereffectsANOVA(group='instructed')
+MIRordereffectsBayesANOVA(group='instructed')
 ```
 
 There are no order effects, regardless of whether participants experience the mirror reversal before or after the other perturbation.
 
 ## Target location
+
+For the following statistical tests, we calculated a sign flip for targets that required a negative amount of compensation, such that we are only comparing the magnitude of the compensation.
 
 ### Rotation: Non-instructed
 
@@ -88,9 +96,10 @@ plotNIROTTargetEffects()
 
 ```{r}
 ROTtargeteffectsANOVA(group='noninstructed')
+ROTtargeteffectsBayesANOVA(group='noninstructed')
 ```
 
-There are no order effects, regardless of whether targets are located before or after the perturbation axis.
+There are no target location effects, regardless of whether targets are located before or after the perturbation axis, but we find a main effect of block.
 
 ### Rotation: Instructed
 
@@ -100,9 +109,10 @@ plotIROTTargetEffects()
 
 ```{r}
 ROTtargeteffectsANOVA(group='instructed')
+ROTtargeteffectsBayesANOVA(group='instructed')
 ```
 
-There are no order effects, regardless of whether targets are located before or after the perturbation axis.
+There are no target location effects, regardless of whether targets are located before or after the perturbation axis. However, Bayesian analysis suggests that there is a main effect of block.
 
 ### Mirror: Non-instructed
 
@@ -112,9 +122,10 @@ plotNIMIRTargetEffects()
 
 ```{r}
 MIRtargeteffectsANOVA(group='noninstructed')
+MIRtargeteffectsBayesANOVA(group='noninstructed')
 ```
 
-There are no order effects, regardless of whether targets are located before or after the perturbation axis.
+There are no target location effects, regardless of whether targets are located before or after the perturbation axis. Bayesian analysis suggests that there is a small main effect of target location, but this is a very small effect (close to 1) which neither supports the null or alternative hypothesis. There is a main effect of block.
 
 ### Mirror: Instructed
 
@@ -124,9 +135,10 @@ plotIMIRTargetEffects()
 
 ```{r}
 MIRtargeteffectsANOVA(group='instructed')
+MIRtargeteffectsBayesANOVA(group='instructed')
 ```
 
-There are no order effects, regardless of whether targets are located before or after the perturbation axis.
+There are no target location effects, regardless of whether targets are located before or after the perturbation axis.
 
 ## Perturbation Axis
 
@@ -138,9 +150,10 @@ plotNIROTAxisEffects()
 
 ```{r}
 ROTaxiseffectsANOVA(group='noninstructed')
+ROTaxiseffectsBayesANOVA(group='noninstructed')
 ```
 
-There are no order effects, regardless of whether the perturbation is on the horizontal or vertical axis of the workspace.
+There are no axis effects, regardless of whether the perturbation is experienced on the horizontal or vertical axis of the workspace. We find a main effect of block across training trials.
 
 ### Rotation: Instructed
 
@@ -150,9 +163,10 @@ plotIROTAxisEffects()
 
 ```{r}
 ROTaxiseffectsANOVA(group='instructed')
+ROTaxiseffectsBayesANOVA(group='instructed')
 ```
 
-There are no order effects, regardless of whether the perturbation is on the horizontal or vertical axis of the workspace.
+There are no axis effects, regardless of whether the perturbation is experienced on the horizontal or vertical axis of the workspace. Bayesian analysis suggests a main effect of block.
 
 ### Mirror: Non-instructed
 
@@ -162,9 +176,10 @@ plotNIMIRAxisEffects()
 
 ```{r}
 MIRaxiseffectsANOVA(group='noninstructed')
+MIRaxiseffectsBayesANOVA(group='noninstructed')
 ```
 
-There are no order effects, regardless of whether the perturbation is on the horizontal or vertical axis of the workspace.
+There are no axis effects, regardless of whether the perturbation is experienced on the horizontal or vertical axis of the workspace. There is a main effect of block across training trials.
 
 ### Mirror: Instructed
 
@@ -174,13 +189,14 @@ plotIMIRAxisEffects()
 
 ```{r}
 MIRaxiseffectsANOVA(group='instructed')
+MIRaxiseffectsBayesANOVA(group='instructed')
 ```
 
-There are no order effects, regardless of whether the perturbation is on the horizontal or vertical axis of the workspace.
+There are no axis effects, regardless of whether the perturbation is experienced on the horizontal or vertical axis of the workspace.
 
 # Learning Rates
 
-We then compare the progression of learning across trials between the rotation and mirror tasks. The y-axis will be amount of compensation in percentage. This is because while the rotation magnitude is consistently 30-degrees, angular reach deviations for the mirror will differ depending on the target distance from the mirror axis. The mirror task will require reach deviations of 15, 30, or 45 degrees. Here, 100% would mean perfect compensation, 0% would be no compensation or reaching directly to the target, and negative values are compensations in the wrong direction relative to the target.
+We then compare the progression of learning across trials between the rotation and mirror tasks. For the plots below, the y-axis will be the amount of compensation in percentage. This is because while the rotation magnitude is consistently 30-degrees, angular reach deviations for the mirror will differ depending on the target distance from the mirror axis. The mirror task will require reach deviations of 15, 30, or 45 degrees. Here, 100% would mean perfect compensation, 0% would be no compensation or reaching directly to the target, and negative values are compensations in the wrong direction relative to the target.
 
 ## Non - instructed group
 

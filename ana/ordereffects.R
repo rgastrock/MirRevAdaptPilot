@@ -678,6 +678,29 @@ MIRordereffectsANOVA <- function(group) {
   print(firstAOV[1:3]) #so that it doesn't print the aov object as well
 }
 
+MIRordereffectsBayesANOVA <- function(group) {
+  
+  #styles <- getStyle()
+  blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
+  
+  LC4aov <- MIRgetBlockedOrderEffectsAOV(blockdefs=blockdefs, group=group)                      
+  
+  #looking into interaction below:
+  #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
+  
+  #Bayes ANOVA - can use long format
+  #will compare models to null (intercept) or no effect - this will be 1
+  #higher than 1 will be evidence for alternative hypothesis, lower will be evidence for null hypothesis
+  #compare models either if only main effects, interaction of effects
+  #use lmBF function for specific models
+  LC4aov$participant <- as.factor(LC4aov$participant)
+  bfLC<- anovaBF(compensation ~ diffcond*block + participant, data = LC4aov, whichRandom = 'participant') #include data from participants, but note that this is a random factor
+  #compare interaction contribution, over the contribution of both main effects
+  bfinteraction <- bfLC[4]/bfLC[3]
+  print(bfLC)
+  print(bfinteraction)
+}
+
 # Target Location Effects: ROT----
 getROTParticipantTargetLoc <- function(group, id, location) {
   
@@ -1111,6 +1134,29 @@ ROTtargeteffectsANOVA <- function(group) {
   print(firstAOV[1:3]) #so that it doesn't print the aov object as well
 }
 
+ROTtargeteffectsBayesANOVA <- function(group) {
+  
+  #styles <- getStyle()
+  blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
+  
+  LC4aov <- ROTgetBlockedTargetEffectsAOV(blockdefs=blockdefs, group=group)                      
+  
+  #looking into interaction below:
+  #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
+  
+  #Bayes ANOVA - can use long format
+  #will compare models to null (intercept) or no effect - this will be 1
+  #higher than 1 will be evidence for alternative hypothesis, lower will be evidence for null hypothesis
+  #compare models either if only main effects, interaction of effects
+  #use lmBF function for specific models
+  LC4aov$participant <- as.factor(LC4aov$participant)
+  bfLC<- anovaBF(compensation ~ diffcond*block + participant, data = LC4aov, whichRandom = 'participant') #include data from participants, but note that this is a random factor
+  #compare interaction contribution, over the contribution of both main effects
+  bfinteraction <- bfLC[4]/bfLC[3]
+  print(bfLC)
+  print(bfinteraction)
+}
+
 #Target Location Effects: MIR----
 getMIRParticipantTargetLoc <- function(group, id, location){
   #same as rotation, we look into percentage of compensation, but note that magnitude to compensate differs per target
@@ -1534,6 +1580,29 @@ MIRtargeteffectsANOVA <- function(group) {
   LC4aov$participant <- as.factor(LC4aov$participant)
   firstAOV <- ezANOVA(data=LC4aov, wid=participant, dv=compensation, within=block,between=diffcond,type=3, return_aov = TRUE) #which type of SS is appropriate?
   print(firstAOV[1:3]) #so that it doesn't print the aov object as well
+}
+
+MIRtargeteffectsBayesANOVA <- function(group) {
+  
+  #styles <- getStyle()
+  blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
+  
+  LC4aov <- MIRgetBlockedTargetEffectsAOV(blockdefs=blockdefs, group=group)                      
+  
+  #looking into interaction below:
+  #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
+  
+  #Bayes ANOVA - can use long format
+  #will compare models to null (intercept) or no effect - this will be 1
+  #higher than 1 will be evidence for alternative hypothesis, lower will be evidence for null hypothesis
+  #compare models either if only main effects, interaction of effects
+  #use lmBF function for specific models
+  LC4aov$participant <- as.factor(LC4aov$participant)
+  bfLC<- anovaBF(compensation ~ diffcond*block + participant, data = LC4aov, whichRandom = 'participant') #include data from participants, but note that this is a random factor
+  #compare interaction contribution, over the contribution of both main effects
+  bfinteraction <- bfLC[4]/bfLC[3]
+  print(bfLC)
+  print(bfinteraction)
 }
 
 #Axis Effects: ROT----
@@ -2080,6 +2149,29 @@ ROTaxiseffectsANOVA <- function(group) {
   print(firstAOV[1:3]) #so that it doesn't print the aov object as well
 }
 
+ROTaxiseffectsBayesANOVA <- function(group) {
+  
+  #styles <- getStyle()
+  blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
+  
+  LC4aov <- ROTgetBlockedAxisEffectsAOV(blockdefs=blockdefs, group=group)                      
+  
+  #looking into interaction below:
+  #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
+  
+  #Bayes ANOVA - can use long format
+  #will compare models to null (intercept) or no effect - this will be 1
+  #higher than 1 will be evidence for alternative hypothesis, lower will be evidence for null hypothesis
+  #compare models either if only main effects, interaction of effects
+  #use lmBF function for specific models
+  LC4aov$participant <- as.factor(LC4aov$participant)
+  bfLC<- anovaBF(compensation ~ diffcond*block + participant, data = LC4aov, whichRandom = 'participant') #include data from participants, but note that this is a random factor
+  #compare interaction contribution, over the contribution of both main effects
+  bfinteraction <- bfLC[4]/bfLC[3]
+  print(bfLC)
+  print(bfinteraction)
+}
+
 #Then do the same for MIR
 MIRgetAxisLongFormat <- function(conditions=c(1,2), group){
   
@@ -2185,5 +2277,28 @@ MIRaxiseffectsANOVA <- function(group) {
   LC4aov$participant <- as.factor(LC4aov$participant)
   firstAOV <- ezANOVA(data=LC4aov, wid=participant, dv=compensation, within=block,between=diffcond,type=3, return_aov = TRUE) #which type of SS is appropriate?
   print(firstAOV[1:3]) #so that it doesn't print the aov object as well
+}
+
+MIRaxiseffectsBayesANOVA <- function(group) {
+  
+  #styles <- getStyle()
+  blockdefs <- list('first'=c(1,6),'second'=c(7,6),'last'=c(85,6)) #6 trials per block
+  
+  LC4aov <- MIRgetBlockedAxisEffectsAOV(blockdefs=blockdefs, group=group)                      
+  
+  #looking into interaction below:
+  #interaction.plot(LC4aov$diffgroup, LC4aov$block, LC4aov$reachdeviation)
+  
+  #Bayes ANOVA - can use long format
+  #will compare models to null (intercept) or no effect - this will be 1
+  #higher than 1 will be evidence for alternative hypothesis, lower will be evidence for null hypothesis
+  #compare models either if only main effects, interaction of effects
+  #use lmBF function for specific models
+  LC4aov$participant <- as.factor(LC4aov$participant)
+  bfLC<- anovaBF(compensation ~ diffcond*block + participant, data = LC4aov, whichRandom = 'participant') #include data from participants, but note that this is a random factor
+  #compare interaction contribution, over the contribution of both main effects
+  bfinteraction <- bfLC[4]/bfLC[3]
+  print(bfLC)
+  print(bfinteraction)
 }
 
